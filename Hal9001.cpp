@@ -3,9 +3,9 @@
 void Hal9001::OnGameStart() { return; }
 
 void Hal9001::OnStep() { 
-    // build a refinery
     TryBuildSupplyDepot();
     TryBuildRefinery();
+    TryBuildBarracks();
 
 }
 
@@ -23,6 +23,11 @@ void Hal9001::OnUnitIdle(const Unit *unit) {
             break;
         }
         Actions()->UnitCommand(unit, ABILITY_ID::SMART, mineral_target);
+        break;
+    }
+    // tells barracks to train marines
+    case UNIT_TYPEID::TERRAN_BARRACKS: {
+        Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_MARINE);
         break;
     }
     default: {
@@ -107,8 +112,27 @@ bool Hal9001::TryBuildSupplyDepot(){
 
 }
 
+bool Hal9001::TryBuildBarracks(){
+
+    // need to have a supply depot first
+    if (CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) < 1){
+        return false;
+    }
+
+    // if we already have a barracks don't build
+    if (CountUnitType(UNIT_TYPEID::TERRAN_BARRACKS) > 0){
+        return false;
+    }
+
+    return TryBuildStructure(ABILITY_ID::BUILD_BARRACKS);    
+}
+
 bool Hal9001::TryBuildRefinery(){
-    int ref_count = 0;
+    // build at most 2 refineries (can change this later)
+    if (CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) > 2){
+        return false;
+    }
+
     const ObservationInterface* observation = Observation();
     // If a unit already building a refinery, do nothing.
     const Unit *unit_to_build = nullptr;
@@ -123,16 +147,8 @@ bool Hal9001::TryBuildRefinery(){
         if (unit->unit_type == UNIT_TYPEID::TERRAN_SCV) {
             unit_to_build = unit;
         }
-        // count how many refineries we have
-        if (unit->unit_type == UNIT_TYPEID::TERRAN_REFINERY) {
-            ref_count += 1;
-        }
     }
-    // build at most 2 refineries (can change this later)
-    if (ref_count > 2){
-        return false;
-    }
-
+    
     const Unit *geyser = FindNearestGeyser(unit_to_build->pos);
     // no geysers
     if (!geyser){
@@ -140,4 +156,8 @@ bool Hal9001::TryBuildRefinery(){
     }
     Actions()->UnitCommand(unit_to_build, ABILITY_ID::BUILD_REFINERY, geyser);
     return true;
+}
+
+size_t Hal9001::CountUnitType(UNIT_TYPEID unit_type) {
+    return Observation()->GetUnits(Unit::Alliance::Self, IsUnit(unit_type)).size();
 }

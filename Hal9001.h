@@ -6,6 +6,7 @@
 #include "sc2lib/sc2_lib.h"
 #include "sc2utils/sc2_manage_process.h"
 #include "sc2utils/sc2_arg_parser.h"
+#include <sc2api/sc2_unit_filters.h>
 
 using namespace sc2;
 
@@ -20,9 +21,11 @@ public:
 	const Unit* FindNearestGeyser(const Point2D &start);
 	bool TryBuildStructure(ABILITY_ID ability_type_for_structure, UNIT_TYPEID unit_type = UNIT_TYPEID::TERRAN_SCV);
 	bool TryBuildSupplyDepot();
+	bool TryBuildBarracks();
 	bool TryBuildRefinery();
 
 private:
+	size_t CountUnitType(UNIT_TYPEID unit_type);
 };
 
 #endif
