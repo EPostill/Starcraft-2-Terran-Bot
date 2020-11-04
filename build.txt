@@ -15,3 +15,26 @@
 15. once factory upgrades finish, build widow mine for air unit defence
 16. 36-38 supply - build depot behind minerals at the 2nd command center
 17. when star port finishes - build viking for defence or liberator for attack
+18. once widow mine finishes, start building a tank
+19. once depot from (16) is done, build another depot right next to it, and continue this chain (build a depot whenever the one next to it finishes)
+
+--- This is generally when the base building is established ---
+--- From here on we focus on building an army to attack     ---
+
+20. ~46 supply, build 2 more barracks next to the star port and factory
+21. once the air unit finishes (17) build another tech lab
+22. once the tank (18) finishes, move the factory to a tech lab and the star port to a reactor
+23. ~4.5 mins, build an Eng Bay and a gas refinery next to the 2nd command center
+24. when the factory is moved, build another tank and put the barracks (20) on the tech labs previously connected to the star port and factory
+25. when the Eng Bay is done, upgrade infantry weapons level 2 and research stim on a tech lab
+26. when mineral line is 16/16, make a second gas refinery
+
+--- This is when the army production is well established ---
+from here on, we use the barracks to make marines (later on marauders), tanks in the factory and medivacs in the star port
+when we make marines, we want to begin them all at the same time, for teams of 3
+tanks can be started right away, but hold out on the medivacs until combat shields finish
+
+27. research combat shields
+28. from here on, we build a command center and go through the upgrade tree
+29. once a suitable number of upgrades have been researched, go for the attack
+
