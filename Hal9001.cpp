@@ -9,11 +9,91 @@ void Hal9001::OnStep() {
 
     switch (progress) {
 
-    case (0): {
+    case 0:
+        if (true) { //game time = 12s
+            //move scv to supply depot build location
+        }
 
-    }
-    }
+        if (supplies >= 14 && Observation()->GetMinerals() >= 100) {
+            //build supply depot towards center
+            ++progress;
+        }
+        break;
 
+    case 1:
+        if (supplies >= 16 && Observation()->GetMinerals() >= 150) {
+            //build barracks toward center
+            ++progress;
+        }
+        break;
+
+    case 2:
+        if (supplies >= 16 && Observation()->GetMinerals() >= 75) {
+            //build refinery on nearest gas
+            ++progress;
+        }
+        break;
+
+    case 3:
+        //scout with scv
+        if (/*we have 0 marines total (queue and active)*/true && Observation()->GetMinerals() >= 50) {
+            //queue up marine
+        }
+
+        if (supplies >= 19 && Observation()->GetMinerals() >= 150) {
+            //upgrade command center to orbital command
+            ++progress;
+        }
+        break;
+
+    case 4:
+        if (supplies >= 20 && Observation()->GetMinerals() >= 400) {
+            //build command center
+            ++progress;
+        }
+        break;
+
+    case 5:
+        if (/*marine finishes building*/true && Observation()->GetMinerals() >= 150) {
+            //build reactor on the barracks
+            //build a depot next to the reactor
+            ++progress;
+        }
+        break;
+
+    case 6:
+        if (supplies >= 22 && /*gas >= 100*/true) {
+            //build factory in between command centers
+            ++progress;
+        }
+        break;
+
+    case 7:
+        if (supplies >= 23 && Observation()->GetMinerals() >= 100) {
+            //build bunker towards the center from command center 2
+            ++progress;
+        }
+        break;
+
+    case 8:
+        if (/*we have less than 3 marines (in queue + out) and 1 reactor*/true && Observation()->GetMinerals() >= 50) {
+            //queue a marine
+            //move marines in front of bunker
+        }
+        if (supplies >= 26 && Observation()->GetMinerals() >= 75 && /*one empty gas next to first command center*/true) {
+            //build second refinery next to first command center
+            ++progress;
+        }
+        break;
+
+    case 9:
+        if (/*we own a factory*/true && Observation()->GetMinerals() >= 150 && /*gas >= 100*/true) {
+            //build a star port next to the factory
+        }
+        if (/*we don't have a tech lab yet*/true && Observation()->GetMinerals() >= 50) {
+            //build a tech lab connected to the factory
+        }
+    }
 }
 
 void Hal9001::OnUnitIdle(const Unit *unit) {
