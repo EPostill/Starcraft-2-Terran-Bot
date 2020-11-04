@@ -1,12 +1,11 @@
 #include "Hal9001.h"
 
-void Hal9001::OnGameStart() { return; }
+void Hal9001::OnGameStart() {
+    progress = 0;
+    supplies = 0;
+}
 
 void Hal9001::OnStep() { 
-    TryBuildSupplyDepot();
-    TryBuildRefinery();
-    TryBuildBarracks();
-
     switch (progress) {
 
     case 0:
@@ -160,89 +159,26 @@ const Unit* Hal9001::FindNearestGeyser(const Point2D &start) {
     return target;
 }
 
-bool Hal9001::TryBuildStructure(ABILITY_ID ability_type_for_structure, UNIT_TYPEID unit_type) {
-    const ObservationInterface* observation = Observation();
-    // If a unit already is building a supply structure of this type, do nothing.
-    const Unit *unit_to_build = nullptr;
-    Units units = observation->GetUnits(Unit::Alliance::Self);
-    for (const auto& unit : units) {
-        for (const auto& order : unit->orders) {
-            if (order.ability_id == ability_type_for_structure) {
-                return false;
-            }
-        }
-        // gets the svc that will build the structure
-        if (unit->unit_type == unit_type) {
-            unit_to_build = unit;
-        }
+void Hal9001::BuildStructure(ABILITY_ID ability_type_for_structure, float x, float y, const Unit *builder) {
+    // if no builder is given, make the builder a random scv
+    if (!builder){
+        Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
+        builder = units.back();
     }
 
-    float rx = GetRandomScalar();
-    float ry = GetRandomScalar();
-
-    Actions()->UnitCommand(unit_to_build,
-        ability_type_for_structure,
-        Point2D(unit_to_build->pos.x + rx * 15.0f, unit_to_build->pos.y + ry * 15.0f));
-
-    return true;    
+    Actions()->UnitCommand(builder, ability_type_for_structure, Point2D(x,y));   
 }
 
-bool Hal9001::TryBuildSupplyDepot(){
-    const ObservationInterface* observation = Observation();
 
-    // only build when supply capped
-    if (observation->GetFoodUsed() <= observation->GetFoodCap() - 2){
-        return false;
-    }
-
-    return TryBuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT);
-
-}
-
-bool Hal9001::TryBuildBarracks(){
-
-    // need to have a supply depot first
-    if (CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) < 1){
-        return false;
-    }
-
-    // if we already have a barracks don't build
-    if (CountUnitType(UNIT_TYPEID::TERRAN_BARRACKS) > 0){
-        return false;
-    }
-
-    return TryBuildStructure(ABILITY_ID::BUILD_BARRACKS);    
-}
-
-bool Hal9001::TryBuildRefinery(){
-    // build at most 2 refineries (can change this later)
-    if (CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) > 2){
-        return false;
-    }
-
-    const ObservationInterface* observation = Observation();
-    // If a unit already building a refinery, do nothing.
-    const Unit *unit_to_build = nullptr;
-    Units units = observation->GetUnits(Unit::Alliance::Self);
-    for (const auto& unit : units) {
-        for (const auto& order : unit->orders) {
-            if (order.ability_id == ABILITY_ID::BUILD_REFINERY) {
-                return false;
-            }
-        }
-        // gets the svc that will the refinery
-        if (unit->unit_type == UNIT_TYPEID::TERRAN_SCV) {
-            unit_to_build = unit;
-        }
+void Hal9001::BuildRefinery(const Unit *builder){
+    // if no builder is given, make the builder a random scv
+    if (!builder){
+        Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
+        builder = units.back();
     }
     
-    const Unit *geyser = FindNearestGeyser(unit_to_build->pos);
-    // no geysers
-    if (!geyser){
-        return false;
-    }
-    Actions()->UnitCommand(unit_to_build, ABILITY_ID::BUILD_REFINERY, geyser);
-    return true;
+    const Unit *geyser = FindNearestGeyser(builder->pos);
+    Actions()->UnitCommand(builder, ABILITY_ID::BUILD_REFINERY, geyser);
 }
 
 size_t Hal9001::CountUnitType(UNIT_TYPEID unit_type) {
@@ -251,4 +187,35 @@ size_t Hal9001::CountUnitType(UNIT_TYPEID unit_type) {
 
 void Hal9001::updateSupplies() {
     supplies = Observation()->GetFoodUsed();
+}
+
+
+Units Hal9001::GetUnitsOfType(UNIT_TYPEID unit_type){
+    const ObservationInterface* observation = Observation();
+    return observation->GetUnits(Unit::Alliance::Self, IsUnit(unit_type));
+}
+
+void Hal9001::step14(){
+    // use extra resources for marines (but prioritize buildings)
+
+}
+
+// once factory upgrades finish, build widow mine for air unit defence
+void Hal9001::step15(){
+    Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
+    const Unit *factory = units.front();
+    // tell factory to build widow mine
+    Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_WIDOWMINE);
+
+}
+
+// 36-38 supply - build depot behind minerals at the 2nd command center
+void Hal9001::step16(){
+    Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+    const Unit *commcenter = units.back();    // check if this gets the 2nd command center
+    // get a mineral that is near the second command center
+    const Unit *mineral = FindNearestMineralPatch(commcenter->pos);
+    // build depot behind this mineral
+    // figure out how to put it behind the depot
+
 }
