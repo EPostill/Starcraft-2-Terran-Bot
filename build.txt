@@ -38,3 +38,6 @@ tanks can be started right away, but hold out on the medivacs until combat shiel
 28. from here on, we build a command center and go through the upgrade tree
 29. once a suitable number of upgrades have been researched, go for the attack
 
+This build is taken from HuShang:
+https://lotv.spawningtool.com/build/135048/
+https://www.youtube.com/watch?v=X1g4O2PTOtQ
