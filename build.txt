@@ -1,0 +1,17 @@
+1. move SCV towards depot build location at ~12 seconds
+2. 14 supply + 100 minerals - build depot towards center from command center
+3. 16 supply + ??? minerals - build barracks near depot + gas refinery
+4. move units to gas refinery just before it finishes to get them mining immediately
+5. 17 supply  - send SCV to scout enemy base (check for enemy expansion)
+6. 19 supply + ??? minerals - orbital command on command center + first marine
+7. 20 supply + ??? minerals - build second command center + set rally point (idk what this is)
+8. when first marine finished - build reactor on the barracks + start second depot next to barracks
+9. 22 supply + 100 gas - factory in between the 2 command centers
+10. 23 supply + ??? minerals - build bunker towards the center of the map from the 2nd command center
+11. once reactor from (8) finishes, build 2 more marines and move all marines in front of bunker
+12. 26 supply + ??? minerals - build second refinery
+13. once factory from (9) finishes, unlock star port + tech lab
+14. use extra resources for marines (but prioritize buildings)
+15. once factory upgrades finish, build widow mine for air unit defence
+16. 36-38 supply - build depot behind minerals at the 2nd command center
+17. when star port finishes - build viking for defence or liberator for attack

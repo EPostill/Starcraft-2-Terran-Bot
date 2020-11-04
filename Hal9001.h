@@ -26,6 +26,8 @@ public:
 
 private:
 	size_t CountUnitType(UNIT_TYPEID unit_type);
+	//progression counter to mark which stage of progress we are at
+	int progress;
 };
 
 #endif
