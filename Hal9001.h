@@ -19,17 +19,25 @@ public:
 	
 	const Unit* FindNearestMineralPatch(const Point2D &start);
 	const Unit* FindNearestGeyser(const Point2D &start);
-	bool TryBuildStructure(ABILITY_ID ability_type_for_structure, UNIT_TYPEID unit_type = UNIT_TYPEID::TERRAN_SCV);
+	bool TryBuildStructure(ABILITY_ID ability_type_for_structure, float x, float y, const Unit *builder = nullptr);
 	bool TryBuildSupplyDepot();
 	bool TryBuildBarracks();
 	bool TryBuildRefinery();
 	void updateSupplies();
+	Units GetUnitsOfType(UNIT_TYPEID unit_type);
+
+	void step14();
+	void step15();
+	void step16();
+	void step17();
+	void step18();
+	void step19();
 
 private:
 	size_t CountUnitType(UNIT_TYPEID unit_type);
 	//progression counter to mark which stage of progress we are at
-	int progress = 0;
-	int supplies = 0;
+	int progress;
+	int supplies;
 };
 
 #endif

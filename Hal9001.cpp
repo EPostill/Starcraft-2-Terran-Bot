@@ -80,20 +80,21 @@ const Unit* Hal9001::FindNearestGeyser(const Point2D &start) {
     return target;
 }
 
-bool Hal9001::TryBuildStructure(ABILITY_ID ability_type_for_structure, UNIT_TYPEID unit_type) {
-    const ObservationInterface* observation = Observation();
-    // If a unit already is building a supply structure of this type, do nothing.
-    const Unit *unit_to_build = nullptr;
-    Units units = observation->GetUnits(Unit::Alliance::Self);
-    for (const auto& unit : units) {
-        for (const auto& order : unit->orders) {
-            if (order.ability_id == ability_type_for_structure) {
-                return false;
+bool Hal9001::TryBuildStructure(ABILITY_ID ability_type_for_structure, float x, float y, const Unit *builder) {
+    // if no builder is given, make the builder a random scv
+    if (!builder){
+        const ObservationInterface* observation = Observation();
+        Units units = observation->GetUnits(Unit::Alliance::Self);
+        for (const auto& unit : units) {
+            for (const auto& order : unit->orders) {
+                if (order.ability_id == ability_type_for_structure) {
+                    return false;
+                }
             }
-        }
-        // gets the svc that will build the structure
-        if (unit->unit_type == unit_type) {
-            unit_to_build = unit;
+            // gets the svc that will build the structure
+            if (unit->unit_type == unit_type) {
+                unit_to_build = unit;
+            }
         }
     }
 
@@ -171,4 +172,35 @@ size_t Hal9001::CountUnitType(UNIT_TYPEID unit_type) {
 
 void Hal9001::updateSupplies() {
     supplies = Observation()->GetFoodUsed();
+}
+
+
+Units Hal9001::GetUnitsOfType(UNIT_TYPEID unit_type){
+    const ObservationInterface* observation = Observation();
+    return observation->GetUnits(Unit::Alliance::Self, IsUnit(unit_type));
+}
+
+void Hal9001::step14(){
+    // use extra resources for marines (but prioritize buildings)
+
+}
+
+// once factory upgrades finish, build widow mine for air unit defence
+void Hal9001::step15(){
+    Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
+    const Unit *factory = units.front();
+    // tell factory to build widow mine
+    Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_WIDOWMINE);
+
+}
+
+// 36-38 supply - build depot behind minerals at the 2nd command center
+void Hal9001::step16(){
+    Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+    const Unit *commcenter = units.back();    // check if this gets the 2nd command center
+    // get a mineral that is near the second command center
+    const Unit *mineral = FindNearestMineralPatch(commcenter->pos);
+    // build depot behind this mineral
+    // figure out how to put it behind the depot
+
 }
