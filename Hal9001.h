@@ -19,22 +19,17 @@ public:
 	
 	const Unit* FindNearestMineralPatch(const Point2D &start);
 	const Unit* FindNearestGeyser(const Point2D &start);
-	bool TryBuildStructure(ABILITY_ID ability_type_for_structure, float x, float y, const Unit *builder = nullptr);
-	bool TryBuildSupplyDepot();
-	bool TryBuildBarracks();
-	bool TryBuildRefinery();
+	void BuildStructure(ABILITY_ID ability_type_for_structure, float x, float y, const Unit *builder = nullptr);
+	void BuildRefinery(const Unit *builder = nullptr);
 	void updateSupplies();
-	Units GetUnitsOfType(UNIT_TYPEID unit_type);
 
 	void step14();
 	void step15();
 	void step16();
-	void step17();
-	void step18();
-	void step19();
 
 private:
 	size_t CountUnitType(UNIT_TYPEID unit_type);
+	Units GetUnitsOfType(UNIT_TYPEID unit_type);
 	//progression counter to mark which stage of progress we are at
 	int progress;
 	int supplies;
