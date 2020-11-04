@@ -23,11 +23,13 @@ public:
 	bool TryBuildSupplyDepot();
 	bool TryBuildBarracks();
 	bool TryBuildRefinery();
+	void updateSupplies();
 
 private:
 	size_t CountUnitType(UNIT_TYPEID unit_type);
 	//progression counter to mark which stage of progress we are at
-	int progress;
+	int progress = 0;
+	int supplies = 0;
 };
 
 #endif

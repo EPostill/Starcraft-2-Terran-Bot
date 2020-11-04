@@ -7,6 +7,13 @@ void Hal9001::OnStep() {
     TryBuildRefinery();
     TryBuildBarracks();
 
+    switch (progress) {
+
+    case (0): {
+
+    }
+    }
+
 }
 
 void Hal9001::OnUnitIdle(const Unit *unit) {
@@ -160,4 +167,8 @@ bool Hal9001::TryBuildRefinery(){
 
 size_t Hal9001::CountUnitType(UNIT_TYPEID unit_type) {
     return Observation()->GetUnits(Unit::Alliance::Self, IsUnit(unit_type)).size();
+}
+
+void Hal9001::updateSupplies() {
+    supplies = Observation()->GetFoodUsed();
 }
