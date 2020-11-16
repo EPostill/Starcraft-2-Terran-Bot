@@ -34,6 +34,8 @@ public:
 private:
 	size_t CountUnitType(UNIT_TYPEID unit_type);
 	Units GetUnitsOfType(UNIT_TYPEID unit_type);
+	// returns true if unit has finished being built
+	bool doneConstruction(const Unit *unit);
 	//progression counter to mark which stage of progress we are at
 	int progress;
 	int supplies;

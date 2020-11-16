@@ -11,6 +11,7 @@ void Hal9001::OnGameStart() {
 void Hal9001::OnStep() { 
     cout << "progress: " << progress << endl;
     updateSupplies();
+    cout << "supplies: " << supplies << endl;
     switch (progress) {
 
     case 0:
@@ -22,19 +23,21 @@ void Hal9001::OnStep() {
         if (supplies >= 14 && Observation()->GetMinerals() >= 100) {
             //build supply depot towards center
             Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
-            const Unit *commcenter = units.front();    // check if this gets the 1st command center
-            BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, commcenter->pos.x + 7, commcenter->pos.y + 9);
+            const Unit *commcenter = units.front();
+            // need to find main ramp location
+            BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, commcenter->pos.x + 5, commcenter->pos.y + 8);
             ++progress;
         }
         break;
 
     case 1:
         if (supplies >= 16 && Observation()->GetMinerals() >= 150) {
-            //build barracks toward center
+            //build barracks next to supply depot
             Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
-            const Unit *depot = units.front();    // check if this gets the 1st command center
-            BuildStructure(ABILITY_ID::BUILD_BARRACKS, depot->pos.x + 3, depot->pos.y + 3);
-            // ++progress;
+            const Unit *depot = units.front();
+            // need to figure out how to place it nicely
+            BuildStructure(ABILITY_ID::BUILD_BARRACKS, depot->pos.x - 3, depot->pos.y);
+            ++progress;
         }
         break;
 
@@ -42,7 +45,14 @@ void Hal9001::OnStep() {
         if (supplies >= 16 && Observation()->GetMinerals() >= 75) {
             //build refinery on nearest gas
             BuildRefinery();
-            ++progress;
+            // move to next stage when barracks is done
+            Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
+            if (!units.empty()){
+                const Unit *barracks = units.front();
+                if (doneConstruction(barracks)){
+                    ++progress;
+                }
+            }
         }
         break;
 
@@ -56,9 +66,10 @@ void Hal9001::OnStep() {
             //upgrade command center to orbital command
             Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
             const Unit *commcenter = units.front();    // check if this gets the 1st command center
+            
             Actions()->UnitCommand(commcenter, ABILITY_ID::MORPH_ORBITALCOMMAND);
-
-            // ++progress;
+            
+            ++progress;
         }
         break;
 
@@ -222,6 +233,10 @@ void Hal9001::updateSupplies() {
 Units Hal9001::GetUnitsOfType(UNIT_TYPEID unit_type){
     const ObservationInterface* observation = Observation();
     return observation->GetUnits(Unit::Alliance::Self, IsUnit(unit_type));
+}
+
+bool Hal9001::doneConstruction(const Unit *unit){
+    return unit->build_progress == 1.0;
 }
 
 void Hal9001::step14(){
