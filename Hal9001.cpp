@@ -1,20 +1,29 @@
 #include "Hal9001.h"
 
+#include <iostream>
+using namespace std;
+
 void Hal9001::OnGameStart() {
     progress = 0;
-    supplies = 0;
+    supplies = 14;
 }
 
 void Hal9001::OnStep() { 
+    cout << "progress: " << progress << endl;
+    updateSupplies();
     switch (progress) {
 
     case 0:
         if (true) { //game time = 12s
             //move scv to supply depot build location
+            
         }
 
         if (supplies >= 14 && Observation()->GetMinerals() >= 100) {
             //build supply depot towards center
+            Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+            const Unit *commcenter = units.front();    // check if this gets the 1st command center
+            BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, commcenter->pos.x + 7, commcenter->pos.y + 9);
             ++progress;
         }
         break;
@@ -22,13 +31,17 @@ void Hal9001::OnStep() {
     case 1:
         if (supplies >= 16 && Observation()->GetMinerals() >= 150) {
             //build barracks toward center
-            ++progress;
+            Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
+            const Unit *depot = units.front();    // check if this gets the 1st command center
+            BuildStructure(ABILITY_ID::BUILD_BARRACKS, depot->pos.x + 3, depot->pos.y + 3);
+            // ++progress;
         }
         break;
 
     case 2:
         if (supplies >= 16 && Observation()->GetMinerals() >= 75) {
             //build refinery on nearest gas
+            BuildRefinery();
             ++progress;
         }
         break;
@@ -41,57 +54,64 @@ void Hal9001::OnStep() {
 
         if (supplies >= 19 && Observation()->GetMinerals() >= 150) {
             //upgrade command center to orbital command
-            ++progress;
+            Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+            const Unit *commcenter = units.front();    // check if this gets the 1st command center
+            Actions()->UnitCommand(commcenter, ABILITY_ID::MORPH_ORBITALCOMMAND);
+
+            // ++progress;
         }
         break;
 
-    case 4:
-        if (supplies >= 20 && Observation()->GetMinerals() >= 400) {
-            //build command center
-            ++progress;
-        }
-        break;
+    // case 4:
+    //     if (supplies >= 20 && Observation()->GetMinerals() >= 400) {
+    //         //build command center
+    //         ++progress;
+    //     }
+    //     break;
 
-    case 5:
-        if (/*marine finishes building*/true && Observation()->GetMinerals() >= 150) {
-            //build reactor on the barracks
-            //build a depot next to the reactor
-            ++progress;
-        }
-        break;
+    // case 5:
+    //     if (/*marine finishes building*/true && Observation()->GetMinerals() >= 150) {
+    //         //build reactor on the barracks
+    //         //build a depot next to the reactor
+    //         ++progress;
+    //     }
+    //     break;
 
-    case 6:
-        if (supplies >= 22 && /*gas >= 100*/true) {
-            //build factory in between command centers
-            ++progress;
-        }
-        break;
+    // case 6:
+    //     if (supplies >= 22 && /*gas >= 100*/true) {
+    //         //build factory in between command centers
+    //         ++progress;
+    //     }
+    //     break;
 
-    case 7:
-        if (supplies >= 23 && Observation()->GetMinerals() >= 100) {
-            //build bunker towards the center from command center 2
-            ++progress;
-        }
-        break;
+    // case 7:
+    //     if (supplies >= 23 && Observation()->GetMinerals() >= 100) {
+    //         //build bunker towards the center from command center 2
+    //         ++progress;
+    //     }
+    //     break;
 
-    case 8:
-        if (/*we have less than 3 marines (in queue + out) and 1 reactor*/true && Observation()->GetMinerals() >= 50) {
-            //queue a marine
-            //move marines in front of bunker
-        }
-        if (supplies >= 26 && Observation()->GetMinerals() >= 75 && /*one empty gas next to first command center*/true) {
-            //build second refinery next to first command center
-            ++progress;
-        }
-        break;
+    // case 8:
+    //     if (/*we have less than 3 marines (in queue + out) and 1 reactor*/true && Observation()->GetMinerals() >= 50) {
+    //         //queue a marine
+    //         //move marines in front of bunker
+    //     }
+    //     if (supplies >= 26 && Observation()->GetMinerals() >= 75 && /*one empty gas next to first command center*/true) {
+    //         //build second refinery next to first command center
+    //         ++progress;
+    //     }
+    //     break;
 
-    case 9:
-        if (/*we own a factory*/true && Observation()->GetMinerals() >= 150 && /*gas >= 100*/true) {
-            //build a star port next to the factory
-        }
-        if (/*we don't have a tech lab yet*/true && Observation()->GetMinerals() >= 50) {
-            //build a tech lab connected to the factory
-        }
+    // case 9:
+    //     if (/*we own a factory*/true && Observation()->GetMinerals() >= 150 && /*gas >= 100*/true) {
+    //         //build a star port next to the factory
+    //     }
+    //     if (/*we don't have a tech lab yet*/true && Observation()->GetMinerals() >= 50) {
+    //         //build a tech lab connected to the factory
+    //     }
+    default: {
+        break;
+    }
     }
 }
 
@@ -103,14 +123,14 @@ void Hal9001::OnUnitIdle(const Unit *unit) {
         break;
     }
     // tells SCVs to mine minerals
-    case UNIT_TYPEID::TERRAN_SCV: {
-        const Unit *mineral_target = FindNearestMineralPatch(unit->pos);
-        if (!mineral_target) {
-            break;
-        }
-        Actions()->UnitCommand(unit, ABILITY_ID::SMART, mineral_target);
-        break;
-    }
+    // case UNIT_TYPEID::TERRAN_SCV: {
+    //     const Unit *mineral_target = FindNearestMineralPatch(unit->pos);
+    //     if (!mineral_target) {
+    //         break;
+    //     }
+    //     Actions()->UnitCommand(unit, ABILITY_ID::SMART, mineral_target);
+    //     break;
+    // }
     // tells barracks to train marines
     case UNIT_TYPEID::TERRAN_BARRACKS: {
         Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_MARINE);
@@ -181,12 +201,21 @@ void Hal9001::BuildRefinery(const Unit *builder){
     Actions()->UnitCommand(builder, ABILITY_ID::BUILD_REFINERY, geyser);
 }
 
+void Hal9001::moveUnit(const Unit *unit, const Point2D &target){
+    Actions()->UnitCommand(unit, ABILITY_ID::SMART, target);
+}
+
+// const Point2D Hal9001::findMainRamp(const Unit *commcenter){
+//     float baseHeight = Observation()->TerrainHeight(commcenter->pos);
+    
+// }
+
 size_t Hal9001::CountUnitType(UNIT_TYPEID unit_type) {
     return Observation()->GetUnits(Unit::Alliance::Self, IsUnit(unit_type)).size();
 }
 
 void Hal9001::updateSupplies() {
-    supplies = Observation()->GetFoodUsed();
+    supplies = CountUnitType(UNIT_TYPEID::TERRAN_SCV);
 }
 
 

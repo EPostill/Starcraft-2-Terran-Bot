@@ -22,6 +22,10 @@ public:
 	void BuildStructure(ABILITY_ID ability_type_for_structure, float x, float y, const Unit *builder = nullptr);
 	void BuildRefinery(const Unit *builder = nullptr);
 	void updateSupplies();
+	// moves unit to target position
+	void moveUnit(const Unit *unit, const Point2D &target);
+	// finds the position of main ramp leading to the given command center
+	const Point2D findMainRamp(const Unit *commcenter);
 
 	void step14();
 	void step15();
