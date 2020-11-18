@@ -22,6 +22,13 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     if (build_complete) {
         return;
     }
+
+    //Counts to keep track of all of our buildings (so we don't need to recount at every if statement
+    Units bases = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+    Units barracks = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
+    Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
+    Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
+    Units depots = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
     
     // tell the first scv in training to move towards supply depot build location
     if (!mainSCV && supplies == 13){
@@ -149,7 +156,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     }
 
     //this one is tricky, we basically want to chain depots next to each other behind the second comm center
-    Units depots = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
     const Unit* current_depot;
     if (depots.size() != 0) {
         current_depot = depots.front();
@@ -320,6 +326,7 @@ void Hal9001::BuildStructure(ABILITY_ID ability_type_for_structure, float x, flo
 
 void Hal9001::BuildNextTo(ABILITY_ID ability_type_for_structure, UNIT_TYPEID new_building, const Unit* reference, const Unit* builder) {
     //find a way to add the radius of the new building to this
+    Unit* radius_getter = Unit(new_building);
     float offset = reference->radius;
     float reference_x = reference->pos.x;
     float reference_y = reference->pos.y;
