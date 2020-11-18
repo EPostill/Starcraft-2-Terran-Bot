@@ -32,8 +32,6 @@ public:
 	void Expand();
 	// moves unit to target position
 	void moveUnit(const Unit *unit, const Point2D &target);
-	// finds the position of the ramp leading to the main base
-	void FindMainRamp();
 
 	void step14();
 	void step15();

@@ -17,16 +17,15 @@ void Hal9001::OnGameStart() {
 
 //This function contains the steps we take at the start to establish ourselves
 void Hal9001::BuildOrder(const ObservationInterface *observation) {
-
-    FindMainRamp();    
+    
     // move scv towards supply depot build location
     if (!mainSCV && supplies == 13){
         // set main scv worker to the first one trained
-        mainSCV = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV).front();
+        mainSCV = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV).front();  // test if this gets the newly trained scv
         const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
         Point3D exp = FindNearestExpansion();
         // sets rally point to nearest expansion so scv will walk towards it
-        // will stop scv at correct location later
+        // !!! change to correct location 
         Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, exp);
         
     }
@@ -34,12 +33,11 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     if (supplies >= 14){
        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
        Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos)); 
-       // !!! update find nearest mineral so that it returns the nearest not full mineral patch
     }
 
     //first supply depot build
     if (supplies >= 14 && minerals > 100 && CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) == 0) {
-        // !!! change location to correct location
+        // !!! change to correct location
         BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, startLocation.x + 3, startLocation.y + 3);
 
     }
@@ -240,16 +238,6 @@ void Hal9001::moveUnit(const Unit *unit, const Point2D &target){
     Actions()->UnitCommand(unit, ABILITY_ID::SMART, target);
 }
 
-void Hal9001::FindMainRamp(){
-    if (mainSCV){
-        cout << "x: " << mainSCV->pos.x << "y: " << mainSCV->pos.y << endl;
-    }
-    
-    // string mapName = Observation()->GetGameInfo().map_name;
-    // if (mapName == "Cactus Valley LE (Void)"){
-
-    // }
-}
 
 size_t Hal9001::CountUnitType(UNIT_TYPEID unit_type) {
     return Observation()->GetUnits(Unit::Alliance::Self, IsUnit(unit_type)).size();
