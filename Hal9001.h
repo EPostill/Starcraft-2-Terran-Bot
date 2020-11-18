@@ -23,6 +23,8 @@ public:
 	void BuildOrder();
 	void BuildRefinery(const Unit *builder = nullptr);
 	void updateSupplies();
+	//builds a building adjacent to reference
+	void BuildNextTo(ABILITY_ID ability_type_for_structure, UNIT_TYPEID new_building, const Unit* reference, const Unit* builder);
 	// moves unit to target position
 	void moveUnit(const Unit *unit, const Point2D &target);
 	// finds the position of main ramp leading to the given command center

@@ -1,6 +1,7 @@
 #include "Hal9001.h"
 
 #include <iostream>
+#include "cpp-sc2/src/sc2api/sc2_client.cc"
 using namespace std;
 
 void Hal9001::OnGameStart() {
@@ -245,6 +246,31 @@ void Hal9001::BuildStructure(ABILITY_ID ability_type_for_structure, float x, flo
     }
 
     Actions()->UnitCommand(builder, ability_type_for_structure, Point2D(x,y));   
+}
+
+void Hal9001::BuildNextTo(ABILITY_ID ability_type_for_structure, UNIT_TYPEID new_building, const Unit* reference, const Unit* builder) {
+    //find a way to add the radius of the new building to this
+    float offset = reference->radius;
+    float reference_x = reference->pos.x;
+    float reference_y = reference->pos.y;
+
+    BuildStructure(ability_type_for_structure, reference_x + offset, reference_y, builder);
+    if (true) { //if build order is successful
+        return;
+    }
+    BuildStructure(ability_type_for_structure, reference_x - offset, reference_y, builder);
+    if (true) { //if build order is successful
+        return;
+    }
+    BuildStructure(ability_type_for_structure, reference_x, reference_y + offset, builder);
+    if (true) { //if build order is successful
+        return;
+    }
+    BuildStructure(ability_type_for_structure, reference_x, reference_y - offset, builder);
+    if (true) { //if build order is successful
+        return;
+    }
+
 }
 
 
