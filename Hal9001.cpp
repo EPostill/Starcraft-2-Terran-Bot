@@ -19,15 +19,8 @@ void Hal9001::OnGameStart() {
 //This function contains the steps we take at the start to establish ourselves
 void Hal9001::BuildOrder(const ObservationInterface *observation) {
     
-    // move scv towards supply depot build location
+    // tell the first scv in training to move towards supply depot build location
     if (!mainSCV && supplies == 13){
-        // set main scv worker to the first one trained
-        Units scvs = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);  // test if this gets the newly trained scv
-        int i = 0;
-        for (const auto &scv : scvs){
-            cout << i << ": " << scv->pos.x << "  " << scv->pos.y << endl;
-            ++i;
-        }
         const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
         Point3D exp = FindNearestExpansion();
         // sets rally point to nearest expansion so scv will walk towards it
@@ -35,16 +28,25 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, exp);
         
     }
-    // set rally point back to minerals
-    if (mainSCV && supplies == 14){
-       const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
-       Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos)); 
+    // set mainSCV to the first trained scv
+    if (!mainSCV && supplies == 14){
+        Units scvs = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
+        for (const auto &scv: scvs){
+            const UnitOrder order = scv->orders.front();
+            // this is the first trained scv
+            if (order.target_pos.x != 0 && order.target_pos.y != 0){
+                mainSCV = scv;
+            }
+        }
+        // set rally point back to minerals
+        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
+        Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos)); 
     }
 
     //first supply depot build
     if (supplies >= 14 && minerals > 100 && CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) == 0) {
         // !!! change to correct location
-        BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, startLocation.x + 3, startLocation.y + 3);
+        BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, startLocation.x + 3, startLocation.y + 3, mainSCV);
 
     }
 
@@ -54,7 +56,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         //build barracks next to supply depot
         // !!! need to figure out how to place it correctly
         const Unit *depot = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT).front();
-        BuildStructure(ABILITY_ID::BUILD_BARRACKS, depot->pos.x + 5, depot->pos.y);
+        BuildStructure(ABILITY_ID::BUILD_BARRACKS, depot->pos.x + 5, depot->pos.y, mainSCV);
     }
 
     //build a refinery on nearest gas
@@ -62,9 +64,20 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         BuildRefinery();
     }
 
-    Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
-    if (!units.empty()) {
-        const Unit* barracks = units.front();
+    // send 2 more scvs to mine the gas
+    if (CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) == 1){
+        const Unit *refinery = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY).front();
+        // almost done building
+        if (refinery->build_progress == 0.75){
+            // get two random scvs
+            Units scvs = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, 2);
+            Actions()->UnitCommand(scvs, ABILITY_ID::SMART, refinery);
+        }
+    }
+
+    Units barracks_list = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
+    if (!barracks_list.empty()) {
+        const Unit* barracks = barracks_list.front();
         if (doneConstruction(barracks) && CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 0 && barracks->orders.empty()) {
             // !!! scout with scv
 
@@ -205,7 +218,6 @@ void Hal9001::ManageSCVTraining(){
 }
 
 void Hal9001::OnStep() { 
-    // cout << Observation()->GetGameLoop() << endl;
     const ObservationInterface *observation = Observation();
     minerals = observation->GetMinerals();
     supplies = observation->GetFoodUsed();
@@ -213,9 +225,6 @@ void Hal9001::OnStep() {
 
     BuildOrder(observation);
 
-    if (mainSCV){
-        cout << "x: " << mainSCV->pos.x << " y: " << mainSCV->pos.y << endl;
-    }
 
 }
 
@@ -353,7 +362,35 @@ size_t Hal9001::CountUnitType(UNIT_TYPEID unit_type) {
 Units Hal9001::GetUnitsOfType(UNIT_TYPEID unit_type){
     const ObservationInterface* observation = Observation();
     return observation->GetUnits(Unit::Alliance::Self, IsUnit(unit_type));
-    
+}
+
+Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, int num){
+    // !!! maybe worry about if count < num after going thru all units list
+    int count = 0;
+    Units units = GetUnitsOfType(unit_type);
+    Units to_return;
+    for (const auto &u : units){
+        if (count == num){
+            break;
+        }
+        if (unit_type == UNIT_TYPEID::TERRAN_SCV){
+            // don't return mainScv
+            if (u == mainSCV){
+                continue;
+            }
+            // only choose from scvs that are mining minerals or idle
+            AbilityID aid = u->orders.front().ability_id;
+            if (u->orders.empty() || aid == ABILITY_ID::HARVEST_GATHER || aid == ABILITY_ID::HARVEST_RETURN){
+                to_return.push_back(u);
+                ++count;
+            }
+        // only choose from idle units
+        } else if (u->orders.empty()){
+            to_return.push_back(u);
+            ++count;
+        }
+    }
+    return to_return;
 }
 
 bool Hal9001::doneConstruction(const Unit *unit){
