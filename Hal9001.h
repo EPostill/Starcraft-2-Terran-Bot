@@ -23,7 +23,7 @@ public:
 	// returns free expansion location nearest to main base
 	const Point3D FindNearestExpansion();
 	void BuildStructure(ABILITY_ID ability_type_for_structure, float x, float y, const Unit *builder = nullptr);
-	void BuildOrder();
+	void BuildOrder(const ObservationInterface *observation);
 	void BuildRefinery(const Unit *builder = nullptr);
 	void updateSupplies();
 	// policy for training scvs
@@ -32,8 +32,8 @@ public:
 	void Expand();
 	// moves unit to target position
 	void moveUnit(const Unit *unit, const Point2D &target);
-	// finds the position of main ramp leading to the given command center
-	const Point2D findMainRamp(const Unit *commcenter);
+	// finds the position of the ramp leading to the main base
+	void FindMainRamp();
 
 	void step14();
 	void step15();
@@ -45,8 +45,12 @@ private:
 	// returns true if unit has finished being built
 	bool doneConstruction(const Unit *unit);
 
-    std::vector<Point3D> expansions;
-    Point3D startLocation;
+    std::vector<Point3D> expansions;	// vector of all expansions
+    Point3D startLocation;	// location of main base
+	Point3D rampLocation;	// location of ramp leading to main base
+	const Unit *mainSCV;	// main scv worker
+	int supplies;			// supply count
+	int minerals;			// mineral count
 };
 
 #endif

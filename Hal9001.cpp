@@ -4,28 +4,43 @@
 using namespace std;
 
 void Hal9001::OnGameStart() {
-    // store expansions and start location
     const ObservationInterface *observation = Observation();
+    minerals = observation->GetMinerals();
+    supplies = observation->GetFoodUsed();
+    // store expansions and start location
     expansions = search::CalculateExpansionLocations(observation, Query());
     startLocation = observation->GetStartLocation();
+    rampLocation = startLocation;   // will change later
+    mainSCV = nullptr;
+
 }
 
 //This function contains the steps we take at the start to establish ourselves
-void Hal9001::BuildOrder() {
+void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
-    const ObservationInterface *observation = Observation();
-    int minerals = observation->GetMinerals();
-    int supplies = observation->GetFoodUsed();
-
-    if (observation->GetGameLoop() == 192) {//game time 12s (16 ticks * 12s)
-        // !!! move scv to supply depot build location
-
+    FindMainRamp();    
+    // move scv towards supply depot build location
+    if (!mainSCV && supplies == 13){
+        // set main scv worker to the first one trained
+        mainSCV = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV).front();
+        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
+        Point3D exp = FindNearestExpansion();
+        // sets rally point to nearest expansion so scv will walk towards it
+        // will stop scv at correct location later
+        Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, exp);
+        
+    }
+    // set rally point back to minerals
+    if (supplies >= 14){
+       const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
+       Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos)); 
+       // !!! update find nearest mineral so that it returns the nearest not full mineral patch
     }
 
     //first supply depot build
     if (supplies >= 14 && minerals > 100 && CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) == 0) {
-        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
-        BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, commcenter->pos.x + 5, commcenter->pos.y);
+        // !!! change location to correct location
+        BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, startLocation.x + 3, startLocation.y + 3);
 
     }
 
@@ -62,7 +77,7 @@ void Hal9001::BuildOrder() {
 
     if (supplies >= 20 && Observation()->GetMinerals() >= 400 && CountUnitType(UNIT_TYPEID::TERRAN_COMMANDCENTER) == 0) {
         //build command center
-        Expand(startLocation);
+        Expand();
     } 
 
 
@@ -117,9 +132,12 @@ void Hal9001::ManageSCVTraining(){
 
 void Hal9001::OnStep() { 
     // cout << Observation()->GetGameLoop() << endl;
-
-    BuildOrder();
+    const ObservationInterface *observation = Observation();
+    minerals = observation->GetMinerals();
+    supplies = observation->GetFoodUsed();
     ManageSCVTraining();
+
+    BuildOrder(observation);
 
 }
 
@@ -130,7 +148,7 @@ void Hal9001::OnUnitIdle(const Unit *unit) {
 void Hal9001::Expand(){
     Point3D exp = FindNearestExpansion();
     // build command centre
-    // !!! maybe use a specific worker?
+    // !!! maybe use mainscv as builder?
     BuildStructure(ABILITY_ID::BUILD_COMMANDCENTER, exp.x, exp.y);
 }
 
@@ -222,10 +240,16 @@ void Hal9001::moveUnit(const Unit *unit, const Point2D &target){
     Actions()->UnitCommand(unit, ABILITY_ID::SMART, target);
 }
 
-// const Point2D Hal9001::findMainRamp(const Unit *commcenter){
-//     float baseHeight = Observation()->TerrainHeight(commcenter->pos);
+void Hal9001::FindMainRamp(){
+    if (mainSCV){
+        cout << "x: " << mainSCV->pos.x << "y: " << mainSCV->pos.y << endl;
+    }
     
-// }
+    // string mapName = Observation()->GetGameInfo().map_name;
+    // if (mapName == "Cactus Valley LE (Void)"){
+
+    // }
+}
 
 size_t Hal9001::CountUnitType(UNIT_TYPEID unit_type) {
     return Observation()->GetUnits(Unit::Alliance::Self, IsUnit(unit_type)).size();
