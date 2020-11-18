@@ -11,28 +11,37 @@ void Hal9001::OnGameStart() {
 //This function contains the steps we take at the start to establish ourselves
 void Hal9001::BuildOrder() {
 
-    const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
+    const ObservationInterface *observation = Observation();
+    int minerals = observation->GetMinerals();
     
-    if (Observation()->GetGameLoop() > 192) {//game time 12s (16 ticks * 12s)\
+    if (observation->GetGameLoop() == 192) {//game time 12s (16 ticks * 12s)\
         //move scv to supply depot build location
+        // train scvs
+        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
+        Actions()->UnitCommand(commcenter, ABILITY_ID::TRAIN_SCV);
+
     }
 
     //first supply depot build
-    if (supplies >= 14 && Observation()->GetMinerals() > 100 && CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) == 0) {
+    if (supplies >= 14 && minerals > 100 && CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) == 0) {
+        // take this out when we have the correct position
+        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
         BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, commcenter->pos.x + 5, commcenter->pos.y);
+        // train scvs
+        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
+        Actions()->UnitCommand(commcenter, ABILITY_ID::TRAIN_SCV);
     }
 
     //first barracks build
-    if (supplies >= 16 && Observation()->GetMinerals() >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_BARRACKS) == 0) {
+    if (supplies >= 16 && minerals >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_BARRACKS) == 0) {
         //build barracks next to supply depot
-        Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
-        const Unit* depot = units.front();
+        const Unit *depot = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT).front();
         // need to figure out how to place it nicely
         BuildStructure(ABILITY_ID::BUILD_BARRACKS, depot->pos.x + 5, depot->pos.y);
     }
 
     //build refinery
-    if (supplies >= 16 && Observation()->GetMinerals() >= 75 && CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
+    if (supplies >= 16 && minerals >= 75 && CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
         //build 1 refinery on nearest gas
         if (CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) < 1) {
             BuildRefinery();
@@ -48,11 +57,9 @@ void Hal9001::BuildOrder() {
         }
     }
 
-    if (supplies >= 19 && Observation()->GetMinerals() >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND) == 0) {
+    if (supplies >= 19 && minerals >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND) == 0) {
         //upgrade command center to orbital command
-        Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
-        const Unit* commcenter = units.front();
-
+        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
         Actions()->UnitCommand(commcenter, ABILITY_ID::MORPH_ORBITALCOMMAND);
     }
 
@@ -111,9 +118,6 @@ void Hal9001::OnStep() {
     //     if (/*we don't have a tech lab yet*/true && Observation()->GetMinerals() >= 50) {
     //         //build a tech lab connected to the factory
     //     }
-    default: 
-        break;
-    }
 }
 
 void Hal9001::OnUnitIdle(const Unit *unit) {
