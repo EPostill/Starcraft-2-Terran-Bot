@@ -66,7 +66,40 @@ void Hal9001::BuildOrder() {
         Actions()->UnitCommand(commcenter, ABILITY_ID::MORPH_ORBITALCOMMAND);
     }
 
+    if (supplies >= 20 && Observation()->GetMinerals() >= 400 && CountUnitType(UNIT_TYPEID::TERRAN_COMMANDCENTER) == 0) {
+        //build command center
+    } 
 
+
+    if (CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 1 && Observation()->GetMinerals() >= 150) {
+        //build reactor on the barracks
+        //build a depot next to the reactor
+    }
+
+    if (supplies >= 22 && Observation()->GetVespene() > 100 && Observation()->GetMinerals() > 150 && CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 0) {
+        //build factory in between command centers
+    }
+
+    if (supplies >= 23 && Observation()->GetMinerals() >= 100 && CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_BUNKER) == 0) {
+        //build bunker towards the center from command center 2
+    }
+
+    if (CountUnitType(UNIT_TYPEID::TERRAN_REACTOR) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_MARINE) < 4 && Observation()->GetMinerals() >= 50) {
+        //queue a marine
+        //move marines in front of bunker
+    }
+
+    if (supplies >= 26 && Observation()->GetMinerals() >= 75 && /*one empty gas next to first command center*/true) {
+        //build second refinery next to first command center
+    }
+
+    if (CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 1 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() > 100) {
+        //build a star port next to the factory
+    }
+
+    if (CountUnitType(UNIT_TYPEID::TERRAN_TECHLAB) == 0 && Observation()->GetMinerals() >= 50) {
+        //build a tech lab connected to the factory
+    }
 }
 
 void Hal9001::OnStep() { 
@@ -74,53 +107,8 @@ void Hal9001::OnStep() {
     updateSupplies();
     cout << "supplies: " << supplies << endl;
 
-    // case 4:
-    //     if (supplies >= 20 && Observation()->GetMinerals() >= 400) {
-    //         //build command center
-    //         ++progress;
-    //     }
-    //     break;
+    BuildOrder();
 
-    // case 5:
-    //     if (/*marine finishes building*/true && Observation()->GetMinerals() >= 150) {
-    //         //build reactor on the barracks
-    //         //build a depot next to the reactor
-    //         ++progress;
-    //     }
-    //     break;
-
-    // case 6:
-    //     if (supplies >= 22 && /*gas >= 100*/true) {
-    //         //build factory in between command centers
-    //         ++progress;
-    //     }
-    //     break;
-
-    // case 7:
-    //     if (supplies >= 23 && Observation()->GetMinerals() >= 100) {
-    //         //build bunker towards the center from command center 2
-    //         ++progress;
-    //     }
-    //     break;
-
-    // case 8:
-    //     if (/*we have less than 3 marines (in queue + out) and 1 reactor*/true && Observation()->GetMinerals() >= 50) {
-    //         //queue a marine
-    //         //move marines in front of bunker
-    //     }
-    //     if (supplies >= 26 && Observation()->GetMinerals() >= 75 && /*one empty gas next to first command center*/true) {
-    //         //build second refinery next to first command center
-    //         ++progress;
-    //     }
-    //     break;
-
-    // case 9:
-    //     if (/*we own a factory*/true && Observation()->GetMinerals() >= 150 && /*gas >= 100*/true) {
-    //         //build a star port next to the factory
-    //     }
-    //     if (/*we don't have a tech lab yet*/true && Observation()->GetMinerals() >= 50) {
-    //         //build a tech lab connected to the factory
-    //     }
 }
 
 void Hal9001::OnUnitIdle(const Unit *unit) {
