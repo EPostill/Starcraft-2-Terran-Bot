@@ -311,8 +311,7 @@ const Unit* Hal9001::FindNearestGeyser(const Point2D &start) {
 void Hal9001::BuildStructure(ABILITY_ID ability_type_for_structure, float x, float y, const Unit *builder) {
     // if no builder is given, make the builder a random scv
     if (!builder){
-        Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
-        builder = units.back();
+        builder = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV).back();
     }
 
     Actions()->UnitCommand(builder, ability_type_for_structure, Point2D(x,y));   
@@ -348,10 +347,8 @@ void Hal9001::BuildNextTo(ABILITY_ID ability_type_for_structure, UNIT_TYPEID new
 void Hal9001::BuildRefinery(const Unit *builder){
     // if no builder is given, make the builder a random scv
     if (!builder){
-        Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
-        builder = units.back();
-    }
-    
+        builder = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV).back();
+    }  
     const Unit *geyser = FindNearestGeyser(builder->pos);
     Actions()->UnitCommand(builder, ABILITY_ID::BUILD_REFINERY, geyser);
 }
