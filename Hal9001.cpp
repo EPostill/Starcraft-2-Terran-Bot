@@ -18,7 +18,7 @@ void Hal9001::BuildOrder() {
     int supplies = observation->GetFoodUsed();
 
     if (observation->GetGameLoop() == 192) {//game time 12s (16 ticks * 12s)
-        //move scv to supply depot build location
+        // !!! move scv to supply depot build location
 
     }
 
@@ -33,14 +33,13 @@ void Hal9001::BuildOrder() {
     if (supplies >= 16 && minerals >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_BARRACKS) == 0) {
 
         //build barracks next to supply depot
+        // !!! need to figure out how to place it correctly
         const Unit *depot = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT).front();
-        // need to figure out how to place it nicely
         BuildStructure(ABILITY_ID::BUILD_BARRACKS, depot->pos.x + 5, depot->pos.y);
     }
 
-    //build refinery
+    //build a refinery on nearest gas
     if (supplies >= 16 && minerals >= 75 && CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
-        //build 1 refinery on nearest gas
         BuildRefinery();
     }
 
@@ -48,7 +47,7 @@ void Hal9001::BuildOrder() {
     if (!units.empty()) {
         const Unit* barracks = units.front();
         if (doneConstruction(barracks) && CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 0 && barracks->orders.empty()) {
-            //scout with scv
+            // !!! scout with scv
 
             //train one marine
             Actions()->UnitCommand(barracks, ABILITY_ID::TRAIN_MARINE);
@@ -63,6 +62,7 @@ void Hal9001::BuildOrder() {
 
     if (supplies >= 20 && Observation()->GetMinerals() >= 400 && CountUnitType(UNIT_TYPEID::TERRAN_COMMANDCENTER) == 0) {
         //build command center
+        Expand(startLocation);
     } 
 
 
@@ -127,13 +127,45 @@ void Hal9001::OnUnitIdle(const Unit *unit) {
 
 }
 
+void Hal9001::Expand(){
+    Point3D exp = FindNearestExpansion();
+    // build command centre
+    // !!! maybe use a specific worker?
+    BuildStructure(ABILITY_ID::BUILD_COMMANDCENTER, exp.x, exp.y);
+}
+
+const Point3D Hal9001::FindNearestExpansion(){
+    bool occupied;
+    float distance = std::numeric_limits<float>::max();
+    Point3D closest;    // very unlikely that closest will remain uninitialized
+    for (const auto &exp : expansions){
+        occupied = false;
+        float d = DistanceSquared3D(exp, startLocation);
+        if (d < distance){
+            // check if there's a command centre already on it
+            Units commcenters = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+            for (const auto &cc : commcenters){
+                if (cc->pos == exp){
+                    occupied = true;
+                    break;
+                }
+            }
+            if (!occupied){
+                distance = d;
+                closest = exp;
+            }
+        }
+    }
+    return closest;
+}
+
 // returns nearest mineral patch or nullptr if none found
 const Unit* Hal9001::FindNearestMineralPatch(const Point2D &start) {
     // gets all neutral units
     Units units = Observation()->GetUnits(Unit::Alliance::Neutral);
     float distance = std::numeric_limits<float>::max();
     const Unit *target = nullptr;
-    for (const auto& u : units) {
+    for (const auto &u : units) {
         // get closest mineral field
         if (u->unit_type == UNIT_TYPEID::NEUTRAL_MINERALFIELD) {
             float d = DistanceSquared2D(u->pos, start);
@@ -151,7 +183,7 @@ const Unit* Hal9001::FindNearestGeyser(const Point2D &start) {
     Units units = Observation()->GetUnits(Unit::Alliance::Neutral);
     float distance = std::numeric_limits<float>::max();
     const Unit *target = nullptr;
-    for (const auto& u : units) {
+    for (const auto &u : units) {
         // get closest vespene geyser
         if (u->unit_type == UNIT_TYPEID::NEUTRAL_VESPENEGEYSER) {
             float d = DistanceSquared2D(u->pos, start);
