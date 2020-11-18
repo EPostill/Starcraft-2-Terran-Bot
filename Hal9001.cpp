@@ -13,12 +13,15 @@ void Hal9001::BuildOrder() {
 
     const ObservationInterface *observation = Observation();
     int minerals = observation->GetMinerals();
-    
-    if (observation->GetGameLoop() == 192) {//game time 12s (16 ticks * 12s)\
-        //move scv to supply depot build location
+
+    if (observation->GetGameLoop() < 192){
         // train scvs
         const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
         Actions()->UnitCommand(commcenter, ABILITY_ID::TRAIN_SCV);
+    }
+
+    if (observation->GetGameLoop() == 192) {//game time 12s (16 ticks * 12s)
+        //move scv to supply depot build location
 
     }
 
