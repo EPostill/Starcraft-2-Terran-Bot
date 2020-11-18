@@ -100,6 +100,13 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         //build command center
         Expand();
     } 
+    // set rally point of new command center to minerals
+    if (CountUnitType(UNIT_TYPEID::TERRAN_COMMANDCENTER) == 1){
+        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
+        if (commcenter->build_progress == 0.5){
+            Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos), true);
+        }
+    }
 
 
     if (CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 1 && Observation()->GetMinerals() >= 150) {
@@ -242,7 +249,6 @@ void Hal9001::OnUnitIdle(const Unit *unit) {
 void Hal9001::Expand(){
     Point3D exp = FindNearestExpansion();
     // build command centre
-    // !!! maybe use mainscv as builder?
     BuildStructure(ABILITY_ID::BUILD_COMMANDCENTER, exp.x, exp.y, mainSCV);
 }
 
