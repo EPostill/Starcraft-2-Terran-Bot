@@ -326,7 +326,6 @@ void Hal9001::BuildStructure(ABILITY_ID ability_type_for_structure, float x, flo
 
 void Hal9001::BuildNextTo(ABILITY_ID ability_type_for_structure, UNIT_TYPEID new_building, const Unit* reference, const Unit* builder) {
     //find a way to add the radius of the new building to this
-    Unit* radius_getter = Unit(new_building);
     float offset = reference->radius;
     float reference_x = reference->pos.x;
     float reference_y = reference->pos.y;
