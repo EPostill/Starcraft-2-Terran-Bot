@@ -4,8 +4,10 @@
 using namespace std;
 
 void Hal9001::OnGameStart() {
-    progress = 0;
-    supplies = 14;
+    // store expansions and start location
+    const ObservationInterface *observation = Observation();
+    expansions = search::CalculateExpansionLocations(observation, Query());
+    startLocation = observation->GetStartLocation();
 }
 
 //This function contains the steps we take at the start to establish ourselves
@@ -13,12 +15,7 @@ void Hal9001::BuildOrder() {
 
     const ObservationInterface *observation = Observation();
     int minerals = observation->GetMinerals();
-
-    if (observation->GetGameLoop() < 192){
-        // train scvs
-        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
-        Actions()->UnitCommand(commcenter, ABILITY_ID::TRAIN_SCV);
-    }
+    int supplies = observation->GetFoodUsed();
 
     if (observation->GetGameLoop() == 192) {//game time 12s (16 ticks * 12s)
         //move scv to supply depot build location
@@ -27,16 +24,14 @@ void Hal9001::BuildOrder() {
 
     //first supply depot build
     if (supplies >= 14 && minerals > 100 && CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) == 0) {
-        // take this out when we have the correct position
         const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
         BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, commcenter->pos.x + 5, commcenter->pos.y);
-        // train scvs
-        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
-        Actions()->UnitCommand(commcenter, ABILITY_ID::TRAIN_SCV);
+
     }
 
     //first barracks build
     if (supplies >= 16 && minerals >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_BARRACKS) == 0) {
+
         //build barracks next to supply depot
         const Unit *depot = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT).front();
         // need to figure out how to place it nicely
@@ -46,17 +41,17 @@ void Hal9001::BuildOrder() {
     //build refinery
     if (supplies >= 16 && minerals >= 75 && CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
         //build 1 refinery on nearest gas
-        if (CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) < 1) {
-            BuildRefinery();
-        }
+        BuildRefinery();
     }
 
     Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
     if (!units.empty()) {
         const Unit* barracks = units.front();
-        if (doneConstruction(barracks) && CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 0) {
+        if (doneConstruction(barracks) && CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 0 && barracks->orders.empty()) {
             //scout with scv
-            //build marine
+
+            //train one marine
+            Actions()->UnitCommand(barracks, ABILITY_ID::TRAIN_MARINE);
         }
     }
 
@@ -102,42 +97,34 @@ void Hal9001::BuildOrder() {
     }
 }
 
+
+void Hal9001::ManageSCVTraining(){
+    Units commcenters = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+    Units orbital_commcenters = GetUnitsOfType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND);
+
+    for (const auto &cc : commcenters){
+        if (cc->assigned_harvesters < cc->ideal_harvesters && cc->orders.empty()){
+            Actions()->UnitCommand(cc, ABILITY_ID::TRAIN_SCV);
+        }
+    }
+
+    for (const auto &cc : orbital_commcenters){
+        if (cc->assigned_harvesters < cc->ideal_harvesters && cc->orders.empty()){
+            Actions()->UnitCommand(cc, ABILITY_ID::TRAIN_SCV);
+        }
+    }
+}
+
 void Hal9001::OnStep() { 
-    cout << "progress: " << progress << endl;
-    updateSupplies();
-    cout << "supplies: " << supplies << endl;
+    // cout << Observation()->GetGameLoop() << endl;
 
     BuildOrder();
+    ManageSCVTraining();
 
 }
 
 void Hal9001::OnUnitIdle(const Unit *unit) {
-    switch (unit->unit_type.ToType()) {
-    // tells command center to build SCVs
-    // case UNIT_TYPEID::TERRAN_COMMANDCENTER: {
-    //     if (supplies < 19){
-    //         Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_SCV);
-    //         break;
-    //     }
-    // }
-    // tells SCVs to mine minerals
-    // case UNIT_TYPEID::TERRAN_SCV: {
-    //     const Unit *mineral_target = FindNearestMineralPatch(unit->pos);
-    //     if (!mineral_target) {
-    //         break;
-    //     }
-    //     Actions()->UnitCommand(unit, ABILITY_ID::SMART, mineral_target);
-    //     break;
-    // }
-    // tells barracks to train marines
-    case UNIT_TYPEID::TERRAN_BARRACKS: {
-        Actions()->UnitCommand(unit, ABILITY_ID::TRAIN_MARINE);
-        break;
-    }
-    default: {
-        break;
-    }
-    }
+
 }
 
 // returns nearest mineral patch or nullptr if none found
@@ -210,10 +197,6 @@ void Hal9001::moveUnit(const Unit *unit, const Point2D &target){
 
 size_t Hal9001::CountUnitType(UNIT_TYPEID unit_type) {
     return Observation()->GetUnits(Unit::Alliance::Self, IsUnit(unit_type)).size();
-}
-
-void Hal9001::updateSupplies() {
-    supplies = Observation()->GetFoodUsed();
 }
 
 

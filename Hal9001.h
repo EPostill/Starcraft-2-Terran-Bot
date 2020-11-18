@@ -4,9 +4,9 @@
 #include "sc2api/sc2_api.h"
 #include "sc2api/sc2_args.h"
 #include "sc2lib/sc2_lib.h"
-#include "sc2utils/sc2_manage_process.h"
-#include "sc2utils/sc2_arg_parser.h"
-#include <sc2api/sc2_unit_filters.h>
+
+#include "sc2api/sc2_unit_filters.h"
+#include "sc2lib/sc2_search.h"
 
 using namespace sc2;
 
@@ -23,6 +23,8 @@ public:
 	void BuildOrder();
 	void BuildRefinery(const Unit *builder = nullptr);
 	void updateSupplies();
+	// policy for training scvs
+	void ManageSCVTraining();
 	// moves unit to target position
 	void moveUnit(const Unit *unit, const Point2D &target);
 	// finds the position of main ramp leading to the given command center
@@ -37,9 +39,9 @@ private:
 	Units GetUnitsOfType(UNIT_TYPEID unit_type);
 	// returns true if unit has finished being built
 	bool doneConstruction(const Unit *unit);
-	//progression counter to mark which stage of progress we are at
-	int progress;
-	int supplies;
+
+    std::vector<Point3D> expansions;
+    Point3D startLocation;
 };
 
 #endif
