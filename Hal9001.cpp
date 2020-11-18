@@ -90,6 +90,76 @@ void Hal9001::BuildOrder() {
     if (CountUnitType(UNIT_TYPEID::TERRAN_TECHLAB) == 0 && Observation()->GetMinerals() >= 50) {
         //build a tech lab connected to the factory
     }
+
+    if (CountUnitType(UNIT_TYPEID::TERRAN_REACTOR) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_WIDOWMINE) == 0 && Observation()->GetMinerals() >= 75) {
+        //build widow mine for defence
+    }
+
+    if (supplies > 36 && Observation()->GetMinerals() >= 100 && CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) < 2) {
+        //build supply depot behind the minerals next to the 2nd comm center
+    }
+
+    if (CountUnitType(UNIT_TYPEID::TERRAN_STARPORT) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_VIKINGASSAULT) == 0) {
+        //build a viking
+    }
+
+    if (CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) == 0 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() >= 125) {
+        //build a tank
+    }
+
+    //this one is tricky, we basically want to chain depots next to each other behind the second comm center
+    Units depots = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
+    const Unit* current_depot = depots.front();
+    if (doneConstruction(current_depot) && Observation()->GetMinerals() >= 100) {
+        //build another depot behind the current depot
+    }
+
+    if (supplies >= 46 && Observation()->GetMinerals() >= 300) {
+        //build 2 more barracks next to the star port and factory
+    }
+
+    //this is another tricky one, when the tank is FINISHED we want to move the factory on to a tech lab and the star port on to a reactor
+    if (CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) == 1) {
+        //move buildings
+    }
+
+    if (Observation()->GetGameLoop() > 4320 && Observation()->GetMinerals() >= 200 && CountUnitType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY) == 0) { //4320 ticks ~ 4mins30sec
+        //build engineering bay and a gas refinery at the 2nd comm center
+    }
+
+    //something about checking building positions here
+    if (/*factory and star port have been moved*/true) {
+        //move the 2 newest barracks to the tech labs that are now open
+    }
+
+    Units engbays = GetUnitsOfType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+    const Unit* engbay = depots.front();
+    if (doneConstruction(engbay)) {
+        //upgrade infantry weapons to level 2 and research stim in the tech labs
+    }
+
+    if (/*mineral line is fully saturated*/true && Observation()->GetMinerals() >= 75 && CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) < 3) {
+        //build second refinery for the gas
+    }
+
+    //At this point we have a few goals before we attack
+    // we want to:
+    //research combat shields
+    //build another command center
+    //research some amount of techs
+
+    //more notes:
+    //we should only build medivacs once combat shields has been researched
+    //Star ports -> medivacs
+    //Factories -> tanks
+    //barracks -> marines (later on maurauders, although I doubt the game will go that far)
+
+
+
+
+
+
+
 }
 
 void Hal9001::OnStep() { 
