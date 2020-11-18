@@ -7,6 +7,7 @@
 
 #include "sc2api/sc2_unit_filters.h"
 #include "sc2lib/sc2_search.h"
+#include "sc2api/sc2_data.h"
 
 using namespace sc2;
 
