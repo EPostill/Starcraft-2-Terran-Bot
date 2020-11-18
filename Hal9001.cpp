@@ -18,6 +18,10 @@ void Hal9001::OnGameStart() {
 
 //This function contains the steps we take at the start to establish ourselves
 void Hal9001::BuildOrder(const ObservationInterface *observation) {
+
+    if (build_complete) {
+        return;
+    }
     
     // move scv towards supply depot build location
     if (!mainSCV && supplies == 13){
@@ -102,11 +106,11 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         //build second refinery next to first command center
     }
 
-    if (CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 1 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() > 100) {
+    if (CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_STARPORT) == 0 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() > 100) {
         //build a star port next to the factory
     }
 
-    if (CountUnitType(UNIT_TYPEID::TERRAN_TECHLAB) == 0 && Observation()->GetMinerals() >= 50) {
+    if (CountUnitType(UNIT_TYPEID::TERRAN_TECHLAB) == 0 && CountUnitType(UNIT_TYPEID::TERRAN_STARPORT) == 1 && Observation()->GetMinerals() >= 50) {
         //build a tech lab connected to the factory
     }
 
@@ -122,13 +126,16 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         //build a viking
     }
 
-    if (CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) == 0 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() >= 125) {
+    if (CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) == 0 && CountUnitType(UNIT_TYPEID::TERRAN_VIKINGASSAULT) == 1 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() >= 125) {
         //build a tank
     }
 
     //this one is tricky, we basically want to chain depots next to each other behind the second comm center
     Units depots = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
-    const Unit* current_depot = depots.front();
+    const Unit* current_depot;
+    if (depots.size() != 0) {
+        current_depot = depots.front();
+    }
     if (doneConstruction(current_depot) && Observation()->GetMinerals() >= 100) {
         //build another depot behind the current depot
     }
@@ -152,7 +159,10 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     }
 
     Units engbays = GetUnitsOfType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
-    const Unit* engbay = depots.front();
+    const Unit* engbay;
+    if (engbays.size() != 0) {
+        engbay = engbays.front();
+    }
     if (doneConstruction(engbay)) {
         //upgrade infantry weapons to level 2 and research stim in the tech labs
     }
@@ -172,6 +182,10 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     //Star ports -> medivacs
     //Factories -> tanks
     //barracks -> marines (later on maurauders, although I doubt the game will go that far)
+
+    if (false /*every condition is met*/) {
+        build_complete = true;
+    }
 
 
 
@@ -346,6 +360,9 @@ Units Hal9001::GetUnitsOfType(UNIT_TYPEID unit_type){
 }
 
 bool Hal9001::doneConstruction(const Unit *unit){
+    if (unit == nullptr) {
+        return false;
+    }
     return unit->build_progress == 1.0;
 }
 

@@ -44,6 +44,7 @@ private:
 	Units GetUnitsOfType(UNIT_TYPEID unit_type);
 	// returns true if unit has finished being built
 	bool doneConstruction(const Unit *unit);
+	bool build_complete = false;
 
     std::vector<Point3D> expansions;	// vector of all expansions
     Point3D startLocation;	// location of main base
