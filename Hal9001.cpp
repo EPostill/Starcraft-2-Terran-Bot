@@ -8,75 +8,61 @@ void Hal9001::OnGameStart() {
     supplies = 14;
 }
 
+//This function contains the steps we take at the start to establish ourselves
+void Hal9001::BuildOrder() {
+
+    const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
+    
+    if (Observation()->GetGameLoop() > 192) {//game time 12s (16 ticks * 12s)\
+        //move scv to supply depot build location
+    }
+
+    //first supply depot build
+    if (supplies >= 14 && Observation()->GetMinerals() > 100 && CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) == 0) {
+        BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, commcenter->pos.x + 5, commcenter->pos.y);
+    }
+
+    //first barracks build
+    if (supplies >= 16 && Observation()->GetMinerals() >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_BARRACKS) == 0) {
+        //build barracks next to supply depot
+        Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
+        const Unit* depot = units.front();
+        // need to figure out how to place it nicely
+        BuildStructure(ABILITY_ID::BUILD_BARRACKS, depot->pos.x + 5, depot->pos.y);
+    }
+
+    //build refinery
+    if (supplies >= 16 && Observation()->GetMinerals() >= 75 && CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
+        //build 1 refinery on nearest gas
+        if (CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) < 1) {
+            BuildRefinery();
+        }
+    }
+
+    Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
+    if (!units.empty()) {
+        const Unit* barracks = units.front();
+        if (doneConstruction(barracks) && CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 0) {
+            //scout with scv
+            //build marine
+        }
+    }
+
+    if (supplies >= 19 && Observation()->GetMinerals() >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND) == 0) {
+        //upgrade command center to orbital command
+        Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+        const Unit* commcenter = units.front();
+
+        Actions()->UnitCommand(commcenter, ABILITY_ID::MORPH_ORBITALCOMMAND);
+    }
+
+
+}
+
 void Hal9001::OnStep() { 
     cout << "progress: " << progress << endl;
     updateSupplies();
     cout << "supplies: " << supplies << endl;
-    switch (progress) {
-
-    case 0:
-    {
-        // train scvs
-        const Unit *commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
-        Actions()->UnitCommand(commcenter, ABILITY_ID::TRAIN_SCV);
-        if (true) { //game time = 12s
-            //move scv to supply depot build location
-            
-        }
-
-        if (supplies >= 14 && Observation()->GetMinerals() >= 100) {
-            
-            //build supply depot towards center
-            // need to find main ramp location
-            BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, commcenter->pos.x + 5, commcenter->pos.y);
-            ++progress;
-        }
-        break;
-    }
-    case 1:
-        if (supplies >= 16 && Observation()->GetMinerals() >= 150) {
-            //build barracks next to supply depot
-            Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
-            const Unit *depot = units.front();
-            // need to figure out how to place it nicely
-            BuildStructure(ABILITY_ID::BUILD_BARRACKS, depot->pos.x + 5, depot->pos.y);
-            ++progress;
-        }
-        break;
-
-    case 2:
-        if (supplies >= 16 && Observation()->GetMinerals() >= 75) {
-            //build 1 refinery on nearest gas
-            if (CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) < 1){
-                BuildRefinery();
-            }
-            // move to next stage when barracks is done
-            Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
-            if (!units.empty()){
-                const Unit *barracks = units.front();
-                if (doneConstruction(barracks)){
-                    ++progress;
-                }
-            }
-        }
-        break;
-
-    case 3:
-        //scout with scv
-        if (/*we have 0 marines total (queue and active)*/true && Observation()->GetMinerals() >= 50) {
-            //queue up marine
-        }
-
-        if (supplies >= 19 && Observation()->GetMinerals() >= 150) {
-            //upgrade command center to orbital command
-            Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
-            const Unit *commcenter = units.front();
-            
-            Actions()->UnitCommand(commcenter, ABILITY_ID::MORPH_ORBITALCOMMAND);
-            
-           ++progress;
-        }
-        break;
 
     // case 4:
     //     if (supplies >= 20 && Observation()->GetMinerals() >= 400) {

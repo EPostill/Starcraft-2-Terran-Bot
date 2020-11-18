@@ -20,6 +20,7 @@ public:
 	const Unit* FindNearestMineralPatch(const Point2D &start);
 	const Unit* FindNearestGeyser(const Point2D &start);
 	void BuildStructure(ABILITY_ID ability_type_for_structure, float x, float y, const Unit *builder = nullptr);
+	void BuildOrder();
 	void BuildRefinery(const Unit *builder = nullptr);
 	void updateSupplies();
 	// moves unit to target position
