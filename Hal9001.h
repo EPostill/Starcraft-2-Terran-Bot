@@ -7,6 +7,7 @@
 
 #include "sc2api/sc2_unit_filters.h"
 #include "sc2lib/sc2_search.h"
+#include "sc2api/sc2_data.h"
 
 using namespace sc2;
 
@@ -40,8 +41,12 @@ public:
 	void step16();
 
 private:
+	// counts the number of units of a given type (does not include those in training)
 	size_t CountUnitType(UNIT_TYPEID unit_type);
+	// returns a vec of units of given type (does not include those in training)
 	Units GetUnitsOfType(UNIT_TYPEID unit_type);
+	// returns a vec of a certain number of units of the given type (default num is 1)
+	Units GetRandomUnits(UNIT_TYPEID unit_type, int num = 1);
 	// returns true if unit has finished being built
 	bool doneConstruction(const Unit *unit);
 
