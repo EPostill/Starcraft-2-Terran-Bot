@@ -193,6 +193,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
     if (/*mineral line is fully saturated*/true && Observation()->GetMinerals() >= 75 && CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) < 3) {
         //build second refinery for the gas
+        BuildRefinery();
     }
 
     //At this point we have a few goals before we attack
