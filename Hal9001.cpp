@@ -65,18 +65,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
     //build a refinery on nearest gas
     if (supplies >= 16 && minerals >= 75 && CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
-        BuildRefinery();
-    }
-
-    // send 2 more scvs to mine the gas
-    if (CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) == 1){
-        const Unit *refinery = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY).front();
-        // almost done building
-        if (refinery->build_progress == 0.75){
-            // get two random scvs
-            Units scvs = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, 2);
-            Actions()->UnitCommand(scvs, ABILITY_ID::SMART, refinery);
-        }
+        BuildRefinery(GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front());
     }
 
     Units barracks_list = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
@@ -100,13 +89,13 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         //build command center
         Expand();
     } 
-    // set rally point of new command center to minerals
-    if (CountUnitType(UNIT_TYPEID::TERRAN_COMMANDCENTER) == 1){
-        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
-        if (commcenter->build_progress == 0.5){
-            Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos), true);
-        }
-    }
+    // // set rally point of new command center to minerals
+    // if (CountUnitType(UNIT_TYPEID::TERRAN_COMMANDCENTER) == 1){
+    //     const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
+    //     if (commcenter->build_progress == 0.5){
+    //         Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos), true);
+    //     }
+    // }
 
 
     if (CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 1 && Observation()->GetMinerals() >= 150) {
@@ -127,8 +116,10 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         //move marines in front of bunker
     }
 
-    if (supplies >= 26 && Observation()->GetMinerals() >= 75 && /*one empty gas next to first command center*/true) {
+    if (supplies >= 26 && Observation()->GetMinerals() >= 75) {
         //build second refinery next to first command center
+        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND).front();
+        BuildRefinery(commcenter);  // !!! didn't seem to be working
     }
 
     if (CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_STARPORT) == 0 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() > 100) {
@@ -222,11 +213,33 @@ void Hal9001::ManageSCVTraining(){
         if (cc->assigned_harvesters < cc->ideal_harvesters && cc->orders.empty()){
             Actions()->UnitCommand(cc, ABILITY_ID::TRAIN_SCV);
         }
+        // set rally point of new command centers to minerals
+        if (cc->build_progress == 0.5){
+            Actions()->UnitCommand(cc, ABILITY_ID::SMART, FindNearestMineralPatch(cc->pos), true);
+        }
     }
 
     for (const auto &cc : orbital_commcenters){
         if (cc->assigned_harvesters < cc->ideal_harvesters && cc->orders.empty()){
             Actions()->UnitCommand(cc, ABILITY_ID::TRAIN_SCV);
+        }
+        // set rally point of new command centers to minerals
+        if (cc->build_progress == 0.5){
+            Actions()->UnitCommand(cc, ABILITY_ID::SMART, FindNearestMineralPatch(cc->pos), true);
+        }
+    }
+}
+
+// have 3 workers on each refinery
+void Hal9001::ManageRefineries(){
+    Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
+    for (const auto &refinery : refineries){
+        // almost done building
+        if (refinery->build_progress == 0.75){
+            // get two random scvs
+            Units scvs = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, refinery->pos, 2);
+
+            Actions()->UnitCommand(scvs, ABILITY_ID::SMART, refinery, true);
         }
     }
 }
@@ -236,6 +249,7 @@ void Hal9001::OnStep() {
     minerals = observation->GetMinerals();
     supplies = observation->GetFoodUsed();
     ManageSCVTraining();
+    ManageRefineries();
 
     BuildOrder(observation);
 
@@ -350,12 +364,13 @@ void Hal9001::BuildNextTo(ABILITY_ID ability_type_for_structure, UNIT_TYPEID new
 }
 
 
-void Hal9001::BuildRefinery(const Unit *builder){
+void Hal9001::BuildRefinery(const Unit *commcenter, const Unit *builder){
+    const Unit *geyser = FindNearestGeyser(commcenter->pos);
     // if no builder is given, make the builder a random scv
     if (!builder){
-        builder = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV).back();
+        builder = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, geyser->pos).back();
     }  
-    const Unit *geyser = FindNearestGeyser(builder->pos);
+    
     Actions()->UnitCommand(builder, ABILITY_ID::BUILD_REFINERY, geyser);
 }
 
@@ -374,11 +389,12 @@ Units Hal9001::GetUnitsOfType(UNIT_TYPEID unit_type){
     return observation->GetUnits(Unit::Alliance::Self, IsUnit(unit_type));
 }
 
-Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, int num){
+Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
     // !!! maybe worry about if count < num after going thru all units list
     int count = 0;
     Units units = GetUnitsOfType(unit_type);
     Units to_return;
+    bool in_range = true;
     for (const auto &u : units){
         if (count == num){
             break;
@@ -391,14 +407,25 @@ Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, int num){
             // only choose from scvs that are mining minerals or idle
             AbilityID aid = u->orders.front().ability_id;
             if (u->orders.empty() || aid == ABILITY_ID::HARVEST_GATHER || aid == ABILITY_ID::HARVEST_RETURN){
-                to_return.push_back(u);
-                ++count;
+                if (location != Point3D(0,0,0) && DistanceSquared2D(u->pos, location) > 225.0){
+                    in_range = false;
+                }
+                if (in_range){
+                    to_return.push_back(u);
+                    ++count;
+                }
             }
         // only choose from idle units
         } else if (u->orders.empty()){
-            to_return.push_back(u);
-            ++count;
+            if (location != Point3D(0,0,0) && DistanceSquared3D(u->pos, location) > 225.0){
+                in_range = false;
+            }
+            if (in_range){
+                to_return.push_back(u);
+                ++count;
+            }
         }
+        in_range = true;
     }
     return to_return;
 }
