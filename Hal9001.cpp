@@ -22,6 +22,13 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     if (build_complete) {
         return;
     }
+
+    //Counts to keep track of all of our buildings (so we don't need to recount at every if statement
+    Units bases = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+    Units barracks = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
+    Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
+    Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
+    Units depots = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
     
     // tell the first scv in training to move towards supply depot build location
     if (!mainSCV && supplies == 13){
@@ -147,7 +154,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     }
 
     //this one is tricky, we basically want to chain depots next to each other behind the second comm center
-    Units depots = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
     const Unit* current_depot;
     if (depots.size() != 0) {
         current_depot = depots.front();
