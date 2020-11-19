@@ -23,12 +23,24 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         return;
     }
 
-    //Counts to keep track of all of our buildings (so we don't need to recount at every if statement
+    //lists to keep track of all of our buildings (so we don't need to recount at every if statement
     Units bases = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
     Units barracks = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
     Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
     Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
+    Units techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_TECHLAB);
+    Units reactors = GetUnitsOfType(UNIT_TYPEID::TERRAN_REACTOR);
     Units depots = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
+    Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
+    Units engbays = GetUnitsOfType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+    Units orbcoms = GetUnitsOfType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND);
+    Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
+
+    //lists to keep track of all our units
+    Units marines = GetUnitsOfType(UNIT_TYPEID::TERRAN_MARINE);
+    Units tanks = GetUnitsOfType(UNIT_TYPEID::TERRAN_SIEGETANK);
+    Units widowmines = GetUnitsOfType(UNIT_TYPEID::TERRAN_WIDOWMINE);
+    Units vikings = GetUnitsOfType(UNIT_TYPEID::TERRAN_VIKINGASSAULT);
     
     // tell the first scv in training to move towards supply depot build location
     if (!mainSCV && supplies == 13){
@@ -55,14 +67,14 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     }
 
     //first supply depot build
-    if (supplies >= 14 && minerals > 100 && CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) == 0) {
+    if (supplies >= 14 && minerals > 100 && depots.size() == 0) {
         // !!! change to correct location
         BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, startLocation.x + 3, startLocation.y + 3, mainSCV);
 
     }
 
     //first barracks build
-    if (supplies >= 16 && minerals >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_BARRACKS) == 0) {
+    if (supplies >= 16 && minerals >= 150 && barracks.size() == 0) {
 
         //build barracks next to supply depot
         // !!! need to figure out how to place it correctly
@@ -71,85 +83,97 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     }
 
     //build a refinery on nearest gas
-    if (supplies >= 16 && minerals >= 75 && CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
+    if (supplies >= 16 && minerals >= 75 && refineries.size() == 0) {
         BuildRefinery(GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front());
     }
 
-    Units barracks_list = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
-    if (!barracks_list.empty()) {
-        const Unit* barracks = barracks_list.front();
-        if (doneConstruction(barracks) && CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 0 && barracks->orders.empty()) {
+    //first marine
+    if (!barracks.empty()) {
+        const Unit* barrack = barracks.front();
+        if (doneConstruction(barrack) && marines.size() == 0 && barrack->orders.empty()) {
             // !!! scout with scv
 
             //train one marine
-            Actions()->UnitCommand(barracks, ABILITY_ID::TRAIN_MARINE);
+            Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
         }
     }
 
-    if (supplies >= 19 && minerals >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND) == 0) {
+    //upgrade command center
+    if (supplies >= 19 && minerals >= 150 && orbcoms.size() == 0) {
         //upgrade command center to orbital command
-        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
+        const Unit* commcenter = bases.front();
         Actions()->UnitCommand(commcenter, ABILITY_ID::MORPH_ORBITALCOMMAND, true);
     }
 
-    if (supplies >= 20 && Observation()->GetMinerals() >= 400 && CountUnitType(UNIT_TYPEID::TERRAN_COMMANDCENTER) == 0) {
+    //build second command center
+    if (supplies >= 20 && Observation()->GetMinerals() >= 400 && bases.size() < 2) {
         //build command center
         Expand();
     } 
     // // set rally point of new command center to minerals
-    // if (CountUnitType(UNIT_TYPEID::TERRAN_COMMANDCENTER) == 1){
+    // if (bases.size() == 1){
     //     const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
     //     if (commcenter->build_progress == 0.5){
     //         Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos), true);
     //     }
     // }
 
-
-    if (CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 1 && Observation()->GetMinerals() >= 150) {
+    //build reactor and another depot
+    if (marines.size() == 1 && depots.size() < 2 && Observation()->GetMinerals() >= 150) {
         //build reactor on the barracks
         //build a depot next to the reactor
     }
 
-    if (supplies >= 22 && Observation()->GetVespene() > 100 && Observation()->GetMinerals() > 150 && CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 0) {
+    //build first factory
+    if (supplies >= 22 && Observation()->GetVespene() > 100 && Observation()->GetMinerals() > 150 && factories.size() == 0) {
         //build factory in between command centers
     }
 
-    if (supplies >= 23 && Observation()->GetMinerals() >= 100 && CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_BUNKER) == 0) {
+    //build first bunker
+    if (supplies >= 23 && Observation()->GetMinerals() >= 100 && factories.size() == 1 && bunkers.size() == 0) {
         //build bunker towards the center from command center 2
     }
 
-    if (CountUnitType(UNIT_TYPEID::TERRAN_REACTOR) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_MARINE) < 4 && Observation()->GetMinerals() >= 50) {
+    //build army to size 3 and station at bunker
+    if (reactors.size() == 1 && marines.size() < 4 && Observation()->GetMinerals() >= 50) {
         //queue a marine
         //move marines in front of bunker
     }
 
-    if (supplies >= 26 && Observation()->GetMinerals() >= 75) {
+    //build our second refinery
+    if (supplies >= 26 && refineries.size() < 2 && Observation()->GetMinerals() >= 75) {
         //build second refinery next to first command center
-        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND).front();
+        const Unit* commcenter = orbcoms.front();
         BuildRefinery(commcenter);  // !!! doesn't seem to be working
     }
 
-    if (CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_STARPORT) == 0 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() > 100) {
+    //build our first star port
+    if (factories.size() == 1 && starports.size() == 0 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() > 100) {
         //build a star port next to the factory
     }
 
-    if (CountUnitType(UNIT_TYPEID::TERRAN_TECHLAB) == 0 && CountUnitType(UNIT_TYPEID::TERRAN_STARPORT) == 1 && Observation()->GetMinerals() >= 50) {
+    //build our first techlab
+    if (techlabs.size() == 0 && starports.size() == 1 && Observation()->GetMinerals() >= 50) {
         //build a tech lab connected to the factory
     }
 
-    if (CountUnitType(UNIT_TYPEID::TERRAN_REACTOR) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_WIDOWMINE) == 0 && Observation()->GetMinerals() >= 75) {
+    //build a widow mine for air defence
+    if (reactors.size() == 1 && widowmines.size() == 0 && Observation()->GetMinerals() >= 75) {
         //build widow mine for defence
     }
 
-    if (supplies > 36 && Observation()->GetMinerals() >= 100 && CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) < 2) {
+    //build our 2nd com center's supply depot
+    if (supplies > 36 && Observation()->GetMinerals() >= 100 && depots.size() < 2) {
         //build supply depot behind the minerals next to the 2nd comm center
     }
 
-    if (CountUnitType(UNIT_TYPEID::TERRAN_STARPORT) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_VIKINGASSAULT) == 0) {
+    //build our first air unit
+    if (starports.size() == 1 && vikings.size() == 0) {
         //build a viking
     }
 
-    if (CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) == 0 && CountUnitType(UNIT_TYPEID::TERRAN_VIKINGASSAULT) == 1 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() >= 125) {
+    //build our first tank
+    if (tanks.size() == 0 && vikings.size() == 1 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() >= 125) {
         //build a tank
     }
 
@@ -162,25 +186,26 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         //build another depot behind the current depot
     }
 
+    //build 2 barracks to later move
     if (supplies >= 46 && Observation()->GetMinerals() >= 300) {
         //build 2 more barracks next to the star port and factory
     }
 
     //this is another tricky one, when the tank is FINISHED we want to move the factory on to a tech lab and the star port on to a reactor
-    if (CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) == 1) {
+    if (tanks.size() == 1) {
         //move buildings
     }
 
-    if (Observation()->GetGameLoop() > 4320 && Observation()->GetMinerals() >= 200 && CountUnitType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY) == 0) { //4320 ticks ~ 4mins30sec
+    //build our first eng bay
+    if (Observation()->GetGameLoop() > 4320 && Observation()->GetMinerals() >= 200 && engbays.size() == 0) { //4320 ticks ~ 4mins30sec
         //build engineering bay and a gas refinery at the 2nd comm center
     }
 
-    //something about checking building positions here
+    //once the space from the factory and star port are open, move our new barracks there
     if (/*factory and star port have been moved*/true) {
         //move the 2 newest barracks to the tech labs that are now open
     }
 
-    Units engbays = GetUnitsOfType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
     const Unit* engbay;
     if (engbays.size() != 0) {
         engbay = engbays.front();
@@ -189,9 +214,11 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         //upgrade infantry weapons to level 2 and research stim in the tech labs
     }
 
-    if (/*mineral line is fully saturated*/true && Observation()->GetMinerals() >= 75 && CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) < 3) {
+    //fully build out our second base
+    if (/*mineral line is fully saturated*/true && Observation()->GetMinerals() >= 75 && refineries.size() < 3) {
         //build second refinery for the gas
-        BuildRefinery();
+        const Unit *commandcenter = bases.front();
+        BuildRefinery(commandcenter, mainSCV);
     }
 
     //At this point we have a few goals before we attack
