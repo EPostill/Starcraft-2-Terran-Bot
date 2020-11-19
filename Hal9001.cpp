@@ -126,7 +126,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     if (supplies >= 26 && Observation()->GetMinerals() >= 75) {
         //build second refinery next to first command center
         const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND).front();
-        BuildRefinery(commcenter);  // !!! didn't seem to be working
+        BuildRefinery(commcenter);  // !!! doesn't seem to be working
     }
 
     if (CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_STARPORT) == 0 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() > 100) {
@@ -377,7 +377,7 @@ void Hal9001::BuildRefinery(const Unit *commcenter, const Unit *builder){
         builder = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, geyser->pos).back();
     }  
     
-    Actions()->UnitCommand(builder, ABILITY_ID::BUILD_REFINERY, geyser);
+    Actions()->UnitCommand(builder, ABILITY_ID::BUILD_REFINERY, geyser, true);
 }
 
 void Hal9001::moveUnit(const Unit *unit, const Point2D &target){
