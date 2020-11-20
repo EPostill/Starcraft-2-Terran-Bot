@@ -35,7 +35,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, exp);
         
     }
-    
     // set rally point back to minerals
     if (mainSCV && supplies == 14){
        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
@@ -95,7 +94,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     if (supplies >= 16 && minerals >= 75 && CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
         // Call BuildRefinery with no builer aka random scv will be assigned
         // This will seek for nearest gas supply
-        BuildRefinery();
+        BuildRefinery(GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front());
 
         // TODO: assign 3 SCV to refinery after build
     }
@@ -377,16 +376,14 @@ void Hal9001::BuildNextTo(ABILITY_ID ability_type_for_structure, UNIT_TYPEID new
 
 }
 
-
-void Hal9001::BuildRefinery(const Unit *builder){
+void Hal9001::BuildRefinery(const Unit *commcenter, const Unit *builder){
+    const Unit *geyser = FindNearestGeyser(commcenter->pos);
     // if no builder is given, make the builder a random scv
     if (!builder){
-        Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
-        builder = units.back();
-    }
+        builder = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, geyser->pos).back();
+    }  
     
-    const Unit *geyser = FindNearestGeyser(builder->pos);
-    Actions()->UnitCommand(builder, ABILITY_ID::BUILD_REFINERY, geyser);
+    Actions()->UnitCommand(builder, ABILITY_ID::BUILD_REFINERY, geyser, true);
 }
 
 void Hal9001::moveUnit(const Unit *unit, const Point2D &target){
