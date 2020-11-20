@@ -43,6 +43,17 @@ public:
 	void step15();
 	void step16();
 
+
+	// Helper functions
+	// TODO: Public for now, move to private later
+
+	/*
+	@desc 	This will return the radius of the structure to be built
+	@param	abilityId - BUILD_SUPPLYDEPOT, etc
+	*/
+	float radiusOfToBeBuilt(ABILITY_ID abilityId);
+
+
 private:
 	// counts the number of units of a given type (does not include those in training)
 	size_t CountUnitType(UNIT_TYPEID unit_type);

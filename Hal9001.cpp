@@ -11,6 +11,17 @@ void Hal9001::OnGameStart() {
     // store expansions and start location
     expansions = search::CalculateExpansionLocations(observation, Query());
     startLocation = observation->GetStartLocation();
+
+    // cout << (observation -> GetGameInfo()).start_locations.size() <<  endl
+    // << (observation -> GetGameInfo()).enemy_start_locations.size() << endl;
+
+    cout << radiusOfToBeBuilt(ABILITY_ID::BUILD_COMMANDCENTER) << endl;
+
+    
+
+    
+
+
     rampLocation = startLocation;   // will change later
     mainSCV = nullptr;
 
@@ -18,6 +29,26 @@ void Hal9001::OnGameStart() {
 
 //This function contains the steps we take at the start to establish ourselves
 void Hal9001::BuildOrder(const ObservationInterface *observation) {
+
+    // lists to keep track of all of our buildings (so we don't need to recount at every if statement
+    Units bases = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+    Units barracks = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
+    Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
+    Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
+    Units techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_TECHLAB);
+    Units reactors = GetUnitsOfType(UNIT_TYPEID::TERRAN_REACTOR);
+    Units depots = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
+    Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
+    Units engbays = GetUnitsOfType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+    Units orbcoms = GetUnitsOfType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND);
+    Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
+
+    // lists to keep track of all our units
+    Units marines = GetUnitsOfType(UNIT_TYPEID::TERRAN_MARINE);
+    Units tanks = GetUnitsOfType(UNIT_TYPEID::TERRAN_SIEGETANK);
+    Units widowmines = GetUnitsOfType(UNIT_TYPEID::TERRAN_WIDOWMINE);
+    Units vikings = GetUnitsOfType(UNIT_TYPEID::TERRAN_VIKINGASSAULT);
+
     
     // move scv towards supply depot build location
     if (!mainSCV && supplies == 13){
@@ -45,18 +76,23 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Build Order # 2: Build Depot towards center from command center
     Condition: supply >= 14 and minerals > 100
     **/
-    if (supplies >= 14 && minerals > 100 && CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) == 0) {
+    if (supplies >= 14 && minerals > 100 && depots.size() == 0) {
+        // get the radius of the initial command center
+        float radius = bases.front() -> radius;
+
         // distance from supply depot
         // TODO: factor in the radius of to-built stucture
-        int distance = 3;
+        int distance = 4;
 
         // config coordinates 
         // startLocation is the location of command center
-        int x = startLocation.x + distance;
-        int y = startLocation.y + distance;
+        float x = startLocation.x + distance;
+        float y = startLocation.y + distance;
+
+        // cout << radius << endl; 
 
         // call BuildStructure
-        BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, x, y);
+        BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, x, y, mainSCV);
 
         //TODO: lower the supply depot so units can walk over it
 
@@ -67,7 +103,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Build Order # 3: Build barracks near depot
     Condition: supply >= 16 and minerals >= 150
     **/
-    if (supplies >= 16 && minerals >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_BARRACKS) == 0) {
+    if (supplies >= 16 && minerals >= 150 && barracks.size() == 0) {
         // build barracks next to supply depot
 
         // TODO: need to find radius of Barracks dynamically
@@ -78,11 +114,11 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         const Unit *depot = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT).front();
         
         // config coordinates for building barracks
-        int x = (depot -> pos.x) + (depot -> radius) + radius;
-        int y = (depot -> pos.y) + (depot -> radius) + radius;
+        float x = (depot -> pos.x) + radius;
+        float y = (depot -> pos.y) + radius;
 
         // call BuildStructure
-        BuildStructure(ABILITY_ID::BUILD_BARRACKS, x, y);
+        BuildStructure(ABILITY_ID::BUILD_BARRACKS, x, y, mainSCV);
 
         cout << "Build Order #3: First barracks built close to depot!" << endl;
     }
@@ -91,7 +127,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Build Order # 4: Build a refinery on nearest gas
     Condition: supply >= 16 and minerals >= 75 and No refineries yet 
     **/
-    if (supplies >= 16 && minerals >= 75 && CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
+    if (supplies >= 16 && minerals >= 75 && refineries.size() == 0) {
         // Call BuildRefinery with no builer aka random scv will be assigned
         // This will seek for nearest gas supply
         BuildRefinery(GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front());
@@ -103,7 +139,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Build Order # 5: Send a SCV to ascount enemy base
     Condition: supply >= 17 and Barracks == 1, Supply Depot == 1, Refinery == 1
     **/
-   if (supplies >= 17 && CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_BARRACKS) == 1){
+   if (supplies >= 17 && refineries.size() == 1 && depots.size() == 1 && barracks.size() == 1){
        // get random scv
 
        // send scv to diagonal opposite from starting point
@@ -402,6 +438,47 @@ Units Hal9001::GetUnitsOfType(UNIT_TYPEID unit_type){
     
 }
 
+Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
+    // !!! maybe worry about if count < num after going thru all units list
+    int count = 0;
+    Units units = GetUnitsOfType(unit_type);
+    Units to_return;
+    bool in_range = true;
+    for (const auto &u : units){
+        if (count == num){
+            break;
+        }
+        if (unit_type == UNIT_TYPEID::TERRAN_SCV){
+            // don't return mainScv
+            if (u == mainSCV){
+                continue;
+            }
+            // only choose from scvs that are mining minerals or idle
+            AbilityID aid = u->orders.front().ability_id;
+            if (u->orders.empty() || aid == ABILITY_ID::HARVEST_GATHER || aid == ABILITY_ID::HARVEST_RETURN){
+                if (location != Point3D(0,0,0) && DistanceSquared2D(u->pos, location) > 225.0){
+                    in_range = false;
+                }
+                if (in_range){
+                    to_return.push_back(u);
+                    ++count;
+                }
+            }
+        // only choose from idle units
+        } else if (u->orders.empty()){
+            if (location != Point3D(0,0,0) && DistanceSquared3D(u->pos, location) > 225.0){
+                in_range = false;
+            }
+            if (in_range){
+                to_return.push_back(u);
+                ++count;
+            }
+        }
+        in_range = true;
+    }
+    return to_return;
+}
+
 bool Hal9001::doneConstruction(const Unit *unit){
     return unit->build_progress == 1.0;
 }
@@ -429,4 +506,33 @@ void Hal9001::step16(){
     // build depot behind this mineral
     // figure out how to put it behind the depot
 
+}
+
+/*
+@desc 	This will return the radius of the structure to be built
+@param	abilityId - BUILD_SUPPLYDEPOT, etc
+*/
+float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
+    // TODO:: add assertion that only "build-type" abilities will be accepted
+    
+    // get observation
+    const ObservationInterface *observation = Observation();
+
+    // get vector of abilities
+    const vector<AbilityData> abilities = observation ->GetAbilityData();
+
+    // This will be the index of the searched ability
+    int index;
+
+    // loop through vector to search for ability
+    for(int i = 0; i < abilities.size(); ++i){
+        if(abilities[i].ability_id == abilityId){
+            index = i;
+        }
+    }
+
+    cout << abilities[index].button_name << " " << abilities[index].is_building << endl;
+
+    // return the footprint radius of ability
+    return abilities[index].footprint_radius;
 }

@@ -1,7 +1,76 @@
-
-what's up gamers
-
 ### How to build solution Visual Studio Code 2019 and run bot
 1. On Terminal, run `start ./build/Hal9001.sln`. This will open Visual Studio Code 2019.
 2. On Visual Studio Code 2019, type `Ctrl+Shift+B`. This will build the solution.
 3. On Terminal again, run `./build/bin/Hal9001.exe -c -a <enemy> -d <difficulty> -m <map>`. This will start StarCraft 2 and run the bot.
+
+
+### Start Location per Maps (CactusValleyLE, BelShirVestigeLE, and ProximaStationLE)
+`NOTE:` 
+- Start Location is where the first CommandCenter is.
+- All coordinates are in (x, y) format.
+- The following data were extracted from multiple test runs. Do not assume or limit implementation on the coordinates below.
+
+1. CactusValleyLE
+    - **NW** ***(upper left corner)*** = (33.5, 158.5)
+    - **SW** ***(lower left corner)*** = (33.5, 33.5)
+    - **NE** ***(upper right corner)*** = (158.5, 158.5)
+    - **SE** ***(lower right corner)*** = (158.5, 33.5)
+
+    - ***Player can have 4 possible starting locations***
+    - ***Enemy can have 3 possible starting locations***
+
+2. BelShirVestigeLE
+    - **NW** ***(upper left corner)*** = (29.5, 134.5)
+    - **SE** ***(lower right corner)*** = (114.5, 25.5)
+
+    - ***Player can have 2 possible starting locations***
+    - ***Enemy can have 1 possible starting locations***
+
+3. ProximaStationLE
+    - **SW (with a litle bit to the right)** ***(lower left corner)*** = (62.5, 28.5)
+
+    - ***Player can have 2 possible starting locations***
+    - ***Enemy can have 1 possible starting locations***
+
+### How to get map info
+```
+// use ObservationInterface *observation in OnGameStart()
+std::string map_name = observation -> GetGameInfo().map_name; // this will get the name of the map
+```
+
+### How to get radius of to be build structure
+Get all the abilities that can be accessed via the Observation Interface. Loop through it, find matching ability id, then return footprint_radius
+
+See `radiusOfToBeBuilt()` in Hal9001.cpp.
+`NOTE:` Maybe extract helper functions later, to avoid longer file.
+
+```
+/*
+@desc 	This will return the radius of the structure to be built
+@param	abilityId - BUILD_SUPPLYDEPOT, etc
+*/
+float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
+    // TODO:: add assertion that only "build-type" abilities will be accepted
+    
+    // get observation
+    const ObservationInterface *observation = Observation();
+
+    // get vector of abilities
+    const vector<AbilityData> abilities = observation ->GetAbilityData();
+
+    // This will be the index of the searched ability
+    int index;
+
+    // loop through vector to search for ability
+    for(int i = 0; i < abilities.size(); ++i){
+        if(abilities[i].ability_id == abilityId){
+            index = i;
+        }
+    }
+
+    cout << abilities[index].link_name << " " << abilities[index].is_building << endl;
+
+    // return the footprint radius of ability
+    return abilities[index].footprint_radius;
+}
+```
