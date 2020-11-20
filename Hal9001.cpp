@@ -24,10 +24,10 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // set main scv worker to the first one trained
         Units scvs = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);  // test if this gets the newly trained scv
         int i = 0;
-        for (const auto &scv : scvs){
-            cout << i << ": " << scv->pos.x << "  " << scv->pos.y << endl;
-            ++i;
-        }
+        // for (const auto &scv : scvs){
+        //     cout << i << ": " << scv->pos.x << "  " << scv->pos.y << endl;
+        //     ++i;
+        // }
         const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
         Point3D exp = FindNearestExpansion();
         // sets rally point to nearest expansion so scv will walk towards it
@@ -35,32 +35,81 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, exp);
         
     }
+    
     // set rally point back to minerals
     if (mainSCV && supplies == 14){
        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
        Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos)); 
     }
 
-    //first supply depot build
+    /**
+    Build Order # 2: Build Depot towards center from command center
+    Condition: supply >= 14 and minerals > 100
+    **/
     if (supplies >= 14 && minerals > 100 && CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) == 0) {
-        // !!! change to correct location
-        BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, startLocation.x + 3, startLocation.y + 3);
+        // distance from supply depot
+        // TODO: factor in the radius of to-built stucture
+        int distance = 3;
 
+        // config coordinates 
+        // startLocation is the location of command center
+        int x = startLocation.x + distance;
+        int y = startLocation.y + distance;
+
+        // call BuildStructure
+        BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, x, y);
+
+        //TODO: lower the supply depot so units can walk over it
+
+        cout << "Build Order #2: First supply depot built!" << endl;
     }
 
-    //first barracks build
+    /**
+    Build Order # 3: Build barracks near depot
+    Condition: supply >= 16 and minerals >= 150
+    **/
     if (supplies >= 16 && minerals >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_BARRACKS) == 0) {
+        // build barracks next to supply depot
 
-        //build barracks next to supply depot
-        // !!! need to figure out how to place it correctly
+        // TODO: need to find radius of Barracks dynamically
+        int radius = 5;
+
+        // MAYBE TODO: generalize this to function BuildNextTo()
+        // build relative to this
         const Unit *depot = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT).front();
-        BuildStructure(ABILITY_ID::BUILD_BARRACKS, depot->pos.x + 5, depot->pos.y);
+        
+        // config coordinates for building barracks
+        int x = (depot -> pos.x) + (depot -> radius) + radius;
+        int y = (depot -> pos.y) + (depot -> radius) + radius;
+
+        // call BuildStructure
+        BuildStructure(ABILITY_ID::BUILD_BARRACKS, x, y);
+
+        cout << "Build Order #3: First barracks built close to depot!" << endl;
     }
 
-    //build a refinery on nearest gas
+    /**
+    Build Order # 4: Build a refinery on nearest gas
+    Condition: supply >= 16 and minerals >= 75 and No refineries yet 
+    **/
     if (supplies >= 16 && minerals >= 75 && CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) == 0) {
+        // Call BuildRefinery with no builer aka random scv will be assigned
+        // This will seek for nearest gas supply
         BuildRefinery();
+
+        // TODO: assign 3 SCV to refinery after build
     }
+
+    /**
+    Build Order # 5: Send a SCV to ascount enemy base
+    Condition: supply >= 17 and Barracks == 1, Supply Depot == 1, Refinery == 1
+    **/
+   if (supplies >= 17 && CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_BARRACKS) == 1){
+       // get random scv
+
+       // send scv to diagonal opposite from starting point
+   }
+
 
     Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
     if (!units.empty()) {
