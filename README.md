@@ -88,4 +88,7 @@ float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
 
 In `CactusValleyLE`, player can be assigned to any of the four corners. Therefore in expansion, `getRelativeDir()` is important. This function will say where will another structure be built relative to a given unit structure (anchor). There are only 5 choices of direction `FRONT`, `LEFT`, `RIGHT`, `FRONTLEFT`, `FRONTRIGHT`. There are no `BACK` since it is an expansion. Remember that this directions are **relative** to the given object.
 
-See this pic for more detail:
+See this pics for more detail:
+
+<img src="https://raw.githubusercontent.com/EPostill/CMPUT350Project/phase-1/docs/Orientation-CactusValleyLe.png?token=ALIZXBDLDBSQWXXT4WEK7PC7YIB2S" width="500">
+<img src="https://raw.githubusercontent.com/EPostill/CMPUT350Project/phase-1/docs/Relative%20Location%20Building%20(Build%20Order%20%23%202).png?token=ALIZXBGNAUHYRZLDSPFHF6C7YICBG" width="500">
