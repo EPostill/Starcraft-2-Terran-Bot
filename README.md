@@ -28,9 +28,17 @@
 
 3. ProximaStationLE
     - **SW (with a litle bit to the right)** ***(lower left corner)*** = (62.5, 28.5)
+    - another one
 
     - ***Player can have 2 possible starting locations***
     - ***Enemy can have 1 possible starting locations***
+
+```
+int player_possible = (observation -> GetGameInfo()).start_locations.size();
+int enemy_possible (observation -> GetGameInfo()).enemy_start_locations.size();
+
+// Coordinates in GetGameInfo().enemy_start_locations can be use for scouting enemy base
+```
 
 ### How to get map info
 ```
@@ -74,3 +82,10 @@ float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
     return abilities[index].footprint_radius;
 }
 ```
+
+### Relative Direction of Expansion based on Orientation
+`Explanation:` Expansion depends on where the base is located on the a given map. 
+
+In `CactusValleyLE`, player can be assigned to any of the four corners. Therefore in expansion, `getRelativeDir()` is important. This function will say where will another structure be built relative to a given unit structure (anchor). There are only 5 choices of direction `FRONT`, `LEFT`, `RIGHT`, `FRONTLEFT`, `FRONTRIGHT`. There are no `BACK` since it is an expansion. Remember that this directions are **relative** to the given object.
+
+See this pic for more detail:

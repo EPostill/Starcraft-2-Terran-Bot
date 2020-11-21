@@ -8,23 +8,27 @@ void Hal9001::OnGameStart() {
     const ObservationInterface *observation = Observation();
     minerals = observation->GetMinerals();
     supplies = observation->GetFoodUsed();
+
     // store expansions and start location
     expansions = search::CalculateExpansionLocations(observation, Query());
     startLocation = observation->GetStartLocation();
 
-    // cout << (observation -> GetGameInfo()).start_locations.size() <<  endl
-    // << (observation -> GetGameInfo()).enemy_start_locations.size() << endl;
+    // get map width and height
+    map_width = observation -> GetGameInfo().width;
+    map_height = observation -> GetGameInfo().height;
 
-    cout << radiusOfToBeBuilt(ABILITY_ID::BUILD_COMMANDCENTER) << endl;
+    // get raw map_name
+    std::string map_name = observation -> GetGameInfo().map_name;
 
-    
-
-    
-
+    // config map_name to enum
+    if(map_name == "Cactus Valley LE (Void)"){
+        this -> map_name = CACTUS;
+    } else{
+        cout << "Map Name Cannot be retrieved" << endl;
+    }
 
     rampLocation = startLocation;   // will change later
     mainSCV = nullptr;
-
 }
 
 //This function contains the steps we take at the start to establish ourselves
@@ -78,18 +82,23 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     **/
     if (supplies >= 14 && minerals > 100 && depots.size() == 0) {
         // get the radius of the initial command center
-        float radius = bases.front() -> radius;
+        float radiusCC = bases.front() -> radius;
 
-        // distance from supply depot
-        // TODO: factor in the radius of to-built stucture
-        int distance = 4;
+        // get the radius of to-be-built structure
+        float radiusSD = radiusOfToBeBuilt(ABILITY_ID::BUILD_SUPPLYDEPOT);
+
+        // distance from CC
+        // TODO: is this still too hard coded? maybe look into playable_max of game_info
+        int distance = 10;
+
+        // get relative direction
+        // I want to place supply depot in relative front left of Command Center
+        std::pair<int, int> relDir = getRelativeDir(bases.front(), FRONTLEFT);
 
         // config coordinates 
         // startLocation is the location of command center
-        float x = startLocation.x + distance;
-        float y = startLocation.y + distance;
-
-        // cout << radius << endl; 
+        float x = startLocation.x + (radiusCC + radiusSD + distance) * relDir.first;
+        float y = startLocation.y + (radiusCC + radiusSD + distance) * relDir.second;
 
         // call BuildStructure
         BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, x, y, mainSCV);
@@ -104,18 +113,20 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Condition: supply >= 16 and minerals >= 150
     **/
     if (supplies >= 16 && minerals >= 150 && barracks.size() == 0) {
-        // build barracks next to supply depot
-
-        // TODO: need to find radius of Barracks dynamically
-        int radius = 5;
-
-        // MAYBE TODO: generalize this to function BuildNextTo()
-        // build relative to this
-        const Unit *depot = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT).front();
+        const Unit *depot = depots.front();
         
+        // get radius of depot
+        float radiusDE = depot -> radius;
+
+        // get radius of barrack
+        float radiusBA = radiusOfToBeBuilt(ABILITY_ID::BUILD_BARRACKS); 
+
+        // I want to build it front left hand side of supply depot
+        std::pair<int, int> relDir = getRelativeDir(depot, FRONTLEFT);
+
         // config coordinates for building barracks
-        float x = (depot -> pos.x) + radius;
-        float y = (depot -> pos.y) + radius;
+        float x = (depot -> pos.x) + (radiusDE + radiusBA) * relDir.first;
+        float y = (depot -> pos.y) + (radiusDE + radiusBA) * relDir.second;
 
         // call BuildStructure
         BuildStructure(ABILITY_ID::BUILD_BARRACKS, x, y, mainSCV);
@@ -128,7 +139,8 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Condition: supply >= 16 and minerals >= 75 and No refineries yet 
     **/
     if (supplies >= 16 && minerals >= 75 && refineries.size() == 0) {
-        // Call BuildRefinery with no builer aka random scv will be assigned
+
+        // Call BuildRefinery with no builder aka random scv will be assigned
         // This will seek for nearest gas supply
         BuildRefinery(GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front());
 
@@ -139,11 +151,11 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Build Order # 5: Send a SCV to ascount enemy base
     Condition: supply >= 17 and Barracks == 1, Supply Depot == 1, Refinery == 1
     **/
-   if (supplies >= 17 && refineries.size() == 1 && depots.size() == 1 && barracks.size() == 1){
-       // get random scv
+    if (supplies >= 17 && refineries.size() == 1 && depots.size() == 1 && barracks.size() == 1){
+        // get random scv
 
-       // send scv to diagonal opposite from starting point
-   }
+        // send scv to diagonal opposite from starting point
+    }
 
 
     Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
@@ -535,4 +547,96 @@ float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
 
     // return the footprint radius of ability
     return abilities[index].footprint_radius;
+}
+
+/*
+@desc   This will return a tuple (1,0), (1, -1), etc. 
+@param  anchor - a unit, will build relative to this
+        dir    - RelDir enum
+@note   Refer to Orientation pngs in /docs
+*/
+std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir){
+    
+    // if cactus
+    if(map_name == CACTUS){
+
+        // anchor is located in the SW part of Map
+        if( ((map_width / 2) > (anchor -> pos.x)) && ((map_height /2) > (anchor -> pos.y)) ){
+            cout << "SW" << endl;
+            switch(dir){
+                case(FRONT):
+                    return std::make_pair(1, 1);
+                case(LEFT):
+                    return std::make_pair(-1, 1);
+                case(RIGHT):
+                    return std::make_pair(1, -1);
+                case(FRONTLEFT):
+                    return std::make_pair(0, 1);
+                case(FRONTRIGHT):
+                    return std::make_pair(1, 0);
+                default:
+                    return std::make_pair(0,0);
+            }
+            
+        // anchor is located in NW part of Map
+        } else if( ((map_width / 2) > (anchor -> pos.x)) && ((map_height /2) < (anchor -> pos.y)) ){
+            cout << "NW" << endl;
+
+            switch(dir){
+                case(FRONT):
+                    return std::make_pair(1, -1);
+                case(LEFT):
+                    return std::make_pair(1, 1);
+                case(RIGHT):
+                    return std::make_pair(-1, -1);
+                case(FRONTLEFT):
+                    return std::make_pair(1, 0);
+                case(FRONTRIGHT):
+                    return std::make_pair(0, -1);
+                default:
+                    return std::make_pair(0,0);
+            }
+            
+        // anchor is located in SE part of Map
+        } else if( ((map_width / 2) < (anchor -> pos.x)) && ((map_height /2) > (anchor -> pos.y)) ){
+            cout << "SE" << endl;
+
+            switch(dir){
+                case(FRONT):
+                    return std::make_pair(-1, 1);
+                case(LEFT):
+                    return std::make_pair(-1, -1);
+                case(RIGHT):
+                    return std::make_pair(1, 1);
+                case(FRONTLEFT):
+                    return std::make_pair(-1, 0);
+                case(FRONTRIGHT):
+                    return std::make_pair(0, 1);
+                default:
+                    return std::make_pair(0,0);
+            }
+
+        // anchor is located in NE part of Map
+        } else if( ((map_width / 2) < (anchor -> pos.x)) && ((map_height /2) < (anchor -> pos.y)) ){
+            cout << "NE" << endl;
+
+            switch(dir){
+                case(FRONT):
+                    return std::make_pair(-1, -1);
+                case(LEFT):
+                    return std::make_pair(1, -1);
+                case(RIGHT):
+                    return std::make_pair(-1, 1);
+                case(FRONTLEFT):
+                    return std::make_pair(0, -1);
+                case(FRONTRIGHT):
+                    return std::make_pair(-1, 0);
+                default:
+                    return std::make_pair(0,0);
+            }
+        }
+
+    }
+
+    return std::make_pair(0, 0);
 }
