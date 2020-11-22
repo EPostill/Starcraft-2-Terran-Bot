@@ -79,6 +79,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     /**
     Build Order # 2: Build Depot towards center from command center
     Condition: supply >= 14 and minerals > 100
+    Status: DONE
     **/
     if (supplies >= 14 && minerals > 100 && depots.size() == 0) {
         // get the radius of the initial command center
@@ -111,6 +112,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     /**
     Build Order # 3: Build barracks near depot
     Condition: supply >= 16 and minerals >= 150
+    Status: DONE
     **/
     if (supplies >= 16 && minerals >= 150 && barracks.size() == 0) {
         const Unit *depot = depots.front();
@@ -136,7 +138,8 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
     /**
     Build Order # 4: Build a refinery on nearest gas
-    Condition: supply >= 16 and minerals >= 75 and No refineries yet 
+    Condition: supply >= 16 and minerals >= 75 and No refineries yet
+    Status: DONE 
     **/
     if (supplies >= 16 && minerals >= 75 && refineries.size() == 0) {
 
@@ -144,17 +147,22 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // This will seek for nearest gas supply
         BuildRefinery(GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front());
 
-        // TODO: assign 3 SCV to refinery after build
+        // ManageRefineries() will take care of assigning scvs
+        cout << "Build Order #4: Build a refinery on nearest gas" << endl;
     }
 
     /**
-    Build Order # 5: Send a SCV to ascount enemy base
+    Build Order # 5: Send a SCV to scount enemy base
     Condition: supply >= 17 and Barracks == 1, Supply Depot == 1, Refinery == 1
+    Status: NOT DONE
     **/
     if (supplies >= 17 && refineries.size() == 1 && depots.size() == 1 && barracks.size() == 1){
         // get random scv
+        const Unit *random = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV).front();
 
         // send scv to diagonal opposite from starting point
+
+        // FOR MAX
     }
 
 
@@ -306,6 +314,7 @@ void Hal9001::OnStep() {
     minerals = observation->GetMinerals();
     supplies = observation->GetFoodUsed();
     ManageSCVTraining();
+    ManageRefineries();
 
     BuildOrder(observation);
 
@@ -518,6 +527,21 @@ void Hal9001::step16(){
     // build depot behind this mineral
     // figure out how to put it behind the depot
 
+}
+
+
+// have 3 workers on each refinery
+void Hal9001::ManageRefineries(){
+    Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
+    for (const auto &refinery : refineries){
+        // almost done building
+        if (refinery->build_progress == 0.75){
+            // get two random scvs
+            Units scvs = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, refinery->pos, 2);
+
+            Actions()->UnitCommand(scvs, ABILITY_ID::SMART, refinery, true);
+        }
+    }
 }
 
 /*
