@@ -8,22 +8,33 @@ void Hal9001::OnGameStart() {
     const ObservationInterface *observation = Observation();
     minerals = observation->GetMinerals();
     supplies = observation->GetFoodUsed();
+
     // store expansions and start location
     expansions = search::CalculateExpansionLocations(observation, Query());
     startLocation = observation->GetStartLocation();
+
+    // get map width and height
+    map_width = observation -> GetGameInfo().width;
+    map_height = observation -> GetGameInfo().height;
+
+    // get raw map_name
+    std::string map_name = observation -> GetGameInfo().map_name;
+
+    // config map_name to enum
+    if(map_name == "Cactus Valley LE (Void)"){
+        this -> map_name = CACTUS;
+    } else{
+        cout << "Map Name Cannot be retrieved" << endl;
+    }
+
     rampLocation = startLocation;   // will change later
     mainSCV = nullptr;
-
 }
 
 //This function contains the steps we take at the start to establish ourselves
 void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
-    if (build_complete) {
-        return;
-    }
-
-    //lists to keep track of all of our buildings (so we don't need to recount at every if statement
+    // lists to keep track of all of our buildings (so we don't need to recount at every if statement
     Units bases = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
     Units barracks = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
     Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
@@ -36,14 +47,22 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Units orbcoms = GetUnitsOfType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND);
     Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
 
-    //lists to keep track of all our units
+    // lists to keep track of all our units
     Units marines = GetUnitsOfType(UNIT_TYPEID::TERRAN_MARINE);
     Units tanks = GetUnitsOfType(UNIT_TYPEID::TERRAN_SIEGETANK);
     Units widowmines = GetUnitsOfType(UNIT_TYPEID::TERRAN_WIDOWMINE);
     Units vikings = GetUnitsOfType(UNIT_TYPEID::TERRAN_VIKINGASSAULT);
+
     
-    // tell the first scv in training to move towards supply depot build location
+    // move scv towards supply depot build location
     if (!mainSCV && supplies == 13){
+        // set main scv worker to the first one trained
+        Units scvs = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);  // test if this gets the newly trained scv
+        int i = 0;
+        // for (const auto &scv : scvs){
+        //     cout << i << ": " << scv->pos.x << "  " << scv->pos.y << endl;
+        //     ++i;
+        // }
         const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
         Point3D exp = FindNearestExpansion();
         // sets rally point to nearest expansion so scv will walk towards it
@@ -51,174 +70,204 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, exp);
         
     }
-    // set mainSCV to the first trained scv
-    if (!mainSCV && supplies == 14){
-        Units scvs = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
-        for (const auto &scv: scvs){
-            const UnitOrder order = scv->orders.front();
-            // this is the first trained scv
-            if (order.target_pos.x != 0 && order.target_pos.y != 0){
-                mainSCV = scv;
-            }
-        }
-        // set rally point back to minerals
-        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
-        Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos)); 
+    // set rally point back to minerals
+    if (mainSCV && supplies == 14){
+       const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
+       Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos)); 
     }
 
-    //first supply depot build
+    /**
+    Build Order # 2: Build Depot towards center from command center
+    Condition: supply >= 14 and minerals > 100
+    Status: DONE
+    **/
     if (supplies >= 14 && minerals > 100 && depots.size() == 0) {
-        // !!! change to correct location
-        BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, startLocation.x + 3, startLocation.y + 3, mainSCV);
+        // get the radius of the initial command center
+        float radiusCC = bases.front() -> radius;
 
+        // get the radius of to-be-built structure
+        float radiusSD = radiusOfToBeBuilt(ABILITY_ID::BUILD_SUPPLYDEPOT);
+
+        // distance from CC
+        // TODO: is this still too hard coded? maybe look into playable_max of game_info
+        int distance = 10;
+
+        // get relative direction
+        // I want to place supply depot in relative front left of Command Center
+        std::pair<int, int> relDir = getRelativeDir(bases.front(), FRONTLEFT);
+
+        // config coordinates 
+        // startLocation is the location of command center
+        float x = startLocation.x + (radiusCC + radiusSD + distance) * relDir.first;
+        float y = startLocation.y + (radiusCC + radiusSD + distance) * relDir.second;
+
+        // call BuildStructure
+        BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, x, y, mainSCV);
+
+        //TODO: lower the supply depot so units can walk over it
+
+        cout << "Build Order #2: First supply depot built!" << endl;
     }
 
-    //first barracks build
+    /**
+    Build Order # 3: Build barracks near depot
+    Condition: supply >= 16 and minerals >= 150
+    Status: DONE
+    **/
     if (supplies >= 16 && minerals >= 150 && barracks.size() == 0) {
+        const Unit *depot = depots.front();
+        
+        // get radius of depot
+        float radiusDE = depot -> radius;
 
-        //build barracks next to supply depot
-        // !!! need to figure out how to place it correctly
-        const Unit *depot = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT).front();
-        BuildStructure(ABILITY_ID::BUILD_BARRACKS, depot->pos.x + 5, depot->pos.y, mainSCV);
+        // get radius of barrack
+        float radiusBA = radiusOfToBeBuilt(ABILITY_ID::BUILD_BARRACKS); 
+
+        // I want to build it front left hand side of supply depot
+        std::pair<int, int> relDir = getRelativeDir(depot, FRONTLEFT);
+
+        // config coordinates for building barracks
+        float x = (depot -> pos.x) + (radiusDE + radiusBA) * relDir.first;
+        float y = (depot -> pos.y) + (radiusDE + radiusBA) * relDir.second;
+
+        // call BuildStructure
+        BuildStructure(ABILITY_ID::BUILD_BARRACKS, x, y, mainSCV);
+
+        cout << "Build Order #3: First barracks built close to depot!" << endl;
     }
 
-    //build a refinery on nearest gas
+    /**
+    Build Order # 4: Build a refinery on nearest gas
+    Condition: supply >= 16 and minerals >= 75 and No refineries yet
+    Status: DONE 
+    **/
     if (supplies >= 16 && minerals >= 75 && refineries.size() == 0) {
+
+        // Call BuildRefinery with no builder aka random scv will be assigned
+        // This will seek for nearest gas supply
         BuildRefinery(GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front());
+
+        // ManageRefineries() will take care of assigning scvs
+        cout << "Build Order #4: Build a refinery on nearest gas" << endl;
     }
 
-    //first marine
-    if (!barracks.empty()) {
-        const Unit* barrack = barracks.front();
-        if (doneConstruction(barrack) && marines.size() == 0 && barrack->orders.empty()) {
+    /**
+    Build Order # 5: Send a SCV to scount enemy base
+    Condition: supply >= 17 and Barracks == 1, Supply Depot == 1, Refinery == 1
+    Status: NOT DONE
+    **/
+    if (supplies >= 17 && refineries.size() == 1 && depots.size() == 1 && barracks.size() == 1){
+        // get random scv
+        const Unit *random = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV).front();
+
+        // send scv to diagonal opposite from starting point
+
+        // FOR MAX
+    }
+
+
+    Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
+    if (!units.empty()) {
+        const Unit* barracks = units.front();
+        if (doneConstruction(barracks) && CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 0 && barracks->orders.empty()) {
             // !!! scout with scv
 
             //train one marine
-            Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
+            Actions()->UnitCommand(barracks, ABILITY_ID::TRAIN_MARINE);
         }
     }
 
-    //upgrade command center
-    if (supplies >= 19 && minerals >= 150 && orbcoms.size() == 0) {
+    if (supplies >= 19 && minerals >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND) == 0) {
         //upgrade command center to orbital command
-        const Unit* commcenter = bases.front();
+        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
         Actions()->UnitCommand(commcenter, ABILITY_ID::MORPH_ORBITALCOMMAND, true);
     }
 
-    //build second command center
-    if (supplies >= 20 && Observation()->GetMinerals() >= 400 && bases.size() < 2) {
+    if (supplies >= 20 && Observation()->GetMinerals() >= 400 && CountUnitType(UNIT_TYPEID::TERRAN_COMMANDCENTER) == 0) {
         //build command center
         Expand();
     } 
-    // // set rally point of new command center to minerals
-    // if (bases.size() == 1){
-    //     const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
-    //     if (commcenter->build_progress == 0.5){
-    //         Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos), true);
-    //     }
-    // }
 
-    //build reactor and another depot
-    if (marines.size() == 1 && depots.size() < 2 && Observation()->GetMinerals() >= 150) {
+
+    if (CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 1 && Observation()->GetMinerals() >= 150) {
         //build reactor on the barracks
         //build a depot next to the reactor
     }
 
-    //build first factory
-    if (supplies >= 22 && Observation()->GetVespene() > 100 && Observation()->GetMinerals() > 150 && factories.size() == 0) {
+    if (supplies >= 22 && Observation()->GetVespene() > 100 && Observation()->GetMinerals() > 150 && CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 0) {
         //build factory in between command centers
     }
 
-    //build first bunker
-    if (supplies >= 23 && Observation()->GetMinerals() >= 100 && factories.size() == 1 && bunkers.size() == 0) {
+    if (supplies >= 23 && Observation()->GetMinerals() >= 100 && CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_BUNKER) == 0) {
         //build bunker towards the center from command center 2
     }
 
-    //build army to size 3 and station at bunker
-    if (reactors.size() == 1 && marines.size() < 4 && Observation()->GetMinerals() >= 50) {
+    if (CountUnitType(UNIT_TYPEID::TERRAN_REACTOR) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_MARINE) < 4 && Observation()->GetMinerals() >= 50) {
         //queue a marine
         //move marines in front of bunker
     }
 
-    //build our second refinery
-    if (supplies >= 26 && refineries.size() < 2 && Observation()->GetMinerals() >= 75) {
+    if (supplies >= 26 && Observation()->GetMinerals() >= 75 && /*one empty gas next to first command center*/true) {
         //build second refinery next to first command center
-        const Unit* commcenter = orbcoms.front();
-        BuildRefinery(commcenter);  // !!! doesn't seem to be working
     }
 
-    //build our first star port
-    if (factories.size() == 1 && starports.size() == 0 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() > 100) {
+    if (CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 1 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() > 100) {
         //build a star port next to the factory
     }
 
-    //build our first techlab
-    if (techlabs.size() == 0 && starports.size() == 1 && Observation()->GetMinerals() >= 50) {
+    if (CountUnitType(UNIT_TYPEID::TERRAN_TECHLAB) == 0 && Observation()->GetMinerals() >= 50) {
         //build a tech lab connected to the factory
     }
 
-    //build a widow mine for air defence
-    if (reactors.size() == 1 && widowmines.size() == 0 && Observation()->GetMinerals() >= 75) {
+    if (CountUnitType(UNIT_TYPEID::TERRAN_REACTOR) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_WIDOWMINE) == 0 && Observation()->GetMinerals() >= 75) {
         //build widow mine for defence
     }
 
-    //build our 2nd com center's supply depot
-    if (supplies > 36 && Observation()->GetMinerals() >= 100 && depots.size() < 2) {
+    if (supplies > 36 && Observation()->GetMinerals() >= 100 && CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) < 2) {
         //build supply depot behind the minerals next to the 2nd comm center
     }
 
-    //build our first air unit
-    if (starports.size() == 1 && vikings.size() == 0) {
+    if (CountUnitType(UNIT_TYPEID::TERRAN_STARPORT) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_VIKINGASSAULT) == 0) {
         //build a viking
     }
 
-    //build our first tank
-    if (tanks.size() == 0 && vikings.size() == 1 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() >= 125) {
+    if (CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) == 0 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() >= 125) {
         //build a tank
     }
 
     //this one is tricky, we basically want to chain depots next to each other behind the second comm center
-    const Unit* current_depot;
-    if (depots.size() != 0) {
-        current_depot = depots.front();
-    }
-    if (doneConstruction(current_depot) && Observation()->GetMinerals() >= 100) {
-        //build another depot behind the current depot
-    }
+    // Units depots = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);  
+    // const Unit* current_depot = depots.front();  // causes error because depots is empty at the start of the game
+    // if (doneConstruction(current_depot) && Observation()->GetMinerals() >= 100) {
+    //     //build another depot behind the current depot
+    // }
 
-    //build 2 barracks to later move
     if (supplies >= 46 && Observation()->GetMinerals() >= 300) {
         //build 2 more barracks next to the star port and factory
     }
 
     //this is another tricky one, when the tank is FINISHED we want to move the factory on to a tech lab and the star port on to a reactor
-    if (tanks.size() == 1) {
+    if (CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) == 1) {
         //move buildings
     }
 
-    //build our first eng bay
-    if (Observation()->GetGameLoop() > 4320 && Observation()->GetMinerals() >= 200 && engbays.size() == 0) { //4320 ticks ~ 4mins30sec
+    if (Observation()->GetGameLoop() > 4320 && Observation()->GetMinerals() >= 200 && CountUnitType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY) == 0) { //4320 ticks ~ 4mins30sec
         //build engineering bay and a gas refinery at the 2nd comm center
     }
 
-    //once the space from the factory and star port are open, move our new barracks there
+    //something about checking building positions here
     if (/*factory and star port have been moved*/true) {
         //move the 2 newest barracks to the tech labs that are now open
     }
 
-    const Unit* engbay;
-    if (engbays.size() != 0) {
-        engbay = engbays.front();
-    }
-    if (doneConstruction(engbay)) {
-        //upgrade infantry weapons to level 2 and research stim in the tech labs
-    }
+    // Units engbays = GetUnitsOfType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+    // const Unit* engbay = engbays.front();  // causes error because engbays is empty at start of game
+    // if (doneConstruction(engbay)) {
+    //     //upgrade infantry weapons to level 2 and research stim in the tech labs
+    // }
 
-    //fully build out our second base
-    if (/*mineral line is fully saturated*/true && Observation()->GetMinerals() >= 75 && refineries.size() < 3) {
+    if (/*mineral line is fully saturated*/true && Observation()->GetMinerals() >= 75 && CountUnitType(UNIT_TYPEID::TERRAN_REFINERY) < 3) {
         //build second refinery for the gas
-        const Unit *commandcenter = bases.front();
-        BuildRefinery(commandcenter, mainSCV);
     }
 
     //At this point we have a few goals before we attack
@@ -233,9 +282,12 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     //Factories -> tanks
     //barracks -> marines (later on maurauders, although I doubt the game will go that far)
 
-    if (false /*every condition is met*/) {
-        build_complete = true;
-    }
+
+
+
+
+
+
 }
 
 
@@ -247,38 +299,17 @@ void Hal9001::ManageSCVTraining(){
         if (cc->assigned_harvesters < cc->ideal_harvesters && cc->orders.empty()){
             Actions()->UnitCommand(cc, ABILITY_ID::TRAIN_SCV);
         }
-        // set rally point of new command centers to minerals
-        if (cc->build_progress == 0.5){
-            Actions()->UnitCommand(cc, ABILITY_ID::SMART, FindNearestMineralPatch(cc->pos), true);
-        }
     }
 
     for (const auto &cc : orbital_commcenters){
         if (cc->assigned_harvesters < cc->ideal_harvesters && cc->orders.empty()){
             Actions()->UnitCommand(cc, ABILITY_ID::TRAIN_SCV);
         }
-        // set rally point of new command centers to minerals
-        if (cc->build_progress == 0.5){
-            Actions()->UnitCommand(cc, ABILITY_ID::SMART, FindNearestMineralPatch(cc->pos), true);
-        }
-    }
-}
-
-// have 3 workers on each refinery
-void Hal9001::ManageRefineries(){
-    Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
-    for (const auto &refinery : refineries){
-        // almost done building
-        if (refinery->build_progress == 0.75){
-            // get two random scvs
-            Units scvs = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, refinery->pos, 2);
-
-            Actions()->UnitCommand(scvs, ABILITY_ID::SMART, refinery, true);
-        }
     }
 }
 
 void Hal9001::OnStep() { 
+    // cout << Observation()->GetGameLoop() << endl;
     const ObservationInterface *observation = Observation();
     minerals = observation->GetMinerals();
     supplies = observation->GetFoodUsed();
@@ -287,6 +318,9 @@ void Hal9001::OnStep() {
 
     BuildOrder(observation);
 
+    if (mainSCV){
+        cout << "x: " << mainSCV->pos.x << " y: " << mainSCV->pos.y << endl;
+    }
 
 }
 
@@ -297,6 +331,7 @@ void Hal9001::OnUnitIdle(const Unit *unit) {
 void Hal9001::Expand(){
     Point3D exp = FindNearestExpansion();
     // build command centre
+    // !!! maybe use mainscv as builder?
     BuildStructure(ABILITY_ID::BUILD_COMMANDCENTER, exp.x, exp.y, mainSCV);
 }
 
@@ -365,7 +400,8 @@ const Unit* Hal9001::FindNearestGeyser(const Point2D &start) {
 void Hal9001::BuildStructure(ABILITY_ID ability_type_for_structure, float x, float y, const Unit *builder) {
     // if no builder is given, make the builder a random scv
     if (!builder){
-        builder = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV).back();
+        Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
+        builder = units.back();
     }
 
     Actions()->UnitCommand(builder, ability_type_for_structure, Point2D(x,y));   
@@ -397,7 +433,6 @@ void Hal9001::BuildNextTo(ABILITY_ID ability_type_for_structure, UNIT_TYPEID new
 
 }
 
-
 void Hal9001::BuildRefinery(const Unit *commcenter, const Unit *builder){
     const Unit *geyser = FindNearestGeyser(commcenter->pos);
     // if no builder is given, make the builder a random scv
@@ -421,6 +456,7 @@ size_t Hal9001::CountUnitType(UNIT_TYPEID unit_type) {
 Units Hal9001::GetUnitsOfType(UNIT_TYPEID unit_type){
     const ObservationInterface* observation = Observation();
     return observation->GetUnits(Unit::Alliance::Self, IsUnit(unit_type));
+    
 }
 
 Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
@@ -465,9 +501,6 @@ Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
 }
 
 bool Hal9001::doneConstruction(const Unit *unit){
-    if (unit == nullptr) {
-        return false;
-    }
     return unit->build_progress == 1.0;
 }
 
@@ -494,4 +527,140 @@ void Hal9001::step16(){
     // build depot behind this mineral
     // figure out how to put it behind the depot
 
+}
+
+
+// have 3 workers on each refinery
+void Hal9001::ManageRefineries(){
+    Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
+    for (const auto &refinery : refineries){
+        // almost done building
+        if (refinery->build_progress == 0.75){
+            // get two random scvs
+            Units scvs = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, refinery->pos, 2);
+
+            Actions()->UnitCommand(scvs, ABILITY_ID::SMART, refinery, true);
+        }
+    }
+}
+
+/*
+@desc 	This will return the radius of the structure to be built
+@param	abilityId - BUILD_SUPPLYDEPOT, etc
+*/
+float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
+    // TODO:: add assertion that only "build-type" abilities will be accepted
+    
+    // get observation
+    const ObservationInterface *observation = Observation();
+
+    // get vector of abilities
+    const vector<AbilityData> abilities = observation ->GetAbilityData();
+
+    // This will be the index of the searched ability
+    int index;
+
+    // loop through vector to search for ability
+    for(int i = 0; i < abilities.size(); ++i){
+        if(abilities[i].ability_id == abilityId){
+            index = i;
+        }
+    }
+
+    cout << abilities[index].button_name << " " << abilities[index].is_building << endl;
+
+    // return the footprint radius of ability
+    return abilities[index].footprint_radius;
+}
+
+/*
+@desc   This will return a tuple (1,0), (1, -1), etc. 
+@param  anchor - a unit, will build relative to this
+        dir    - RelDir enum
+@note   Refer to Orientation pngs in /docs
+*/
+std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir){
+    
+    // if cactus
+    if(map_name == CACTUS){
+
+        // anchor is located in the SW part of Map
+        if( ((map_width / 2) > (anchor -> pos.x)) && ((map_height /2) > (anchor -> pos.y)) ){
+            cout << "SW" << endl;
+            switch(dir){
+                case(FRONT):
+                    return std::make_pair(1, 1);
+                case(LEFT):
+                    return std::make_pair(-1, 1);
+                case(RIGHT):
+                    return std::make_pair(1, -1);
+                case(FRONTLEFT):
+                    return std::make_pair(0, 1);
+                case(FRONTRIGHT):
+                    return std::make_pair(1, 0);
+                default:
+                    return std::make_pair(0,0);
+            }
+            
+        // anchor is located in NW part of Map
+        } else if( ((map_width / 2) > (anchor -> pos.x)) && ((map_height /2) < (anchor -> pos.y)) ){
+            cout << "NW" << endl;
+
+            switch(dir){
+                case(FRONT):
+                    return std::make_pair(1, -1);
+                case(LEFT):
+                    return std::make_pair(1, 1);
+                case(RIGHT):
+                    return std::make_pair(-1, -1);
+                case(FRONTLEFT):
+                    return std::make_pair(1, 0);
+                case(FRONTRIGHT):
+                    return std::make_pair(0, -1);
+                default:
+                    return std::make_pair(0,0);
+            }
+            
+        // anchor is located in SE part of Map
+        } else if( ((map_width / 2) < (anchor -> pos.x)) && ((map_height /2) > (anchor -> pos.y)) ){
+            cout << "SE" << endl;
+
+            switch(dir){
+                case(FRONT):
+                    return std::make_pair(-1, 1);
+                case(LEFT):
+                    return std::make_pair(-1, -1);
+                case(RIGHT):
+                    return std::make_pair(1, 1);
+                case(FRONTLEFT):
+                    return std::make_pair(-1, 0);
+                case(FRONTRIGHT):
+                    return std::make_pair(0, 1);
+                default:
+                    return std::make_pair(0,0);
+            }
+
+        // anchor is located in NE part of Map
+        } else if( ((map_width / 2) < (anchor -> pos.x)) && ((map_height /2) < (anchor -> pos.y)) ){
+            cout << "NE" << endl;
+
+            switch(dir){
+                case(FRONT):
+                    return std::make_pair(-1, -1);
+                case(LEFT):
+                    return std::make_pair(1, -1);
+                case(RIGHT):
+                    return std::make_pair(-1, 1);
+                case(FRONTLEFT):
+                    return std::make_pair(0, -1);
+                case(FRONTRIGHT):
+                    return std::make_pair(-1, 0);
+                default:
+                    return std::make_pair(0,0);
+            }
+        }
+
+    }
+
+    return std::make_pair(0, 0);
 }

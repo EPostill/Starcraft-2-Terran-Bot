@@ -11,6 +11,14 @@
 
 using namespace sc2;
 
+// For easy identification of map_name throught the code
+enum MapName { CACTUS, BELSHIR, PROXIMA };
+
+// For easy identification of where to place a structure relative to another
+enum RelDir { LEFT, RIGHT, FRONT, FRONTLEFT, FRONTRIGHT };
+
+
+
 class Hal9001 : public sc2::Agent {
 public:
 	virtual void OnGameStart();
@@ -43,6 +51,24 @@ public:
 	void step15();
 	void step16();
 
+
+	// Helper functions
+	// TODO: Public for now, move to private later
+
+	/*
+	@desc 	This will return the radius of the structure to be built
+	@param	abilityId - BUILD_SUPPLYDEPOT, etc
+	*/
+	float radiusOfToBeBuilt(ABILITY_ID abilityId);
+
+	/*
+	@desc   This will return a tuple (1,0), (1, -1), etc. 
+	@param  anchor - a unit, will build relative to this
+			dir    - RelDir enum
+	*/
+	std::pair<int, int> getRelativeDir(const Unit *anchor, const RelDir dir);
+
+
 private:
 	// counts the number of units of a given type (does not include those in training)
 	size_t CountUnitType(UNIT_TYPEID unit_type);
@@ -61,6 +87,14 @@ private:
 	const Unit *mainSCV;	// main scv worker
 	int supplies;			// supply count
 	int minerals;			// mineral count
+
+	// map name
+	MapName map_name;
+
+	// map width and height
+	int map_width;
+	int map_height;
+
 };
 
 #endif
