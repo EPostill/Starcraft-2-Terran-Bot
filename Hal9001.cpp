@@ -113,29 +113,18 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     }
 
     /**
-    Build Order # 5: Send a SCV to scount enemy base
+    Build Order # 5: Send a SCV to scount enemy base and train a marine
     Condition: supply >= 17 and Barracks == 1, Supply Depot == 1, Refinery == 1
     Status: NOT DONE
     **/
     if (supplies >= 17 && refineries.size() == 1 && depots.size() == 1 && barracks.size() == 1){
-        // get random scv
-        const Unit *random = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV).front();
+        const Unit *barrack = barracks.front();
+        // train one marine
+        if (CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 0 && barrack->orders.empty()){
+            Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
 
-        // send scv to diagonal opposite from starting point
-
-        // FOR MAX
-    }
-
-
-    Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
-    if (!units.empty()) {
-        const Unit* barracks = units.front();
-        if (doneConstruction(barracks) && CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 0 && barracks->orders.empty()) {
-            // !!! scout with scv
-
-            //train one marine
-            Actions()->UnitCommand(barracks, ABILITY_ID::TRAIN_MARINE);
         }
+        // FOR MAX - send scv scout
     }
 
     if (supplies >= 19 && minerals >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND) == 0) {
@@ -148,6 +137,15 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         //build command center
         Expand();
     } 
+
+    // set rally point of new command center to minerals
+    if (bases.size() == 1){
+        const Unit* commcenter = bases.front();
+        // only set it once
+        if (commcenter->build_progress == 0.5){
+            Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos), true);
+        }
+    }
 
 
     if (CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 1 && Observation()->GetMinerals() >= 150) {
