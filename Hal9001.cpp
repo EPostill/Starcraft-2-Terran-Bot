@@ -146,7 +146,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         //build command center
         Expand();
     } 
-
     // set rally point of new command center to minerals
     if (bases.size() == 1){
         const Unit* commcenter = bases.front();
