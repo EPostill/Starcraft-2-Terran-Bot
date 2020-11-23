@@ -26,8 +26,8 @@ void Hal9001::OnGameStart() {
     } else{
         cout << "Map Name Cannot be retrieved" << endl;
     }
-
-    rampLocation = startLocation;   // will change later
+    // set first depot location
+    depotLocation = getFirstDepotLocation(GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front());
     mainSCV = nullptr;
 }
 
@@ -53,56 +53,17 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Units widowmines = GetUnitsOfType(UNIT_TYPEID::TERRAN_WIDOWMINE);
     Units vikings = GetUnitsOfType(UNIT_TYPEID::TERRAN_VIKINGASSAULT);
 
-    
-    // move scv towards supply depot build location
-    if (!mainSCV && supplies == 13){
-        // set main scv worker to the first one trained
-        Units scvs = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);  // test if this gets the newly trained scv
-        int i = 0;
-        // for (const auto &scv : scvs){
-        //     cout << i << ": " << scv->pos.x << "  " << scv->pos.y << endl;
-        //     ++i;
-        // }
-        const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
-        Point3D exp = FindNearestExpansion();
-        // sets rally point to nearest expansion so scv will walk towards it
-        // !!! change to correct location 
-        Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, exp);
-        
-    }
-    // set rally point back to minerals
-    if (mainSCV && supplies == 14){
-       const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
-       Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos)); 
-    }
+    // handle mainSCV behaviour for build orders < #2
+    initializeMainSCV(bases);
 
     /**
     Build Order # 2: Build Depot towards center from command center
     Condition: supply >= 14 and minerals > 100
     Status: DONE
     **/
-    if (supplies >= 14 && minerals > 100 && depots.size() == 0) {
-        // get the radius of the initial command center
-        float radiusCC = bases.front() -> radius;
-
-        // get the radius of to-be-built structure
-        float radiusSD = radiusOfToBeBuilt(ABILITY_ID::BUILD_SUPPLYDEPOT);
-
-        // distance from CC
-        // TODO: is this still too hard coded? maybe look into playable_max of game_info
-        int distance = 10;
-
-        // get relative direction
-        // I want to place supply depot in relative front left of Command Center
-        std::pair<int, int> relDir = getRelativeDir(bases.front(), FRONTLEFT);
-
-        // config coordinates 
-        // startLocation is the location of command center
-        float x = startLocation.x + (radiusCC + radiusSD + distance) * relDir.first;
-        float y = startLocation.y + (radiusCC + radiusSD + distance) * relDir.second;
-
+    if (supplies >= 14 && minerals > 100 && depots.empty()) {
         // call BuildStructure
-        BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, x, y, mainSCV);
+        BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, depotLocation.x, depotLocation.y, mainSCV);
 
         //TODO: lower the supply depot so units can walk over it
 
@@ -114,7 +75,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Condition: supply >= 16 and minerals >= 150
     Status: DONE
     **/
-    if (supplies >= 16 && minerals >= 150 && barracks.size() == 0) {
+    if (supplies >= 16 && minerals >= 150 && barracks.empty()) {
         const Unit *depot = depots.front();
         
         // get radius of depot
@@ -152,41 +113,47 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     }
 
     /**
-    Build Order # 5: Send a SCV to scount enemy base
+    Build Order # 5: Send a SCV to scount enemy base and train a marine
     Condition: supply >= 17 and Barracks == 1, Supply Depot == 1, Refinery == 1
     Status: NOT DONE
     **/
     if (supplies >= 17 && refineries.size() == 1 && depots.size() == 1 && barracks.size() == 1){
-        // get random scv
-        const Unit *random = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV).front();
+        const Unit *barrack = barracks.front();
+        // train one marine
+        if (CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 0 && barrack->orders.empty()){
+            Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
 
-        // send scv to diagonal opposite from starting point
-
-        // FOR MAX
-    }
-
-
-    Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
-    if (!units.empty()) {
-        const Unit* barracks = units.front();
-        if (doneConstruction(barracks) && CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 0 && barracks->orders.empty()) {
-            // !!! scout with scv
-
-            //train one marine
-            Actions()->UnitCommand(barracks, ABILITY_ID::TRAIN_MARINE);
         }
+        // FOR MAX - send scv scout
     }
-
+    /**
+     * Build Order # 6: Upgrade to orbital command center
+     * Condition: supply >= 19, minerals >= 150, Orbital Command == 0
+     * Status: DONE
+     */
     if (supplies >= 19 && minerals >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND) == 0) {
         //upgrade command center to orbital command
         const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
         Actions()->UnitCommand(commcenter, ABILITY_ID::MORPH_ORBITALCOMMAND, true);
     }
 
+    /**
+     * Build Order # 7: Build second command center (expand)
+     * Condition: supply >= 20, minerals >= 400, Command Center == 0
+     * Status: DONE
+     */
     if (supplies >= 20 && Observation()->GetMinerals() >= 400 && CountUnitType(UNIT_TYPEID::TERRAN_COMMANDCENTER) == 0) {
         //build command center
         Expand();
     } 
+    // set rally point of new command center to minerals
+    if (bases.size() == 1){
+        const Unit* commcenter = bases.front();
+        // only set it once
+        if (commcenter->build_progress == 0.5){
+            Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos), true);
+        }
+    }
 
 
     if (CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 1 && Observation()->GetMinerals() >= 150) {
@@ -290,6 +257,54 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
 }
 
+void Hal9001::initializeMainSCV(Units &bases){
+    if (bases.empty()){
+        return;
+    }
+    const Unit *commcenter = bases.front();
+    // tell the first scv in training to move towards supply depot build location
+    // by setting command center rally point
+    if (!mainSCV && supplies == 13){
+        Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, depotLocation);   
+    }
+
+    if (!mainSCV && supplies == 14){
+        // set the first trained scv to mainSCV
+        Units scvs = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
+        for (const auto &scv: scvs){
+            const UnitOrder order = scv->orders.front();
+            // this is the first trained scv
+            if (order.target_pos.x != 0 && order.target_pos.y != 0){
+                mainSCV = scv;
+            }
+        }
+        // set commcenter rally point back to minerals
+        Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos)); 
+    }        
+
+}
+
+const Point2D Hal9001::getFirstDepotLocation(const Unit *commcenter){
+    // get the radius of the initial command center
+    float radiusCC = commcenter->radius;
+
+    // get the radius of to-be-built structure
+    float radiusSD = radiusOfToBeBuilt(ABILITY_ID::BUILD_SUPPLYDEPOT);
+
+    // distance from CC
+    // TODO: is this still too hard coded? maybe look into playable_max of game_info
+    int distance = 10;
+
+    // get relative direction
+    // I want to place supply depot in relative front left of Command Center
+    std::pair<int, int> relDir = getRelativeDir(commcenter, FRONTLEFT);
+
+    // config coordinates 
+    // startLocation is the location of command center
+    float x = startLocation.x + (radiusCC + radiusSD + distance) * relDir.first;
+    float y = startLocation.y + (radiusCC + radiusSD + distance) * relDir.second;   
+    return Point2D(x, y); 
+}
 
 void Hal9001::ManageSCVTraining(){
     Units commcenters = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
@@ -317,10 +332,6 @@ void Hal9001::OnStep() {
     ManageRefineries();
 
     BuildOrder(observation);
-
-    if (mainSCV){
-        cout << "x: " << mainSCV->pos.x << " y: " << mainSCV->pos.y << endl;
-    }
 
 }
 
@@ -567,7 +578,7 @@ float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
         }
     }
 
-    cout << abilities[index].button_name << " " << abilities[index].is_building << endl;
+    // cout << abilities[index].button_name << " " << abilities[index].is_building << endl;
 
     // return the footprint radius of ability
     return abilities[index].footprint_radius;
@@ -586,7 +597,7 @@ std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir
 
         // anchor is located in the SW part of Map
         if( ((map_width / 2) > (anchor -> pos.x)) && ((map_height /2) > (anchor -> pos.y)) ){
-            cout << "SW" << endl;
+            // cout << "SW" << endl;
             switch(dir){
                 case(FRONT):
                     return std::make_pair(1, 1);
@@ -604,7 +615,7 @@ std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir
             
         // anchor is located in NW part of Map
         } else if( ((map_width / 2) > (anchor -> pos.x)) && ((map_height /2) < (anchor -> pos.y)) ){
-            cout << "NW" << endl;
+            // cout << "NW" << endl;
 
             switch(dir){
                 case(FRONT):
@@ -623,7 +634,7 @@ std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir
             
         // anchor is located in SE part of Map
         } else if( ((map_width / 2) < (anchor -> pos.x)) && ((map_height /2) > (anchor -> pos.y)) ){
-            cout << "SE" << endl;
+            // cout << "SE" << endl;
 
             switch(dir){
                 case(FRONT):
@@ -642,7 +653,7 @@ std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir
 
         // anchor is located in NE part of Map
         } else if( ((map_width / 2) < (anchor -> pos.x)) && ((map_height /2) < (anchor -> pos.y)) ){
-            cout << "NE" << endl;
+            // cout << "NE" << endl;
 
             switch(dir){
                 case(FRONT):

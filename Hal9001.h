@@ -46,6 +46,10 @@ public:
 	void Expand();
 	// moves unit to target position
 	void moveUnit(const Unit *unit, const Point2D &target);
+	// sets mainSCV to the first trained scv and moves it to first supply depot build location
+	void initializeMainSCV(Units &bases);
+	// gets the location of where to build the first supply depot
+	const Point2D getFirstDepotLocation(const Unit *commcenter);
 
 	void step14();
 	void step15();
@@ -83,7 +87,7 @@ private:
 
     std::vector<Point3D> expansions;	// vector of all expansions
     Point3D startLocation;	// location of main base
-	Point3D rampLocation;	// location of ramp leading to main base
+	Point2D depotLocation;	// location where to build the first depot
 	const Unit *mainSCV;	// main scv worker
 	int supplies;			// supply count
 	int minerals;			// mineral count
