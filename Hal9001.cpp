@@ -672,7 +672,7 @@ void Hal9001::buildNextTo(ABILITY_ID ability_id, const Unit* ref, RelDir relDir,
     float y = (ref -> pos.y) + (radiusRE + radiusTB + dist) * relCor.second;
 
     // call BuildStructure
-    BuildStructure(ABILITY_ID::BUILD_BARRACKS, x, y);
+    BuildStructure(ability_id, x, y);
 }
 
 
