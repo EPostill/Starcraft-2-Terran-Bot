@@ -126,13 +126,22 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         }
         // FOR MAX - send scv scout
     }
-
+    /**
+     * Build Order # 6: Upgrade to orbital command center
+     * Condition: supply >= 19, minerals >= 150, Orbital Command == 0
+     * Status: DONE
+     */
     if (supplies >= 19 && minerals >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND) == 0) {
         //upgrade command center to orbital command
         const Unit* commcenter = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front();
         Actions()->UnitCommand(commcenter, ABILITY_ID::MORPH_ORBITALCOMMAND, true);
     }
 
+    /**
+     * Build Order # 7: Build second command center (expand)
+     * Condition: supply >= 20, minerals >= 400, Command Center == 0
+     * Status: DONE
+     */
     if (supplies >= 20 && Observation()->GetMinerals() >= 400 && CountUnitType(UNIT_TYPEID::TERRAN_COMMANDCENTER) == 0) {
         //build command center
         Expand();
