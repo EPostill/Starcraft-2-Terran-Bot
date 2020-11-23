@@ -17,7 +17,9 @@ enum MapName { CACTUS, BELSHIR, PROXIMA };
 // For easy identification of where to place a structure relative to another
 enum RelDir { LEFT, RIGHT, FRONT, FRONTLEFT, FRONTRIGHT };
 
-
+// For easy identification of location in the map
+// M for missing
+enum Corner { NW, SW, NE, SE, M };
 
 class Hal9001 : public sc2::Agent {
 public:
@@ -36,8 +38,7 @@ public:
 	// build a refinery near the given command center
 	void BuildRefinery(const Unit *commcenter, const Unit *builder = nullptr);
 	void updateSupplies();
-	//builds a building adjacent to reference
-	void BuildNextTo(ABILITY_ID ability_type_for_structure, UNIT_TYPEID new_building, const Unit* reference, const Unit* builder);
+	
 	// policy for training scvs
 	void ManageSCVTraining();
 	// policy for gathering vespene gas
@@ -60,6 +61,11 @@ public:
 	// TODO: Public for now, move to private later
 
 	/*
+	@desc Builds a building adjacent to reference
+	*/
+	void buildNextTo(ABILITY_ID ability_id, const Unit* ref, RelDir relDir, int dist);
+
+	/*
 	@desc 	This will return the radius of the structure to be built
 	@param	abilityId - BUILD_SUPPLYDEPOT, etc
 	*/
@@ -72,6 +78,24 @@ public:
 	*/
 	std::pair<int, int> getRelativeDir(const Unit *anchor, const RelDir dir);
 
+	/*
+	@desc   This will return where another structure is relative to another structure anchor
+			Layman: "Is target on the left or right of anchor"
+
+	@param  anchor - a unit, from this
+			target - a unit, to this
+
+	@return LEFT or RIGHT (enum)
+	*/
+	RelDir getHandSide(const Unit* anchor, const Unit *target);
+
+
+	/*
+	@desc This will return where a structure is in the map
+	@param unit
+	@return Corner enum
+	*/
+	Corner cornerLoc(const Unit* unit);
 
 private:
 	// counts the number of units of a given type (does not include those in training)
