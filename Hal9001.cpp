@@ -141,10 +141,11 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
     /***=========================================================================================
      * Build Order # 8: Build reactor on barracks, and build second depot
-     * Condition: Marine == 1, we have an orbital and a normal command center and no reactors
+     * Condition: Marine == 1, we have an orbital and a normal command center and one depot
      * Status: DONE
     *========================================================================================= */
-    if (marines.size() == 1 && bases.size() == 1 && orbcoms.size() == 1 && reactors.empty()) {
+    if (marines.size() == 1 && bases.size() == 1 && orbcoms.size() == 1 && depots.size() == 1) {
+        cout << "building reactor and depot" << endl;
         // get barrack
         const Unit* barrack = barracks.front();
         // build reactor on barracks
@@ -459,6 +460,14 @@ void Hal9001::BuildStructure(ABILITY_ID ability_type_for_structure, float x, flo
     // if no builder is given, make the builder a random scv
     if (!builder){
         Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
+        for (const auto &unit : units){
+            for (const auto &order : unit->orders){
+                // don't need to build if another builder is building
+                if (order.ability_id == ability_type_for_structure){
+                    return;
+                }
+            }
+        }
         builder = units.back();
     }
 
@@ -587,16 +596,29 @@ void Hal9001::buildNextTo(ABILITY_ID ability_id, const Unit* ref, RelDir relDir,
 
     // get radius of to be built
     float radiusTB = radiusOfToBeBuilt(ability_id); 
+    vector<QueryInterface::PlacementQuery> queries;
+    // check placement in all directions
+    for (int i = 0; i <= RelDir::FRONTRIGHT; ++i){
+        RelDir rd = static_cast<RelDir>(i);
+        std::pair<int, int> relCor = getRelativeDir(ref, rd);
+        // config coordinates for building barracks
+        float x = (ref -> pos.x) + (radiusRE + radiusTB + dist) * relCor.first;
+        float y = (ref -> pos.y) + (radiusRE + radiusTB + dist) * relCor.second;
+        queries.push_back(QueryInterface::PlacementQuery(ability_id, Point2D(x,y)));
 
-    // I want to build it in relDir of ref
-    std::pair<int, int> relCor = getRelativeDir(ref, relDir);
+    }
+    vector<bool> placeable = Query()->Placement(queries);
+    // place in a possible placement
+    for (int i = 0; i < placeable.size(); ++i){
+        if (placeable[i]){
+            float x = queries[i].target_pos.x;
+            float y = queries[i].target_pos.y;
+            // call BuildStructure
+            BuildStructure(ability_id, x, y, builder);
+            break;
+        }
+    }
 
-    // config coordinates for building barracks
-    float x = (ref -> pos.x) + (radiusRE + radiusTB + dist) * relCor.first;
-    float y = (ref -> pos.y) + (radiusRE + radiusTB + dist) * relCor.second;
-
-    // call BuildStructure
-    BuildStructure(ability_id, x, y, builder);
 }
 
 
