@@ -287,12 +287,12 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
     /***=========================================================================================
      * Build Order # 19: build more 3 depots in succession behind minerals at 2nd comm center
-     * Condition : we already have 3 depots
+     * Condition : we already have 3 depots and have less than 6 depots
      * Status: DONE
     *========================================================================================= */    
-    // if (doneConstruction(current_depot) && Observation()->GetMinerals() >= 100) {
-    //     //build another depot behind the current depot
-    // }
+    if (depots.size() >= 3 && depots.size() < 6) {
+        //build another depot behind the current depot
+    }
 
     // if (supplies >= 46 && Observation()->GetMinerals() >= 300) {
     //     //build 2 more barracks next to the star port and factory
@@ -603,32 +603,6 @@ Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
 bool Hal9001::doneConstruction(const Unit *unit){
     return unit->build_progress == 1.0;
 }
-
-void Hal9001::step14(){
-    // use extra resources for marines (but prioritize buildings)
-
-}
-
-// once factory upgrades finish, build widow mine for air unit defence
-void Hal9001::step15(){
-    Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
-    const Unit *factory = units.front();
-    // tell factory to build widow mine
-    Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_WIDOWMINE);
-
-}
-
-// 36-38 supply - build depot behind minerals at the 2nd command center
-void Hal9001::step16(){
-    Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
-    const Unit *commcenter = units.back();    // check if this gets the 2nd command center
-    // get a mineral that is near the second command center
-    const Unit *mineral = FindNearestMineralPatch(commcenter->pos);
-    // build depot behind this mineral
-    // figure out how to put it behind the depot
-
-}
-
 
 // have 3 workers on each refinery
 void Hal9001::ManageRefineries(){

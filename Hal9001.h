@@ -58,11 +58,6 @@ public:
 	// gets all widow mines (burrowed and raised)
 	Units getWidowMines();
 
-	void step14();
-	void step15();
-	void step16();
-
-
 	// Helper functions
 	// TODO: Public for now, move to private later
 
