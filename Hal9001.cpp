@@ -224,21 +224,16 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: once factory from (9) finishes
      * Status: DONE
      *=========================================================================================*/
-    if (factories.size() == 1 && minerals >= 150 && vespene > 100) {
-        // get factory
-        const Unit* factory = factories.back();
-
-        // build a star port next to the factory
-        Actions()->UnitCommand(factory, ABILITY_ID::BUILD_STARPORT);
-    }
-
-    if (techlabs.empty() && factories.size() == 1) {
-        // get factory
-        const Unit* factory = factories.back();
-
-        // build tech lab on factory
-        Actions()->UnitCommand(factory, ABILITY_ID::BUILD_TECHLAB_FACTORY);
-    }
+    // if (factories.size() == 1 && minerals >= 150 && vespene > 100 && starports.empty()) {
+    //     // get factory
+    //     const Unit* factory = factories.back();
+    //     if (doneConstruction(factory)){
+    //         // build a star port next to the factory
+    //         buildNextTo(ABILITY_ID::BUILD_STARPORT, factory, FRONTRIGHT, 0);
+    //         // build tech lab on factory
+    //         Actions()->UnitCommand(factory, ABILITY_ID::BUILD_TECHLAB_FACTORY);
+    //     }
+    // }
 
     /***=========================================================================================
      * Build Order # 15: build widow mine for air unit defence
