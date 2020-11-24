@@ -372,7 +372,7 @@ const Point2D Hal9001::getFirstDepotLocation(const Unit *commcenter){
 
     // distance from CC
     // TODO: is this still too hard coded? maybe look into playable_max of game_info
-    int distance = 7;
+    int distance = 11;
 
     // get relative direction
     // I want to place supply depot in relative front left of Command Center
