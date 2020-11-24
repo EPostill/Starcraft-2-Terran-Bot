@@ -165,8 +165,11 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // get 1st cc => orbital now
         const Unit* cc1 = orbcoms.front();
 
+        // which handside is the 2nd command center relative to 1st
+        RelDir handSide = getHandSide(cc1, cc2);
+
         // build factory
-        buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 3);
+        buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, handSide, 3);
     }
 
     /***=========================================================================================
@@ -725,13 +728,15 @@ float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
 @note   Refer to Orientation pngs in /docs
 */
 std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir){
-    
+    // get which corner in the map base is
+    Corner loc = cornerLoc(anchor);
+
     // if cactus
     if(map_name == CACTUS){
 
         // anchor is located in the SW part of Map
-        if( ((map_width / 2) > (anchor -> pos.x)) && ((map_height /2) > (anchor -> pos.y)) ){
-            // cout << "SW" << endl;
+        if( loc == SW ){
+       
             switch(dir){
                 case(FRONT):
                     return std::make_pair(1, 1);
@@ -745,13 +750,16 @@ std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir
                     return std::make_pair(1, 0);
                 case(BEHIND):
                     return std::make_pair(-1, -1);
+                case(BEHINDLEFT):
+                    return std::make_pair(-1, 0);
+                case(BEHINDRIGHT):
+                    return std::make_pair(0, -1);
                 default:
                     return std::make_pair(0,0);
             }
             
         // anchor is located in NW part of Map
-        } else if( ((map_width / 2) > (anchor -> pos.x)) && ((map_height /2) < (anchor -> pos.y)) ){
-            // cout << "NW" << endl;
+        } else if( loc == NW ){
 
             switch(dir){
                 case(FRONT):
@@ -766,13 +774,16 @@ std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir
                     return std::make_pair(0, -1);
                 case(BEHIND):
                     return std::make_pair(-1, 1);
+                case(BEHINDLEFT):
+                    return std::make_pair(0, 1);
+                case(BEHINDRIGHT):
+                    return std::make_pair(-1, 0);
                 default:
                     return std::make_pair(0,0);
             }
             
         // anchor is located in SE part of Map
-        } else if( ((map_width / 2) < (anchor -> pos.x)) && ((map_height /2) > (anchor -> pos.y)) ){
-            // cout << "SE" << endl;
+        } else if( loc == SE ){
 
             switch(dir){
                 case(FRONT):
@@ -787,13 +798,16 @@ std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir
                     return std::make_pair(0, 1);
                 case(BEHIND):
                     return std::make_pair(1, -1);
+                case(BEHINDLEFT):
+                    return std::make_pair(0, -1);
+                case(BEHINDRIGHT):
+                    return std::make_pair(1, 0);
                 default:
                     return std::make_pair(0,0);
             }
 
         // anchor is located in NE part of Map
-        } else if( ((map_width / 2) < (anchor -> pos.x)) && ((map_height /2) < (anchor -> pos.y)) ){
-            // cout << "NE" << endl;
+        } else if( loc == NE ){
 
             switch(dir){
                 case(FRONT):
@@ -808,6 +822,10 @@ std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir
                     return std::make_pair(-1, 0);
                 case(BEHIND):
                     return std::make_pair(1, 1);
+                case(BEHINDLEFT):
+                    return std::make_pair(1, 0);
+                case(BEHINDRIGHT):
+                    return std::make_pair(0, 1);
                 default:
                     return std::make_pair(0,0);
             }

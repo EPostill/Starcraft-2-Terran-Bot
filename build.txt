@@ -33,10 +33,28 @@
 from here on, we use the barracks to make marines (later on marauders), tanks in the factory and medivacs in the star port
 when we make marines, we want to begin them all at the same time, for teams of 3
 tanks can be started right away, but hold out on the medivacs until combat shields finish
+air units come out around 8m, fusion core (for medivacs) should be built at 11:40 - 154 supply
+every time we make an expansion we should try an attack to disrupt the opponent
 
 27. research combat shields
 28. from here on, we build a command center and go through the upgrade tree
 29. once a suitable number of upgrades have been researched, go for the attack
+
+
+tech:
+stimpack - 3:50 - 42 supply
+combat shield - 4:00 - 42 supply
+terran infantry level 1 - 53 supply
+concussive shells - 6:22 - 78 supply
+terran infantry armor - 7:09 - 92 supply
+infantry infantry level 2 - 11:56 - 156 supply
+rapid reignition system - 12:26 - 173 supply
+high sec autotracking - 12:46 - 176 supply
+terran vehicle weapons - 13:35
+neosteel armor - 13:44
+vehicle ship plating - 14:27
+level 3 infantry weapons - 15:23
+level 2 vehicle weapons - 15:27
 
 This build is taken from HuShang:
 https://lotv.spawningtool.com/build/135048/

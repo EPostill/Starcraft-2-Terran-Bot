@@ -15,7 +15,7 @@ using namespace sc2;
 enum MapName { CACTUS, BELSHIR, PROXIMA };
 
 // For easy identification of where to place a structure relative to another
-enum RelDir { LEFT, RIGHT, FRONT, FRONTLEFT, FRONTRIGHT, BEHIND };
+enum RelDir { LEFT, RIGHT, FRONT, FRONTLEFT, FRONTRIGHT, BEHINDLEFT, BEHINDRIGHT, BEHIND };
 
 // For easy identification of location in the map
 // M for missing
