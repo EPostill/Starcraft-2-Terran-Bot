@@ -150,7 +150,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         const Unit *firstDepot = depots.front();
         Actions()->UnitCommand(firstDepot, ABILITY_ID::MORPH_SUPPLYDEPOT_LOWER);
         // build a depot next to the reactor
-        buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, barrack, FRONTRIGHT, 0);
+        buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, barrack, LEFT, 0);
     }
 
     /***=========================================================================================
@@ -165,11 +165,8 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // get 1st cc => orbital now
         const Unit* cc1 = orbcoms.front();
 
-        // get handside aka 2nd CC is at left or right of first one
-        RelDir handSide = getHandSide(cc1, cc2);
-
         // build factory
-        buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, handSide, 4);
+        buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 3);
     }
 
     /***=========================================================================================
@@ -235,12 +232,16 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     }
 
     /***=========================================================================================
-     * Build Order # 15: build widow mine for air unit defence
-     * Condition :once factory upgrades finish, 
+     * Build Order # 15: train a widow mine for air unit defence
+     * Condition : we have a factory tech lab 
      * Status: NOT DONE
     *========================================================================================= */
-    if (reactors.size() == 1 && widowmines.empty() && minerals >= 75) {
+    if (techlabs.size() == 1 && widowmines.empty() && minerals >= 75) {
         //build widow mine for defence
+        const Unit *techlab = techlabs.front();
+        if (doneConstruction(techlab)){
+            Actions()->UnitCommand(techlab, ABILITY_ID::TRAIN_WIDOWMINE);
+        }
         
     }
 
@@ -639,6 +640,14 @@ void Hal9001::buildNextTo(ABILITY_ID ability_id, const Unit* ref, RelDir relDir,
 
     }
     vector<bool> placeable = Query()->Placement(queries);
+    // try to place in given direction
+    if (placeable[relDir]){
+        float x = queries[relDir].target_pos.x;
+        float y = queries[relDir].target_pos.y;
+        // call BuildStructure
+        BuildStructure(ability_id, x, y, builder); 
+        return;
+    }
     // place in a possible placement
     for (int i = 0; i < placeable.size(); ++i){
         if (placeable[i]){
