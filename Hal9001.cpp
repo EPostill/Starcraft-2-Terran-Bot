@@ -50,7 +50,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Units marines = GetUnitsOfType(UNIT_TYPEID::TERRAN_MARINE);
     Units tanks = GetUnitsOfType(UNIT_TYPEID::TERRAN_SIEGETANK);
     Units widowmines = getWidowMines();
-    Units vikings = GetUnitsOfType(UNIT_TYPEID::TERRAN_VIKINGASSAULT);
+    Units vikings = GetUnitsOfType(UNIT_TYPEID::TERRAN_VIKINGFIGHTER);
 
     // handle mainSCV behaviour for build orders < #2
     initializeMainSCV(bases);
@@ -257,10 +257,17 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // build depot
         buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, mineralpatch, BEHIND, 1);
     }
-
-    // if (CountUnitType(UNIT_TYPEID::TERRAN_STARPORT) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_VIKINGASSAULT) == 0) {
-    //     //build a viking
-    // }
+    /***=========================================================================================
+     * Build Order # 17: train viking for defence
+     * Condition : we have a starport and no vikings
+     * Status: DONE
+    *========================================================================================= */
+    if (starports.size() == 1 && vikings.empty()) {
+        const Unit *sp = starports.front();
+        if (doneConstruction(sp) && sp->orders.empty()){
+            Actions()->UnitCommand(sp, ABILITY_ID::TRAIN_VIKINGFIGHTER);
+        }
+    }
 
     // if (CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) == 0 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() >= 125) {
     //     //build a tank
