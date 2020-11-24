@@ -39,7 +39,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Units barracks = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
     Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
     Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
-    Units techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_TECHLAB);
+    Units techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORYTECHLAB);
     Units reactors = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKSREACTOR);
     Units depots = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
     Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
@@ -187,23 +187,24 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     }
 
     /***=========================================================================================
-     * Build Order # 11: train 2 marines and move them to front of bunker
+     * Build Order # 11: train 2 marines and move all marines to bunker
      * Condition: once reactor from (8) finishes
      * Status: DONE
      *=========================================================================================*/
     if (reactors.size() == 1 && marines.size() < 3 && minerals >= 50) {
+        // TODO: this will happen again once the marines go in the bunker, fix? 
         // train 2 marines
         const Unit *barrack = barracks.front();
         if (barrack->orders.empty()){
             Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
         }
     }
-    // move marines to front of bunker
+    // load marines in bunker
     if (marines.size() == 3){
         const Unit *bunker = bunkers.front();
-        pair<int, int> relDir = getRelativeDir(bunker, FRONT);
-        Point2D target(bunker->pos.x + 5 * relDir.first, bunker->pos.y + 5 *relDir.second);
-        Actions()->UnitCommand(marines, ABILITY_ID::SMART, target);
+        if (doneConstruction(bunker)){
+            Actions()->UnitCommand(marines, ABILITY_ID::SMART, bunker);
+        }
     }
 
     /***=========================================================================================
@@ -211,31 +212,31 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: 26 supply + ??? minerals
      * Status: DONE
      *=========================================================================================*/
-    if (supplies >= 26 && Observation()->GetMinerals() >= 75 && /*one empty gas next to first command center*/true) {
+    if (supplies >= 26 && minerals >= 75 && /*one empty gas next to first command center*/true) {
         // build second refinery next to first command center
         BuildRefinery(orbcoms.front());
     }
 
-    // /***=========================================================================================
-    //  * Build Order # 13: unlock star port + tech lab
-    //  * Condition: once factory from (9) finishes
-    //  * Status: DONE
-    //  *=========================================================================================*/
-    // if (CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 1 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() > 100) {
-    //     // get factory
-    //     // const Unit* factory = factories.back();
+    /***=========================================================================================
+     * Build Order # 13: unlock star port + tech lab
+     * Condition: once factory from (9) finishes
+     * Status: DONE
+     *=========================================================================================*/
+    if (factories.size() == 1 && minerals >= 150 && vespene > 100) {
+        // get factory
+        const Unit* factory = factories.back();
 
-    //     // // build a star port next to the factory
-    //     // Actions()->UnitCommand(factory, ABILITY_ID::BUILD_STARPORT, true);
-    // }
+        // build a star port next to the factory
+        Actions()->UnitCommand(factory, ABILITY_ID::BUILD_STARPORT);
+    }
 
-    // if (CountUnitType(UNIT_TYPEID::TERRAN_TECHLAB) == 0 && Observation()->GetMinerals() >= 50) {
-    //     // get factory
-    //     // const Unit* factory = factories.back();
+    if (techlabs.empty() && factories.size() == 1) {
+        // get factory
+        const Unit* factory = factories.back();
 
-    //     // //build a tech lab connected to the factory
-    //     // buildNextTo(ABILITY_ID::BUILD_TECHLAB, factory, FRONT, 4);
-    // }
+        // build tech lab on factory
+        Actions()->UnitCommand(factory, ABILITY_ID::BUILD_TECHLAB_FACTORY);
+    }
 
     // /***=========================================================================================
     //  * Build Order # 15: build widow mine for air unit defence
