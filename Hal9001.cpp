@@ -40,13 +40,12 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
     Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
     Units techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_TECHLAB);
-    Units reactors = GetUnitsOfType(UNIT_TYPEID::TERRAN_REACTOR);
+    Units reactors = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKSREACTOR);
     Units depots = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
     Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
     Units engbays = GetUnitsOfType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
     Units orbcoms = GetUnitsOfType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND);
     Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
-
     // lists to keep track of all our units
     Units marines = GetUnitsOfType(UNIT_TYPEID::TERRAN_MARINE);
     Units tanks = GetUnitsOfType(UNIT_TYPEID::TERRAN_SIEGETANK);
@@ -143,7 +142,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
     *========================================================================================= */
     if (marines.size() == 1 && bases.size() == 1 && orbcoms.size() == 1 && depots.size() == 1) {
-        cout << "building reactor and depot" << endl;
         // get barrack
         const Unit* barrack = barracks.front();
         // build reactor on barracks
@@ -181,33 +179,42 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: 23 supply + 100 minerals
      * Status: DONE
      *=========================================================================================*/
-    if (supplies >= 23 && Observation()->GetMinerals() >= 100 && CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_BUNKER) == 0) {
+    if (supplies >= 23 && minerals >= 100 && factories.size() == 1 && bunkers.size() == 0) {
         // get command center
         const Unit* cc = bases.back();
-
         // build bunker towards the center from command center 2
         buildNextTo(ABILITY_ID::BUILD_BUNKER, cc, FRONT, 7);
     }
 
-    // /***=========================================================================================
-    //  * Build Order # 11: build bunker towards the center of the map from the 2nd command center
-    //  * Condition: once reactor from (8) finishes
-    //  * Status: NOT DONE
-    //  *=========================================================================================*/
-    // if (CountUnitType(UNIT_TYPEID::TERRAN_REACTOR) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_MARINE) < 4 && Observation()->GetMinerals() >= 50) {
-    //     // TODO: queue a marine
-    //     // TODO: move marines in front of bunker
-    // }
+    /***=========================================================================================
+     * Build Order # 11: train 2 marines and move them to front of bunker
+     * Condition: once reactor from (8) finishes
+     * Status: DONE
+     *=========================================================================================*/
+    if (reactors.size() == 1 && marines.size() < 3 && minerals >= 50) {
+        // train 2 marines
+        const Unit *barrack = barracks.front();
+        if (barrack->orders.empty()){
+            Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
+        }
+    }
+    // move marines to front of bunker
+    if (marines.size() == 3){
+        const Unit *bunker = bunkers.front();
+        pair<int, int> relDir = getRelativeDir(bunker, FRONT);
+        Point2D target(bunker->pos.x + 5 * relDir.first, bunker->pos.y + 5 *relDir.second);
+        Actions()->UnitCommand(marines, ABILITY_ID::SMART, target);
+    }
 
-    // /***=========================================================================================
-    //  * Build Order # 12: build second refinery
-    //  * Condition: 26 supply + ??? minerals
-    //  * Status: DONE
-    //  *=========================================================================================*/
-    // if (supplies >= 26 && Observation()->GetMinerals() >= 75 && /*one empty gas next to first command center*/true) {
-    //     // build second refinery next to first command center
-    //     BuildRefinery(orbcoms.front());
-    // }
+    /***=========================================================================================
+     * Build Order # 12: build second refinery
+     * Condition: 26 supply + ??? minerals
+     * Status: DONE
+     *=========================================================================================*/
+    if (supplies >= 26 && Observation()->GetMinerals() >= 75 && /*one empty gas next to first command center*/true) {
+        // build second refinery next to first command center
+        BuildRefinery(orbcoms.front());
+    }
 
     // /***=========================================================================================
     //  * Build Order # 13: unlock star port + tech lab
