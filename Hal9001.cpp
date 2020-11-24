@@ -290,9 +290,13 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition : we already have 3 depots and have less than 6 depots
      * Status: DONE
     *========================================================================================= */    
-    if (depots.size() >= 3 && depots.size() < 6) {
-        //build another depot behind the current depot
-    }
+    // if (depots.size() >= 3 && depots.size() < 6 && bases.size() == 1) {
+    //     // get depot thats close to 2nd commcenter
+    //     const Unit *depot = FindNearestDepot(bases.front()->pos);
+    //     if (mainSCV->orders.empty()){
+    //         buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, depot, BEHINDLEFT, 0, mainSCV);
+    //     }
+    // }
 
     // if (supplies >= 46 && Observation()->GetMinerals() >= 300) {
     //     //build 2 more barracks next to the star port and factory
