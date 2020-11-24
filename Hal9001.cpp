@@ -155,12 +155,10 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
     /***=========================================================================================
      * Build Order # 9: Build factory in between command centers
-     * Condition: supply >= 22, vespene > 100, minerals > 150
+     * Condition: supply >= 22, vespene > 100, minerals > 150, we have orbital and normal comm center and no factories
      * Status: DONE
      *=========================================================================================*/
-    if (supplies >= 22 && vespene > 100 && minerals > 150 && CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 0) {
-        //build factory in between command centers
-
+    if (supplies >= 22 && vespene > 100 && minerals > 150 && bases.size() == 1 && orbcoms.size() == 1 && factories.empty()) {
         // get location of 2nd command center
         const Unit* cc2 = bases.back();
 
@@ -171,7 +169,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         RelDir handSide = getHandSide(cc1, cc2);
 
         // build factory
-        buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 4);
+        buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, handSide, 4);
     }
 
     /***=========================================================================================
