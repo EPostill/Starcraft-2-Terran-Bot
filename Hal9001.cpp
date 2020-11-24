@@ -84,7 +84,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
         // Call BuildRefinery with no builder aka random scv will be assigned
         // This will seek for nearest gas supply
-        BuildRefinery(GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front());
+        BuildRefinery(bases.front());
 
         // ManageRefineries() will take care of assigning scvs
     }
@@ -200,7 +200,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         }
     }
     // load marines in bunker
-    if (marines.size() == 3){
+    if (marines.size() == 3 && bunkers.size() == 1){
         const Unit *bunker = bunkers.front();
         if (doneConstruction(bunker)){
             Actions()->UnitCommand(marines, ABILITY_ID::SMART, bunker);
@@ -210,9 +210,10 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     /***=========================================================================================
      * Build Order # 12: build second refinery
      * Condition: 26 supply + ??? minerals
-     * Status: DONE
+     * Status: NOT DONE
      *=========================================================================================*/
     if (supplies >= 26 && minerals >= 75) {
+        // not working but idk why?
         // build second refinery next to first command center
         BuildRefinery(orbcoms.front());
     }
@@ -222,16 +223,16 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: once factory from (9) finishes
      * Status: DONE
      *=========================================================================================*/
-    // if (factories.size() == 1 && minerals >= 150 && vespene > 100 && starports.empty()) {
-    //     // get factory
-    //     const Unit* factory = factories.back();
-    //     if (doneConstruction(factory)){
-    //         // build a star port next to the factory
-    //         buildNextTo(ABILITY_ID::BUILD_STARPORT, factory, FRONTRIGHT, 0);
-    //         // build tech lab on factory
-    //         Actions()->UnitCommand(factory, ABILITY_ID::BUILD_TECHLAB_FACTORY);
-    //     }
-    // }
+    if (factories.size() == 1 && minerals >= 150 && vespene > 100 && starports.empty()) {
+        // get factory
+        const Unit* factory = factories.back();
+        if (doneConstruction(factory)){
+            // build a star port next to the factory
+            buildNextTo(ABILITY_ID::BUILD_STARPORT, factory, FRONTRIGHT, 0);
+            // build tech lab on factory
+            Actions()->UnitCommand(factory, ABILITY_ID::BUILD_TECHLAB_FACTORY);
+        }
+    }
 
     /***=========================================================================================
      * Build Order # 15: build widow mine for air unit defence
@@ -495,7 +496,7 @@ void Hal9001::BuildRefinery(const Unit *commcenter, const Unit *builder){
         builder = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, geyser->pos).back();
     }  
     
-    Actions()->UnitCommand(builder, ABILITY_ID::BUILD_REFINERY, geyser, true);
+    Actions()->UnitCommand(builder, ABILITY_ID::BUILD_REFINERY, geyser);
 }
 
 void Hal9001::moveUnit(const Unit *unit, const Point2D &target){
