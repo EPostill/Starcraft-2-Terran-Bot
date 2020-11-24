@@ -64,8 +64,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     if (supplies >= 14 && minerals > 100 && depots.empty()) {
         // call BuildStructure
         BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, depotLocation.x, depotLocation.y, mainSCV);
-
-        //TODO: lower the supply depot so units can walk over it
     }
 
     /**=========================================================================================
@@ -150,6 +148,9 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         const Unit* barrack = barracks.front();
         // build reactor on barracks
         Actions()->UnitCommand(barrack, ABILITY_ID::BUILD_REACTOR_BARRACKS);
+        // lower first depot
+        const Unit *firstDepot = depots.front();
+        Actions()->UnitCommand(firstDepot, ABILITY_ID::MORPH_SUPPLYDEPOT_LOWER);
         // build a depot next to the reactor
         buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, barrack, FRONTRIGHT, 0);
     }
@@ -175,18 +176,18 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 4);
     }
 
-    // /***=========================================================================================
-    //  * Build Order # 10: build bunker towards the center of the map from the 2nd command center
-    //  * Condition: 23 supply + 100 minerals
-    //  * Status: DONE
-    //  *=========================================================================================*/
-    // if (supplies >= 23 && Observation()->GetMinerals() >= 100 && CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_BUNKER) == 0) {
-    //     // get command center
-    //     const Unit* cc = bases.back();
+    /***=========================================================================================
+     * Build Order # 10: build bunker towards the center of the map from the 2nd command center
+     * Condition: 23 supply + 100 minerals
+     * Status: DONE
+     *=========================================================================================*/
+    if (supplies >= 23 && Observation()->GetMinerals() >= 100 && CountUnitType(UNIT_TYPEID::TERRAN_FACTORY) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_BUNKER) == 0) {
+        // get command center
+        const Unit* cc = bases.back();
 
-    //     // build bunker towards the center from command center 2
-    //     buildNextTo(ABILITY_ID::BUILD_BUNKER, cc, FRONT, 7);
-    // }
+        // build bunker towards the center from command center 2
+        buildNextTo(ABILITY_ID::BUILD_BUNKER, cc, FRONT, 7);
+    }
 
     // /***=========================================================================================
     //  * Build Order # 11: build bunker towards the center of the map from the 2nd command center
