@@ -31,6 +31,8 @@ public:
 	const Unit* FindNearestMineralPatch(const Point2D &start);
 	// returns geyser nearest to start
 	const Unit* FindNearestGeyser(const Point2D &start);
+	// returns supply depot nearest to start
+	const Unit* FindNearestDepot(const Point2D &start);
 	// returns free expansion location nearest to main base
 	const Point3D FindNearestExpansion();
 	void BuildStructure(ABILITY_ID ability_type_for_structure, float x, float y, const Unit *builder = nullptr);
