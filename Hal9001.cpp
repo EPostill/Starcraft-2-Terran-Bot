@@ -456,18 +456,27 @@ const Unit* Hal9001::FindNearestGeyser(const Point2D &start) {
     return target;
 }
 
-void Hal9001::BuildStructure(ABILITY_ID ability_type_for_structure, float x, float y, const Unit *builder) {
-    // if no builder is given, make the builder a random scv
-    if (!builder){
-        Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
-        for (const auto &unit : units){
-            for (const auto &order : unit->orders){
-                // don't need to build if another builder is building
-                if (order.ability_id == ability_type_for_structure){
-                    return;
-                }
+bool Hal9001::alreadyOrdered(ABILITY_ID ability_id){
+    Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
+    for (const auto &unit : units){
+        for (const auto &order : unit->orders){
+            // don't need to build if another builder is building
+            if (order.ability_id == ability_id){
+                return true;
             }
         }
+    }
+    return false;
+}
+
+void Hal9001::BuildStructure(ABILITY_ID ability_type_for_structure, float x, float y, const Unit *builder) {
+    // don't build if already being built
+    if (alreadyOrdered(ability_type_for_structure)){
+        return;
+    }
+    // if no builder is given, make the builder a random scv
+    Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
+    if (!builder){
         builder = units.back();
     }
 
@@ -590,7 +599,10 @@ void Hal9001::ManageRefineries(){
 @desc 	This will return the radius of the structure to be built
 */
 void Hal9001::buildNextTo(ABILITY_ID ability_id, const Unit* ref, RelDir relDir, int dist, const Unit *builder) {
-
+    // don't build if already being built
+    if (alreadyOrdered(ability_id)){
+        return;
+    }
     // get radius of ref
     float radiusRE = ref -> radius;
 

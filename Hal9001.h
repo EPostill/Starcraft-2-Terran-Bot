@@ -51,6 +51,8 @@ public:
 	void initializeMainSCV(Units &bases);
 	// gets the location of where to build the first supply depot
 	const Point2D getFirstDepotLocation(const Unit *commcenter);
+	// checks if any scv has the given order
+	bool alreadyOrdered(ABILITY_ID ability_id);
 
 	void step14();
 	void step15();
