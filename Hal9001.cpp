@@ -269,9 +269,17 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         }
     }
 
-    // if (CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) == 0 && Observation()->GetMinerals() >= 150 && Observation()->GetVespene() >= 125) {
-    //     //build a tank
-    // }
+    /***=========================================================================================
+     * Build Order # 18: train tank
+     * Condition : we have a factory, a widowmine and no tanks
+     * Status: DONE
+    *========================================================================================= */
+    if (tanks.empty() && factories.size() == 1 && widowmines.size() == 1) {
+        const Unit *factory = factories.front();
+        if (factory->orders.empty()){
+            Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_SIEGETANK);
+        }        
+    }
 
     // //this one is tricky, we basically want to chain depots next to each other behind the second comm center
     // // Units depots = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);  
