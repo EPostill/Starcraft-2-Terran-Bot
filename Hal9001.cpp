@@ -49,7 +49,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     // lists to keep track of all our units
     Units marines = GetUnitsOfType(UNIT_TYPEID::TERRAN_MARINE);
     Units tanks = GetUnitsOfType(UNIT_TYPEID::TERRAN_SIEGETANK);
-    Units widowmines = GetUnitsOfType(UNIT_TYPEID::TERRAN_WIDOWMINE);
+    Units widowmines = getWidowMines();
     Units vikings = GetUnitsOfType(UNIT_TYPEID::TERRAN_VIKINGASSAULT);
 
     // handle mainSCV behaviour for build orders < #2
@@ -517,6 +517,13 @@ size_t Hal9001::CountUnitType(UNIT_TYPEID unit_type) {
 Units Hal9001::getDepots(){
     Units raised = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
     Units lowered = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOTLOWERED);
+    raised.insert(raised.begin(), lowered.begin(), lowered.end());
+    return raised;
+}
+
+Units Hal9001::getWidowMines(){
+    Units raised = GetUnitsOfType(UNIT_TYPEID::TERRAN_WIDOWMINE);
+    Units lowered = GetUnitsOfType(UNIT_TYPEID::TERRAN_WIDOWMINEBURROWED);
     raised.insert(raised.begin(), lowered.begin(), lowered.end());
     return raised;
 }

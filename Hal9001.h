@@ -55,6 +55,8 @@ public:
 	bool alreadyOrdered(ABILITY_ID ability_id);
 	// gets all depots (lowered and raised)
 	Units getDepots();
+	// gets all widow mines (burrowed and raised)
+	Units getWidowMines();
 
 	void step14();
 	void step15();
