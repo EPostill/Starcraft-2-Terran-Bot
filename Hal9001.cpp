@@ -233,14 +233,15 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
     /***=========================================================================================
      * Build Order # 15: train a widow mine for air unit defence
-     * Condition : we have a factory tech lab 
-     * Status: NOT DONE
+     * Condition : we have a factory and factory tech lab 
+     * Status: DONE
     *========================================================================================= */
-    if (techlabs.size() == 1 && widowmines.empty() && minerals >= 75) {
+    if (techlabs.size() == 1 && factories.size() == 1 && widowmines.empty() && minerals >= 75) {
         //build widow mine for defence
+        const Unit *factory = factories.front();
         const Unit *techlab = techlabs.front();
-        if (doneConstruction(techlab)){
-            Actions()->UnitCommand(techlab, ABILITY_ID::TRAIN_WIDOWMINE);
+        if (doneConstruction(techlab) && factory->orders.empty()){
+            Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_WIDOWMINE);
         }
         
     }
