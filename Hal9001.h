@@ -63,7 +63,7 @@ public:
 	/*
 	@desc Builds a building adjacent to reference
 	*/
-	void buildNextTo(ABILITY_ID ability_id, const Unit* ref, RelDir relDir, int dist);
+	void buildNextTo(ABILITY_ID ability_id, const Unit* ref, RelDir relDir, int dist, const Unit *builder = nullptr);
 
 	/*
 	@desc 	This will return the radius of the structure to be built
@@ -115,6 +115,7 @@ private:
 	const Unit *mainSCV;	// main scv worker
 	int supplies;			// supply count
 	int minerals;			// mineral count
+	int vespene;			// gas count
 
 	// map name
 	MapName map_name;
