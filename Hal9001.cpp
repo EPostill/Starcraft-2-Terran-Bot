@@ -206,11 +206,12 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
     /***=========================================================================================
      * Build Order # 12: build second refinery
-     * Condition: 26 supply + ??? minerals
+     * Condition: supply >= 26 and we have a refinery
      * Status: NOT DONE
      *=========================================================================================*/
-    if (supplies >= 26 && minerals >= 75) {
+    if (supplies >= 26 && minerals >= 75 && refineries.size() == 1) {
         // not working but idk why?
+        cout << "build refinery" << endl;
         // build second refinery next to first command center
         BuildRefinery(orbcoms.front());
     }
@@ -255,7 +256,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // get mineral patch near 2nd command center
         const Unit *mineralpatch = FindNearestMineralPatch(bases.front()->pos);
         // build depot
-        buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, mineralpatch, BEHIND, 1);
+        buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, mineralpatch, BEHIND, 1, mainSCV);
     }
     /***=========================================================================================
      * Build Order # 17: train viking for defence
@@ -281,12 +282,14 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         }        
     }
 
-    // //this one is tricky, we basically want to chain depots next to each other behind the second comm center
-    // // Units depots = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);  
-    // // const Unit* current_depot = depots.front();  // causes error because depots is empty at the start of the game
-    // // if (doneConstruction(current_depot) && Observation()->GetMinerals() >= 100) {
-    // //     //build another depot behind the current depot
-    // // }
+    /***=========================================================================================
+     * Build Order # 19: build more 3 depots in succession behind minerals at 2nd comm center
+     * Condition : we already have 3 depots
+     * Status: DONE
+    *========================================================================================= */    
+    // if (doneConstruction(current_depot) && Observation()->GetMinerals() >= 100) {
+    //     //build another depot behind the current depot
+    // }
 
     // if (supplies >= 46 && Observation()->GetMinerals() >= 300) {
     //     //build 2 more barracks next to the star port and factory
