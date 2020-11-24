@@ -246,9 +246,17 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         
     }
 
-    // if (supplies > 36 && Observation()->GetMinerals() >= 100 && CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) < 2) {
-    //     //build supply depot behind the minerals next to the 2nd comm center
-    // }
+    /***=========================================================================================
+     * Build Order # 16: build third supply depot behind minerals at 2nd command center
+     * Condition : we have 2 supply depots and a 2nd command center
+     * Status: DONE
+    *========================================================================================= */
+    if (supplies > 36 && minerals >= 100 && depots.size() < 3 && orbcoms.size() == 1 && bases.size() == 1) {
+        // get mineral patch near 2nd command center
+        const Unit *mineralpatch = FindNearestMineralPatch(bases.front()->pos);
+        // build depot
+        buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, mineralpatch, BEHIND, 1);
+    }
 
     // if (CountUnitType(UNIT_TYPEID::TERRAN_STARPORT) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_VIKINGASSAULT) == 0) {
     //     //build a viking
@@ -631,7 +639,7 @@ void Hal9001::buildNextTo(ABILITY_ID ability_id, const Unit* ref, RelDir relDir,
     float radiusTB = radiusOfToBeBuilt(ability_id); 
     vector<QueryInterface::PlacementQuery> queries;
     // check placement in all directions
-    for (int i = 0; i <= RelDir::FRONTRIGHT; ++i){
+    for (int i = 0; i <= RelDir::BEHIND; ++i){
         RelDir rd = static_cast<RelDir>(i);
         std::pair<int, int> relCor = getRelativeDir(ref, rd);
         // config coordinates for building barracks
@@ -717,6 +725,8 @@ std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir
                     return std::make_pair(0, 1);
                 case(FRONTRIGHT):
                     return std::make_pair(1, 0);
+                case(BEHIND):
+                    return std::make_pair(-1, -1);
                 default:
                     return std::make_pair(0,0);
             }
@@ -736,6 +746,8 @@ std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir
                     return std::make_pair(1, 0);
                 case(FRONTRIGHT):
                     return std::make_pair(0, -1);
+                case(BEHIND):
+                    return std::make_pair(-1, 1);
                 default:
                     return std::make_pair(0,0);
             }
@@ -755,6 +767,8 @@ std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir
                     return std::make_pair(-1, 0);
                 case(FRONTRIGHT):
                     return std::make_pair(0, 1);
+                case(BEHIND):
+                    return std::make_pair(1, -1);
                 default:
                     return std::make_pair(0,0);
             }
@@ -774,6 +788,8 @@ std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir
                     return std::make_pair(0, -1);
                 case(FRONTRIGHT):
                     return std::make_pair(-1, 0);
+                case(BEHIND):
+                    return std::make_pair(1, 1);
                 default:
                     return std::make_pair(0,0);
             }
