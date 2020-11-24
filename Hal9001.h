@@ -53,6 +53,8 @@ public:
 	const Point2D getFirstDepotLocation(const Unit *commcenter);
 	// checks if any scv has the given order
 	bool alreadyOrdered(ABILITY_ID ability_id);
+	// gets all depots (lowered and raised)
+	Units getDepots();
 
 	void step14();
 	void step15();

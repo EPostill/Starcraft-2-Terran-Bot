@@ -41,7 +41,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
     Units techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORYTECHLAB);
     Units reactors = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKSREACTOR);
-    Units depots = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
+    Units depots = getDepots();
     Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
     Units engbays = GetUnitsOfType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
     Units orbcoms = GetUnitsOfType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND);
@@ -193,6 +193,8 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      *=========================================================================================*/
     if (reactors.size() == 1 && marines.size() < 3 && minerals >= 50) {
         // TODO: this will happen again once the marines go in the bunker, fix? 
+        // actually keep since its good to keep making some marines, but maybe
+        // move to a function like manageMarineTraining
         // train 2 marines
         const Unit *barrack = barracks.front();
         if (barrack->orders.empty()){
@@ -212,7 +214,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: 26 supply + ??? minerals
      * Status: DONE
      *=========================================================================================*/
-    if (supplies >= 26 && minerals >= 75 && /*one empty gas next to first command center*/true) {
+    if (supplies >= 26 && minerals >= 75) {
         // build second refinery next to first command center
         BuildRefinery(orbcoms.front());
     }
@@ -238,14 +240,15 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         Actions()->UnitCommand(factory, ABILITY_ID::BUILD_TECHLAB_FACTORY);
     }
 
-    // /***=========================================================================================
-    //  * Build Order # 15: build widow mine for air unit defence
-    //  * Condition :once factory upgrades finish, 
-    //  * Status: NOT DONE
-    // *========================================================================================= */
-    // if (CountUnitType(UNIT_TYPEID::TERRAN_REACTOR) == 1 && CountUnitType(UNIT_TYPEID::TERRAN_WIDOWMINE) == 0 && Observation()->GetMinerals() >= 75) {
-    //     //build widow mine for defence
-    // }
+    /***=========================================================================================
+     * Build Order # 15: build widow mine for air unit defence
+     * Condition :once factory upgrades finish, 
+     * Status: NOT DONE
+    *========================================================================================= */
+    if (reactors.size() == 1 && widowmines.empty() && minerals >= 75) {
+        //build widow mine for defence
+        
+    }
 
     // if (supplies > 36 && Observation()->GetMinerals() >= 100 && CountUnitType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT) < 2) {
     //     //build supply depot behind the minerals next to the 2nd comm center
@@ -511,6 +514,12 @@ size_t Hal9001::CountUnitType(UNIT_TYPEID unit_type) {
     return Observation()->GetUnits(Unit::Alliance::Self, IsUnit(unit_type)).size();
 }
 
+Units Hal9001::getDepots(){
+    Units raised = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
+    Units lowered = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOTLOWERED);
+    raised.insert(raised.begin(), lowered.begin(), lowered.end());
+    return raised;
+}
 
 Units Hal9001::GetUnitsOfType(UNIT_TYPEID unit_type){
     const ObservationInterface* observation = Observation();
