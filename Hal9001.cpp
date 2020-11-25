@@ -210,10 +210,10 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     /***=========================================================================================
      * Build Order # 12: build second refinery
      * Condition: 26 supply + ??? minerals
-     * Status: NOT DONE
+     * Status: DONE
      *=========================================================================================*/
-    if (supplies >= 26 && minerals >= 75) {
-        // not working but idk why?
+    if (supplies >= 26 && minerals >= 75 && refineries.size() == 1 && !isOrdered(ABILITY_ID::BUILD_REFINERY)) {
+
         // build second refinery next to first command center
         BuildRefinery(orbcoms.front());
     }
@@ -246,7 +246,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         if (doneConstruction(techlab) && factory->orders.empty()){
             Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_WIDOWMINE);
         }
-        
     }
 
     /***=========================================================================================
@@ -260,6 +259,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // build depot
         buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, mineralpatch, BEHIND, 1);
     }
+
     /***=========================================================================================
      * Build Order # 17: train viking for defence
      * Condition : we have a starport and no vikings
@@ -291,9 +291,28 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     // //     //build another depot behind the current depot
     // // }
 
-    // if (supplies >= 46 && Observation()->GetMinerals() >= 300) {
-    //     //build 2 more barracks next to the star port and factory
-    // }
+
+    /***=========================================================================================
+     * Build Order # 20: ~46 supply, minerals = 300 and barracks == 1
+     * Condition : build 2 more barracks next to the star port and factory
+     * Status: DONE
+    *========================================================================================= */
+    if (supplies >= 46 && minerals >= 300 && barracks.size() == 1) {
+        // get factories
+        const Unit* fa = factories.back();
+
+        // build barrack next to factory
+        buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, RIGHT, 0);
+    }
+
+    if (supplies >= 46 && minerals >= 300 && barracks.size() == 2) {
+        // get star port
+        const Unit* sp = starports.back();
+
+        // build another barrack next to starport
+        buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, RIGHT, 0);
+    }
+
 
     // //this is another tricky one, when the tank is FINISHED we want to move the factory on to a tech lab and the star port on to a reactor
     // if (CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) == 1) {
@@ -478,8 +497,9 @@ const Unit* Hal9001::FindNearestGeyser(const Point2D &start) {
     float distance = std::numeric_limits<float>::max();
     const Unit *target = nullptr;
     for (const auto &u : units) {
+
         // get closest vespene geyser
-        if (u->unit_type == UNIT_TYPEID::NEUTRAL_VESPENEGEYSER) {
+        if (u->unit_type == UNIT_TYPEID::NEUTRAL_VESPENEGEYSER && isPlaceable(ABILITY_ID::BUILD_REFINERY, u -> pos)) {
             float d = DistanceSquared2D(u->pos, start);
             if (d < distance) {
                 distance = d;
@@ -519,10 +539,11 @@ void Hal9001::BuildStructure(ABILITY_ID ability_type_for_structure, float x, flo
 
 void Hal9001::BuildRefinery(const Unit *commcenter, const Unit *builder){
     const Unit *geyser = FindNearestGeyser(commcenter->pos);
+
     // if no builder is given, make the builder a random scv
     if (!builder){
         builder = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, geyser->pos).back();
-    }  
+    }
     
     Actions()->UnitCommand(builder, ABILITY_ID::BUILD_REFINERY, geyser);
 }
@@ -572,7 +593,10 @@ Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
                 continue;
             }
             // only choose from scvs that are mining minerals or idle
-            AbilityID aid = u->orders.front().ability_id;
+
+            // NOTE: added ternary operator to prevent error (may not be a permanent fix)
+            AbilityID aid = u -> orders.size() ? u->orders.front().ability_id : ABILITY_ID::HARVEST_RETURN;
+
             if (u->orders.empty() || aid == ABILITY_ID::HARVEST_GATHER || aid == ABILITY_ID::HARVEST_RETURN){
                 if (location != Point3D(0,0,0) && DistanceSquared2D(u->pos, location) > 225.0){
                     in_range = false;
@@ -687,7 +711,6 @@ void Hal9001::buildNextTo(ABILITY_ID ability_id, const Unit* ref, RelDir relDir,
     }
 
 }
-
 
 /*
 @desc 	This will return the radius of the structure to be built
@@ -897,3 +920,45 @@ Corner Hal9001::cornerLoc(const Unit* unit){
 
     return M;
 }
+
+/*
+@desc This will return true or false if a build ability is placeable in the given position
+@param unit
+@return bool
+*/
+bool Hal9001::isPlaceable(ABILITY_ID abilityId, Point2D points){
+    // placement query provision
+    vector<QueryInterface::PlacementQuery> queries;
+
+    // slate to query
+    queries.push_back(QueryInterface::PlacementQuery(abilityId, points));
+
+    // get query bool
+    vector<bool> placeble = Query()-> Placement(queries);
+
+    return placeble[0];
+}
+
+/*
+@desc This will return true or false if a order is already given to an scv and is in progress
+@param abilityid
+@return bool
+*/
+bool Hal9001::isOrdered(ABILITY_ID abilityId){
+    Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
+
+    for( const auto &u: units ){
+        if(u -> orders.size()){
+            
+            for( const auto &o: u -> orders){
+                if(o.ability_id == abilityId){
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+
+

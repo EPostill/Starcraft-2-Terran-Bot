@@ -103,6 +103,20 @@ public:
 	*/
 	Corner cornerLoc(const Unit* unit);
 
+	/*
+	@desc This will return true or false if a build ability is placeable in the given position
+	@param unit
+	@return bool
+	*/
+	bool isPlaceable(ABILITY_ID abilityId, Point2D points);
+
+	/*
+	@desc This will return true or false if a order is already given to an scv and is in progress
+	@param abilityid
+	@return bool
+	*/
+	bool isOrdered(ABILITY_ID abilityId);
+
 private:
 	// counts the number of units of a given type (does not include those in training)
 	size_t CountUnitType(UNIT_TYPEID unit_type);
