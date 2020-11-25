@@ -333,7 +333,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     }
 
    /***=========================================================================================
-     * Build Order # 29: build another command center
+     * Build Order # 28: build another command center
      * Condition : when we have 4 refineries
      * Status: DONE
     *========================================================================================= */    
