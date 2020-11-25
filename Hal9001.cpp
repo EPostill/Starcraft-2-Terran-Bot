@@ -313,10 +313,19 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         //move the 2 newest barracks to the tech labs that are now open
     }
 
+    if (!techlabs.empty()) {
+        TryBuildUnit(ABILITY_ID::RESEARCH_STIMPACK, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
+        TryBuildUnit(ABILITY_ID::RESEARCH_COMBATSHIELD, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
+        TryBuildUnit(ABILITY_ID::RESEARCH_CONCUSSIVESHELLS, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
+        TryBuildUnit(ABILITY_ID::RESEARCH_RAPIDREIGNITIONSYSTEM, UNIT_TYPEID::TERRAN_FUSIONCORE);
+        TryBuildUnit(ABILITY_ID::RESEARCH_HISECAUTOTRACKING, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+    }
+
     //once we can research in the engbay, figure out the upgrades we need
     if (!engbays.empty()){
         for (const auto &upgrade : upgrades) {
             if (!armories.empty()) {
+                //infantry upgrades
                 if (upgrade == UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1) {
                     TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYWEAPONS, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
                 }
@@ -329,9 +338,24 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
                 else if (upgrade == UPGRADE_ID::TERRANINFANTRYARMORSLEVEL2 && supplies >= 160) {
                     TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYARMOR, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
                 }
+
+                //vehicle and ship upgrades
+                if (upgrade == UPGRADE_ID::TERRANSHIPWEAPONSLEVEL1 && bases.size() > 2) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANSHIPWEAPONS, UNIT_TYPEID::TERRAN_ARMORY);
+                }
+                else if (upgrade == UPGRADE_ID::TERRANVEHICLEWEAPONSLEVEL1 && supplies >= 170) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANVEHICLEWEAPONS, UNIT_TYPEID::TERRAN_ARMORY);
+                }
+                else if (upgrade == UPGRADE_ID::TERRANVEHICLEANDSHIPARMORSLEVEL1 && bases.size() > 2) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANVEHICLEANDSHIPPLATING, UNIT_TYPEID::TERRAN_ARMORY);
+                }
+                else if (upgrade == UPGRADE_ID::TERRANVEHICLEWEAPONSLEVEL2 && supplies >= 190) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANVEHICLEWEAPONS, UNIT_TYPEID::TERRAN_ARMORY);
+                }
+                else if (upgrade == UPGRADE_ID::TERRANVEHICLEANDSHIPARMORSLEVEL2 && supplies >= 190) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANVEHICLEANDSHIPPLATING, UNIT_TYPEID::ZERG_SPIRE);
+                }
             }
-            TryBuildUnit(ABILITY_ID::RESEARCH_STIMPACK, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
-            TryBuildUnit(ABILITY_ID::RESEARCH_COMBATSHIELD, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
         }
     }
 
