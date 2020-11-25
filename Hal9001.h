@@ -95,6 +95,20 @@ public:
 	*/
 	RelDir getHandSide(const Unit* anchor, const Unit *target);
 
+	/*
+	@desc attempts to build a unit
+	@param unit, ability
+	@return if the action was performed successfully
+	*/
+	bool TryBuildUnit(AbilityID ability_type_for_unit, UnitTypeID unit_type);
+
+	/*
+	@desc gets a random unit from the list
+	@param unit, unit type
+	@return if a unit was gotten
+	*/
+	bool GetRandomUnit(const Unit*& unit_out, const ObservationInterface* observation, UnitTypeID unit_type);
+
 
 	/*
 	@desc This will return where a structure is in the map
