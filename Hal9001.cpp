@@ -545,7 +545,7 @@ void Hal9001::BuildStructure(ABILITY_ID ability_type_for_structure, float x, flo
         return;
     }
     // if no builder is given, make the builder a random scv
-    Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
+    Units units = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, Point3D(x,y,0.0));
     if (!builder){
         builder = units.back();
     }
@@ -608,8 +608,7 @@ Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
                 continue;
             }
             // only choose from scvs that are mining minerals or idle
-            AbilityID aid = u->orders.front().ability_id;
-            if (u->orders.empty() || aid == ABILITY_ID::HARVEST_GATHER || aid == ABILITY_ID::HARVEST_RETURN){
+            if (u->orders.empty() || u->orders.front().ability_id == ABILITY_ID::HARVEST_GATHER || u->orders.front().ability_id == ABILITY_ID::HARVEST_RETURN){
                 if (location != Point3D(0,0,0) && DistanceSquared2D(u->pos, location) > 225.0){
                     in_range = false;
                 }
