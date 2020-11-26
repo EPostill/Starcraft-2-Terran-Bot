@@ -1050,7 +1050,7 @@ void Hal9001::landFlyer(const Unit* flyer, RelDir relDir){
     // place in possible placement
     for (int i = 0; i < landable.size(); ++i){
         if (landable[i]){
-            Actions() -> UnitCommand(flyer, ABILITY_ID::LAND, queries[relDir].target_pos);
+            Actions() -> UnitCommand(flyer, ABILITY_ID::LAND, queries[i].target_pos);
             break;
         }
     }
