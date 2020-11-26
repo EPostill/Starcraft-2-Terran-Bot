@@ -341,6 +341,12 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
                 else if (upgrade == UPGRADE_ID::TERRANINFANTRYARMORSLEVEL2 && supplies >= 160) {
                     TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYARMOR, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
                 }
+                if (upgrade == UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL3 && supplies >= 180) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYWEAPONS, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+                }
+                else if (upgrade == UPGRADE_ID::TERRANINFANTRYARMORSLEVEL3 && supplies >= 190) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYARMOR, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+                }
 
                 //vehicle and ship upgrades
                 if (upgrade == UPGRADE_ID::TERRANSHIPWEAPONSLEVEL1 && bases.size() > 2) {
@@ -352,11 +358,14 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
                 else if (upgrade == UPGRADE_ID::TERRANVEHICLEANDSHIPARMORSLEVEL1 && bases.size() > 2) {
                     TryBuildUnit(ABILITY_ID::RESEARCH_TERRANVEHICLEANDSHIPPLATING, UNIT_TYPEID::TERRAN_ARMORY);
                 }
-                else if (upgrade == UPGRADE_ID::TERRANVEHICLEWEAPONSLEVEL2 && supplies >= 190) {
+                if (upgrade == UPGRADE_ID::TERRANVEHICLEWEAPONSLEVEL2 && supplies >= 190) {
                     TryBuildUnit(ABILITY_ID::RESEARCH_TERRANVEHICLEWEAPONS, UNIT_TYPEID::TERRAN_ARMORY);
                 }
                 else if (upgrade == UPGRADE_ID::TERRANVEHICLEANDSHIPARMORSLEVEL2 && supplies >= 190) {
                     TryBuildUnit(ABILITY_ID::RESEARCH_TERRANVEHICLEANDSHIPPLATING, UNIT_TYPEID::ZERG_SPIRE);
+                }
+                else if (upgrade == UPGRADE_ID::TERRANSHIPWEAPONSLEVEL2 && supplies >= 190) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANSHIPWEAPONS, UNIT_TYPEID::ZERG_SPIRE);
                 }
             }
             TryBuildUnit(ABILITY_ID::RESEARCH_HISECAUTOTRACKING, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
