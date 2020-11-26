@@ -115,7 +115,14 @@ public:
 	@param abilityid
 	@return bool
 	*/
-	bool isOrdered(ABILITY_ID abilityId);
+	bool isOrdered(ABILITY_ID abilityId, UNIT_TYPEID unitTypeId);
+
+	/*
+	@desc This will land a build structure in the vicinity
+	@param unit id for building, rel dir (try to land here first)
+	@return void
+	*/
+	void landFlyer(const Unit* flyer, RelDir relDir);
 
 private:
 	// counts the number of units of a given type (does not include those in training)
@@ -143,6 +150,9 @@ private:
 	// map width and height
 	int map_width;
 	int map_height;
+
+	// which corner the base is on the map
+	Corner corner_loc;
 
 };
 
