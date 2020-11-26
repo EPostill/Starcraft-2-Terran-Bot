@@ -165,33 +165,11 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: supply >= 22, vespene > 100, minerals > 150, we have orbital and normal comm center and no factories
      * Status: DONE
      *=========================================================================================*/
-    if (supplies >= 22 && vespene > 100 && minerals > 150 && bases.size() == 1 && orbcoms.size() == 1 && factories.empty() && fly_factories.empty()) {
-        // get location of 2nd command center
-        const Unit* cc2 = bases.back();
-
+    if (factories.empty() && fly_factories.empty() && supplies >= 22 && vespene > 100 && minerals > 150 && bases.size() == 1 && orbcoms.size() == 1) {
         // get 1st cc => orbital now
         const Unit* cc1 = orbcoms.front();
+        buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 4); 
 
-        // which handside is the 2nd command center relative to 1st
-        RelDir handSide = getHandSide(cc1, cc2);
-
-        // get relativeDir
-        std::pair<int, int> relDir = getRelativeDir(cc1, handSide);
-
-        // get radius of to be built factory
-        float radiusFA = radiusOfToBeBuilt(ABILITY_ID::BUILD_FACTORY);
-
-        // config coordinates
-        float x = (cc1 -> pos.x) + ((cc1 -> radius) + radiusFA + 3) * relDir.first;
-        float y = (cc1 -> pos.y) + ((cc1 -> radius) + radiusFA + 3) * relDir.second;
-
-        // displace x-coordinate based on cornerLoc
-        if(cornerLoc(cc1) == SE){
-            // get radius of techlab
-            x -= (radiusOfToBeBuilt(ABILITY_ID::BUILD_TECHLAB) / 2);
-        }
-
-        BuildStructure(ABILITY_ID::BUILD_FACTORY, x, y); 
     }
 
     /***=========================================================================================
@@ -371,7 +349,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         const Unit* fa = fly_factories.front();
         
         // land factory
-        landFlyer(fa, BEHIND);
+        landFlyer(fa, BEHIND, ABILITY_ID::LAND_FACTORY);
     }
 
     // if (Observation()->GetGameLoop() > 4320 && Observation()->GetMinerals() >= 200 && CountUnitType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY) == 0) { //4320 ticks ~ 4mins30sec
@@ -1019,10 +997,10 @@ bool Hal9001::isOrdered(ABILITY_ID abilityId, UNIT_TYPEID unitTypeId){
 
 /*
 @desc This will land a build structure in the vicinity
-@param unit for flying building, rel dir (try to land here first)
+@param unit for flying building, rel dir (try to land here first), ability id for landing the unit
 @return void
 */
-void Hal9001::landFlyer(const Unit* flyer, RelDir relDir){
+void Hal9001::landFlyer(const Unit* flyer, RelDir relDir, ABILITY_ID aid_to_land){
     // derived from mich's code
 
     // config coordinates
@@ -1037,20 +1015,20 @@ void Hal9001::landFlyer(const Unit* flyer, RelDir relDir){
         RelDir rd = static_cast<RelDir>(i);
         std::pair<int, int> relCor = getRelativeDir(flyer, rd);
         x *= relCor.first; y *= relCor.second;
-        queries.push_back(QueryInterface::PlacementQuery(ABILITY_ID::LAND, Point2D(x, y)));
+        queries.push_back(QueryInterface::PlacementQuery(aid_to_land, Point2D(x, y)));
     }
 
     vector<bool> landable = Query() -> Placement(queries);
     // try to land in given dir first
     if( landable[relDir]){
-        Actions() -> UnitCommand(flyer, ABILITY_ID::LAND, queries[relDir].target_pos);
+        Actions() -> UnitCommand(flyer, aid_to_land, queries[relDir].target_pos);
         return;
     }
 
-    // place in possible placement
+    // or land in any possible placement
     for (int i = 0; i < landable.size(); ++i){
         if (landable[i]){
-            Actions() -> UnitCommand(flyer, ABILITY_ID::LAND, queries[i].target_pos);
+            Actions() -> UnitCommand(flyer, aid_to_land, queries[i].target_pos);
             break;
         }
     }

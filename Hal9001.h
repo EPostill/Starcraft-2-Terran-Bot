@@ -122,7 +122,7 @@ public:
 	@param unit id for building, rel dir (try to land here first)
 	@return void
 	*/
-	void landFlyer(const Unit* flyer, RelDir relDir);
+	void landFlyer(const Unit* flyer, RelDir relDir, ABILITY_ID aid_to_land);
 
 private:
 	// counts the number of units of a given type (does not include those in training)
