@@ -398,6 +398,7 @@ void Hal9001::MineIdleWorkers() {
     if (bases.empty()) {
         return;
     }
+
     for (const auto& base : bases) {
         //If we have already mined out here skip the base.
         if (base->ideal_harvesters == 0 || base->build_progress != 1) {
@@ -684,15 +685,16 @@ bool Hal9001::doneConstruction(const Unit *unit){
 void Hal9001::ManageRefineries(){
     Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
     for (const auto &refinery : refineries){
-        // almost done building
-        if (refinery->build_progress == 0.75){
-            // get two random scvs
-            Units scvs = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, refinery->pos, 2);
+        // refinery isn't full
+        if (refinery->build_progress == 1 && refinery->assigned_harvesters < refinery->ideal_harvesters){
+            // get missing amount of scvs
+            int num = refinery->ideal_harvesters - refinery->assigned_harvesters;
+            Units scvs = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, refinery->pos, num);
             if (scvs.empty()){
                 return;
             }
 
-            Actions()->UnitCommand(scvs, ABILITY_ID::SMART, refinery);
+            Actions()->UnitCommand(scvs, ABILITY_ID::HARVEST_GATHER, refinery);
         }
     }
 }
