@@ -366,10 +366,10 @@ void Hal9001::initializeMainSCV(Units &bases){
 
 }
 
-void Hal9001::MineIdleWorkers(const Unit* worker, AbilityID worker_gather_command, UnitTypeID vespene_building_type) {
+void Hal9001::MineIdleWorkers() {
     const ObservationInterface* observation = Observation();
-    Units bases = observation->GetUnits(Unit::Alliance::Self, IsTownHall());
-    Units geysers = observation->GetUnits(Unit::Alliance::Self, IsUnit(vespene_building_type));
+    Units bases = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+    Units workers = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
 
     const Unit* valid_mineral_patch = nullptr;
 
@@ -384,19 +384,14 @@ void Hal9001::MineIdleWorkers(const Unit* worker, AbilityID worker_gather_comman
         }
         if (base->assigned_harvesters < base->ideal_harvesters) {
             valid_mineral_patch = FindNearestMineralPatch(base->pos);
-            Actions()->UnitCommand(worker, worker_gather_command, valid_mineral_patch);
+            for(const auto& worker : workers) {
+                if (worker->orders.front().target_unit_tag == base->tag) {
+                    Actions()->UnitCommand(worker, ABILITY_ID::HARVEST_GATHER, UNIT_TYPEID::TERRAN_REFINERY);
+                }
+            }
             return;
         }
     }
-
-    if (!worker->orders.empty()) {
-        return;
-    }
-
-    //If all workers are spots are filled just go to any base.
-    const Unit* random_base = GetRandomEntry(bases);
-    valid_mineral_patch = FindNearestMineralPatch(random_base->pos);
-    Actions()->UnitCommand(worker, worker_gather_command, valid_mineral_patch);
 }
 
 const Point2D Hal9001::getFirstDepotLocation(const Unit *commcenter){
@@ -445,6 +440,7 @@ void Hal9001::OnStep() {
     supplies = observation->GetFoodUsed();
     vespene = observation->GetVespene();
     ManageSCVTraining();
+    MineIdleWorkers();
     ManageRefineries();
 
     BuildOrder(observation);
