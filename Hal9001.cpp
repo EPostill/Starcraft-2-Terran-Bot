@@ -241,7 +241,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: 26 supply + ??? minerals
      * Status: DONE
      *=========================================================================================*/
-    if (supplies >= 26 && minerals >= 75 && refineries.size() == 1 && !isOrdered(ABILITY_ID::BUILD_REFINERY, UNIT_TYPEID::TERRAN_SCV) ) {
+    if (supplies >= 26 && minerals >= 75 && refineries.size() == 1) {
 
         // build second refinery next to first command center
         BuildRefinery(orbcoms.front());
@@ -700,8 +700,11 @@ void Hal9001::BuildStructure(ABILITY_ID ability_type_for_structure, float x, flo
 }
 
 void Hal9001::BuildRefinery(const Unit *commcenter, const Unit *builder){
-    const Unit *geyser = FindNearestGeyser(commcenter->pos);
-
+    // don't build if already being built
+    if (alreadyOrdered(ABILITY_ID::BUILD_REFINERY)){
+        return;
+    }
+    const Unit *geyser = FindNearestGeyser(commcenter->pos);   
     // if no builder is given, make the builder a random scv
     if (!builder){
         Units units = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, geyser->pos);
