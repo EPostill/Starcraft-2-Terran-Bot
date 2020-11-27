@@ -390,7 +390,7 @@ void Hal9001::initializeMainSCV(Units &bases){
 
 void Hal9001::MineIdleWorkers() {
     const ObservationInterface* observation = Observation();
-    Units bases = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+    Units bases = getCommCenters();
     Units workers = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
 
     const Unit* valid_mineral_patch = nullptr;
@@ -438,18 +438,18 @@ const Point2D Hal9001::getFirstDepotLocation(const Unit *commcenter){
 }
 
 void Hal9001::ManageSCVTraining(){
-    Units commcenters = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
-    Units orbital_commcenters = GetUnitsOfType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND);
+    Units commcenters = getCommCenters();
 
     for (const auto &cc : commcenters){
-        if (cc->assigned_harvesters < cc->ideal_harvesters && cc->orders.empty()){
-            Actions()->UnitCommand(cc, ABILITY_ID::TRAIN_SCV);
-        }
-    }
-
-    for (const auto &cc : orbital_commcenters){
-        if (cc->assigned_harvesters < cc->ideal_harvesters && cc->orders.empty()){
-            Actions()->UnitCommand(cc, ABILITY_ID::TRAIN_SCV);
+        // if any comm center is not full tell all comm centers to train an scv
+        // mineidleworkers will send the scvs to the not full comm centers
+        if (cc->assigned_harvesters < cc->ideal_harvesters){
+            for (const auto &cc2 : commcenters){
+                if (cc->orders.empty()){
+                    Actions()->UnitCommand(cc2, ABILITY_ID::TRAIN_SCV);
+                }
+            }
+            return;
         }
     }
 }
@@ -620,6 +620,13 @@ Units Hal9001::getWidowMines(){
     Units lowered = GetUnitsOfType(UNIT_TYPEID::TERRAN_WIDOWMINEBURROWED);
     raised.insert(raised.begin(), lowered.begin(), lowered.end());
     return raised;
+}
+
+Units Hal9001::getCommCenters(){
+    Units commcenters = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+    Units orbital_commcenters = GetUnitsOfType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND);
+    commcenters.insert(commcenters.begin(), orbital_commcenters.begin(), orbital_commcenters.end());
+    return commcenters;
 }
 
 Units Hal9001::GetUnitsOfType(UNIT_TYPEID unit_type){

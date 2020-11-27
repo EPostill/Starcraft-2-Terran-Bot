@@ -61,6 +61,8 @@ public:
 	Units getDepots();
 	// gets all widow mines (burrowed and raised)
 	Units getWidowMines();
+	// gets all comm centers (orbital and normal)
+	Units getCommCenters();
 
 
 	// Helper functions
