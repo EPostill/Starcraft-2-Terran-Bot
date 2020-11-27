@@ -177,7 +177,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: 23 supply + 100 minerals
      * Status: DONE
      *=========================================================================================*/
-    if (supplies >= 23 && minerals >= 100 && factories.size() == 1 && bunkers.size() == 0) {
+    if (supplies >= 23 && minerals >= 100 && factories.size() == 1 && bunkers.size() == 0 && bases.size() == 1) {
         // get command center
         const Unit* cc = bases.back();
         // build bunker towards the center from command center 2
@@ -637,7 +637,7 @@ Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
             }
             // only choose from scvs that are mining minerals or idle
             if (u->orders.empty() || u->orders.front().ability_id == ABILITY_ID::HARVEST_GATHER || u->orders.front().ability_id == ABILITY_ID::HARVEST_RETURN){
-                if (location != Point3D(0,0,0) && DistanceSquared2D(u->pos, location) > 225.0){
+                if (location != Point3D(0,0,0) && DistanceSquared2D(u->pos, location) > 625.0){
                     in_range = false;
                 }
                 if (in_range){
@@ -647,7 +647,7 @@ Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
             }
         // only choose from idle units
         } else if (u->orders.empty()){
-            if (location != Point3D(0,0,0) && DistanceSquared3D(u->pos, location) > 225.0){
+            if (location != Point3D(0,0,0) && DistanceSquared3D(u->pos, location) > 625.0){
                 in_range = false;
             }
             if (in_range){
