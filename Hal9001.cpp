@@ -388,6 +388,33 @@ void Hal9001::initializeMainSCV(Units &bases){
 
 }
 
+void Hal9001::MineIdleWorkers() {
+    const ObservationInterface* observation = Observation();
+    Units bases = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+    Units workers = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
+
+    const Unit* valid_mineral_patch = nullptr;
+
+    if (bases.empty()) {
+        return;
+    }
+    for (const auto& base : bases) {
+        //If we have already mined out here skip the base.
+        if (base->ideal_harvesters == 0 || base->build_progress != 1) {
+            continue;
+        }
+        //find a base that needs workers and send scvs there
+        for (const auto&worker : workers) {
+            if (worker->orders.empty()) {
+                if (base->assigned_harvesters < base->ideal_harvesters) {
+                    valid_mineral_patch = FindNearestMineralPatch(base->pos);
+                    Actions()->UnitCommand(worker, ABILITY_ID::HARVEST_GATHER, valid_mineral_patch);
+                }
+            }
+        }
+    }
+}
+
 const Point2D Hal9001::getFirstDepotLocation(const Unit *commcenter){
     // get the radius of the initial command center
     float radiusCC = commcenter->radius;
@@ -434,6 +461,7 @@ void Hal9001::OnStep() {
     supplies = observation->GetFoodUsed();
     vespene = observation->GetVespene();
     ManageSCVTraining();
+    MineIdleWorkers();
     ManageRefineries();
 
     BuildOrder(observation);

@@ -27,6 +27,8 @@ public:
 	virtual void OnStep();
 
 	virtual void OnUnitIdle(const Unit* unit);
+	//makes scvs without orders mine by default
+	void MineIdleWorkers();
 	// returns mineral patch nearest to start
 	const Unit* FindNearestMineralPatch(const Point2D &start);
 	// returns geyser nearest to start
