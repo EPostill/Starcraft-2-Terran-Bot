@@ -614,37 +614,42 @@ const Point3D Hal9001::FindNearestExpansion(){
 
 // returns nearest mineral patch or nullptr if none found
 const Unit* Hal9001::FindNearestMineralPatch(const Point2D &start) {
-    // gets all neutral units
-    Units units = Observation()->GetUnits(Unit::Alliance::Neutral);
+    Units units = GetUnitsOfType(UNIT_TYPEID::NEUTRAL_MINERALFIELD);
     float distance = std::numeric_limits<float>::max();
     const Unit *target = nullptr;
     for (const auto &u : units) {
-        // get closest mineral field
-        if (u->unit_type == UNIT_TYPEID::NEUTRAL_MINERALFIELD) {
-            float d = DistanceSquared2D(u->pos, start);
-            if (d < distance) {
-                distance = d;
-                target = u;
-            }
+        float d = DistanceSquared2D(u->pos, start);
+        if (d < distance) {
+            distance = d;
+            target = u;
         }
     }
     return target;
 }
 // returns nearest vespene geyser or nullptr if none found
 const Unit* Hal9001::FindNearestGeyser(const Point2D &start) {
-    // gets all neutral units
-    Units units = Observation()->GetUnits(Unit::Alliance::Neutral);
+    Units units = GetUnitsOfType(UNIT_TYPEID::NEUTRAL_VESPENEGEYSER);
     float distance = std::numeric_limits<float>::max();
     const Unit *target = nullptr;
     for (const auto &u : units) {
+        float d = DistanceSquared2D(u->pos, start);
+        if (d < distance) {
+            distance = d;
+            target = u;
+        }
+    }
+    return target;
+}
 
-        // get closest vespene geyser
-        if (u->unit_type == UNIT_TYPEID::NEUTRAL_VESPENEGEYSER && isPlaceable(ABILITY_ID::BUILD_REFINERY, u -> pos)) {
-            float d = DistanceSquared2D(u->pos, start);
-            if (d < distance) {
-                distance = d;
-                target = u;
-            }
+const Unit* Hal9001::FindNearestDepot(const Point2D &start) {
+    Units units = getDepots();
+    float distance = std::numeric_limits<float>::max();
+    const Unit *target = nullptr;
+    for (const auto &u : units) {
+        float d = DistanceSquared2D(u->pos, start);
+        if (d < distance) {
+            distance = d;
+            target = u;
         }
     }
     return target;
@@ -789,7 +794,6 @@ Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
 bool Hal9001::doneConstruction(const Unit *unit){
     return unit->build_progress == 1.0;
 }
-
 
 // have 3 workers on each refinery
 void Hal9001::ManageRefineries(){
