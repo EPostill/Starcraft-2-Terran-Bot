@@ -3,6 +3,34 @@
 #include "cpp-sc2/src/sc2api/sc2_client.cc"
 using namespace std;
 
+struct IsArmy {
+    IsArmy(const ObservationInterface* obs) : observation_(obs) {}
+
+    bool operator()(const Unit& unit) {
+        auto attributes = observation_->GetUnitTypeData().at(unit.unit_type).attributes;
+        for (const auto& attribute : attributes) {
+            if (attribute == Attribute::Structure) {
+                return false;
+            }
+        }
+        switch (unit.unit_type.ToType()) {
+            case UNIT_TYPEID::ZERG_OVERLORD: return false;
+            case UNIT_TYPEID::PROTOSS_PROBE: return false;
+            case UNIT_TYPEID::ZERG_DRONE: return false;
+            case UNIT_TYPEID::TERRAN_SCV: return false;
+            case UNIT_TYPEID::ZERG_QUEEN: return false;
+            case UNIT_TYPEID::ZERG_LARVA: return false;
+            case UNIT_TYPEID::ZERG_EGG: return false;
+            case UNIT_TYPEID::TERRAN_MULE: return false;
+            case UNIT_TYPEID::TERRAN_NUKE: return false;
+            default: return true;
+        }
+    }
+
+    const ObservationInterface* observation_;
+};
+
+
 void Hal9001::OnGameStart() {
     const ObservationInterface *observation = Observation();
     minerals = observation->GetMinerals();
@@ -286,7 +314,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     }
 
     // //this one is tricky, we basically want to chain depots next to each other behind the second comm center
-    // // Units depots = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);  
+    // // Units depots = GetUnitsOfType(UNIT_TYPEID::TERRAN_SUPPLYDEPOT);
     // // const Unit* current_depot = depots.front();  // causes error because depots is empty at the start of the game
     // // if (doneConstruction(current_depot) && Observation()->GetMinerals() >= 100) {
     // //     //build another depot behind the current depot
@@ -384,13 +412,38 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     // //Factories -> tanks
     // //barracks -> marines (later on maurauders, although I doubt the game will go that far)
 
+}
 
+void Hal9001::ManageArmy() {
+    const ObservationInterface *observation = Observation();
 
+    Units enemies = observation->GetUnits(Unit::Alliance::Enemy);
+    Units bases = observation->GetUnits(Unit::Alliance::Self, IsTownHall());
+    Units allies = observation->GetUnits(Unit::Alliance::Self, IsArmy(observation));
+    Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
+    const Unit *homebase = bases.front();
 
-
+    for (const auto& unit : allies) {
+        switch (unit->unit_type.ToType()) {
+            case(UNIT_TYPEID::TERRAN_MARINE): {
+                if (!bunkers.empty()) {
+                    Actions()->UnitCommand(unit, ABILITY_ID::SMART, bunkers.front());
+                }
+                else {
+                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, homebase->pos);
+                }
+                break;
+            }
+            default: {
+                Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, homebase->pos);
+            }
+        }
+    }
 
 
 }
+
+
 
 void Hal9001::initializeMainSCV(Units &bases){
     if (bases.empty()){
@@ -468,6 +521,7 @@ void Hal9001::OnStep() {
     ManageRefineries();
 
     BuildOrder(observation);
+    ManageArmy();
 
 }
 

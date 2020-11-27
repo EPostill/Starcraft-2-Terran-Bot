@@ -35,6 +35,8 @@ public:
 	const Point3D FindNearestExpansion();
 	void BuildStructure(ABILITY_ID ability_type_for_structure, float x, float y, const Unit *builder = nullptr);
 	void BuildOrder(const ObservationInterface *observation);
+	// Manage our army
+	void ManageArmy();
 	// build a refinery near the given command center
 	void BuildRefinery(const Unit *commcenter, const Unit *builder = nullptr);
 	void updateSupplies();
