@@ -39,6 +39,8 @@ public:
 	const Point3D FindNearestExpansion();
 	void BuildStructure(ABILITY_ID ability_type_for_structure, float x, float y, const Unit *builder = nullptr);
 	void BuildOrder(const ObservationInterface *observation);
+	// Manage our army
+	void ManageArmy();
 	// build a refinery near the given command center
 	void BuildRefinery(const Unit *commcenter, const Unit *builder = nullptr);
 	void updateSupplies();
@@ -105,6 +107,27 @@ public:
 	*/
 	Corner cornerLoc(const Unit* unit);
 
+	/*
+	@desc This will return true or false if a build ability is placeable in the given position
+	@param unit
+	@return bool
+	*/
+	bool isPlaceable(ABILITY_ID abilityId, Point2D points);
+
+	/*
+	@desc This will return true or false if a order is already given to an scv and is in progress
+	@param abilityid
+	@return bool
+	*/
+	bool isOrdered(ABILITY_ID abilityId, UNIT_TYPEID unitTypeId);
+
+	/*
+	@desc This will land a build structure in the vicinity
+	@param unit id for building, rel dir (try to land here first)
+	@return void
+	*/
+	void landFlyer(const Unit* flyer, RelDir relDir, ABILITY_ID aid_to_land);
+
 private:
 	// counts the number of units of a given type (does not include those in training)
 	size_t CountUnitType(UNIT_TYPEID unit_type);
@@ -131,6 +154,9 @@ private:
 	// map width and height
 	int map_width;
 	int map_height;
+
+	// which corner the base is on the map
+	Corner corner_loc;
 
 };
 
