@@ -109,7 +109,7 @@ private:
 	// returns a vec of units of given type (does not include those in training)
 	Units GetUnitsOfType(UNIT_TYPEID unit_type);
 	// returns a vec of a certain number of units of the given type (default num is 1)
-	// if location is given, only looks for units within a 15.0f radius of the location
+	// if location is given, only looks for units within a 30.0 radius of the location
 	Units GetRandomUnits(UNIT_TYPEID unit_type, Point3D location = Point3D(0,0,0), int num = 1);
 	// returns true if unit has finished being built
 	bool doneConstruction(const Unit *unit);

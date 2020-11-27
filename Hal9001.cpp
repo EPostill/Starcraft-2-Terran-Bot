@@ -573,8 +573,11 @@ void Hal9001::BuildStructure(ABILITY_ID ability_type_for_structure, float x, flo
         return;
     }
     // if no builder is given, make the builder a random scv
-    Units units = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, Point3D(x,y,0.0));
     if (!builder){
+        Units units = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, Point3D(x,y,0.0));
+        if (units.empty()){
+            return;
+        }
         builder = units.back();
     }
 
@@ -585,7 +588,12 @@ void Hal9001::BuildRefinery(const Unit *commcenter, const Unit *builder){
     const Unit *geyser = FindNearestGeyser(commcenter->pos);
     // if no builder is given, make the builder a random scv
     if (!builder){
-        builder = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, geyser->pos).back();
+        Units units = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, geyser->pos);
+        // can't find a builder
+        if (units.empty()){
+            return;
+        }
+        builder = units.back();
     }  
     
     Actions()->UnitCommand(builder, ABILITY_ID::BUILD_REFINERY, geyser);
@@ -637,7 +645,7 @@ Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
             }
             // only choose from scvs that are mining minerals or idle
             if (u->orders.empty() || u->orders.front().ability_id == ABILITY_ID::HARVEST_GATHER || u->orders.front().ability_id == ABILITY_ID::HARVEST_RETURN){
-                if (location != Point3D(0,0,0) && DistanceSquared2D(u->pos, location) > 625.0){
+                if (location != Point3D(0,0,0) && DistanceSquared2D(u->pos, location) > 900){
                     in_range = false;
                 }
                 if (in_range){
@@ -647,7 +655,7 @@ Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
             }
         // only choose from idle units
         } else if (u->orders.empty()){
-            if (location != Point3D(0,0,0) && DistanceSquared3D(u->pos, location) > 625.0){
+            if (location != Point3D(0,0,0) && DistanceSquared2D(u->pos, location) > 900){
                 in_range = false;
             }
             if (in_range){
@@ -673,8 +681,11 @@ void Hal9001::ManageRefineries(){
         if (refinery->build_progress == 0.75){
             // get two random scvs
             Units scvs = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, refinery->pos, 2);
+            if (scvs.empty()){
+                return;
+            }
 
-            Actions()->UnitCommand(scvs, ABILITY_ID::SMART, refinery, true);
+            Actions()->UnitCommand(scvs, ABILITY_ID::SMART, refinery);
         }
     }
 }
