@@ -376,20 +376,19 @@ void Hal9001::MineIdleWorkers() {
     if (bases.empty()) {
         return;
     }
-    //Search for a base that is missing workers.
     for (const auto& base : bases) {
         //If we have already mined out here skip the base.
         if (base->ideal_harvesters == 0 || base->build_progress != 1) {
             continue;
         }
-        if (base->assigned_harvesters < base->ideal_harvesters) {
-            valid_mineral_patch = FindNearestMineralPatch(base->pos);
-            for(const auto& worker : workers) {
-                if (worker->orders.front().target_unit_tag == base->tag) {
-                    Actions()->UnitCommand(worker, ABILITY_ID::HARVEST_GATHER, UNIT_TYPEID::TERRAN_REFINERY);
+        //find a base that needs workers and send scvs there
+        for (const auto&worker : workers) {
+            if (worker->orders.empty()) {
+                if (base->assigned_harvesters < base->ideal_harvesters) {
+                    valid_mineral_patch = FindNearestMineralPatch(base->pos);
+                    Actions()->UnitCommand(worker, ABILITY_ID::HARVEST_GATHER, valid_mineral_patch);
                 }
             }
-            return;
         }
     }
 }
@@ -601,8 +600,7 @@ Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
                 continue;
             }
             // only choose from scvs that are mining minerals or idle
-            AbilityID aid = u->orders.front().ability_id;
-            if (u->orders.empty() || aid == ABILITY_ID::HARVEST_GATHER || aid == ABILITY_ID::HARVEST_RETURN){
+            if (u->orders.empty() || u->orders.front().ability_id == ABILITY_ID::HARVEST_GATHER || u->orders.front().ability_id == ABILITY_ID::HARVEST_RETURN){
                 if (location != Point3D(0,0,0) && DistanceSquared2D(u->pos, location) > 225.0){
                     in_range = false;
                 }
