@@ -42,8 +42,9 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Units barracks = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
     Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
     Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
-    Units techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORYTECHLAB);
-    Units reactors = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKSREACTOR);
+    Units factory_techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORYTECHLAB);
+    Units starport_techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORTTECHLAB);
+    Units barracks_reactors = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKSREACTOR);
     Units depots = getDepots();
     Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
     Units engbays = GetUnitsOfType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
@@ -168,7 +169,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     if (factories.empty() && fly_factories.empty() && supplies >= 22 && vespene > 100 && minerals > 150 && bases.size() == 1 && orbcoms.size() == 1) {
         // get 1st cc => orbital now
         const Unit* cc1 = orbcoms.front();
-        buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 4); 
+        buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 3); 
 
     }
 
@@ -189,7 +190,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: once reactor from (8) finishes
      * Status: DONE
      *=========================================================================================*/
-    if (reactors.size() == 1 && marines.size() < 3 && minerals >= 50) {
+    if (barracks_reactors.size() == 1 && marines.size() < 3 && minerals >= 50) {
         // TODO: this will happen again once the marines go in the bunker, fix? 
         // actually keep since its good to keep making some marines, but maybe
         // move to a function like manageMarineTraining
@@ -228,7 +229,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         const Unit* factory = factories.front();
         if (doneConstruction(factory)){
             // build a star port next to the factory
-            buildNextTo(ABILITY_ID::BUILD_STARPORT, factory, FRONTRIGHT, 0);
+            buildNextTo(ABILITY_ID::BUILD_STARPORT, factory, RIGHT, 0);
             // build tech lab on factory
             Actions()->UnitCommand(factory, ABILITY_ID::BUILD_TECHLAB_FACTORY);
         }
@@ -239,10 +240,10 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition : we have a factory and factory tech lab 
      * Status: DONE
     *========================================================================================= */
-    if (techlabs.size() == 1 && factories.size() == 1 && widowmines.empty() && minerals >= 75) {
+    if (factory_techlabs.size() == 1 && factories.size() == 1 && widowmines.empty() && minerals >= 75) {
         //build widow mine for defence
         const Unit *factory = factories.front();
-        const Unit *techlab = techlabs.front();
+        const Unit *techlab = factory_techlabs.front();
         if (doneConstruction(techlab) && factory->orders.empty()){
             Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_WIDOWMINE);
         }
@@ -293,64 +294,64 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
 
     /***=========================================================================================
-     * Build Order # 20: ~46 supply, minerals = 300 and barracks == 1
-     * Condition : build 2 more barracks next to the star port and factory
+     * Build Order # 20: build 2 more barracks next to the star port and factory
+     * Condition : we have a starport, factory techlab and only one barracks so far
      * Status: DONE
     *========================================================================================= */
-    if (supplies >= 46 && minerals >= 300 && barracks.size() == 1) {
+    if (supplies >= 46 && minerals >= 300 && barracks.size() == 1 && factories.size() == 1 && starports.size() == 1) {
         // get factories
         const Unit* fa = factories.back();
-
         // build barrack next to factory
-        buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, RIGHT, 0);
-    }
+        buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, FRONT, 1);
 
-    if (supplies >= 46 && minerals >= 300 && barracks.size() == 2) {
         // get star port
         const Unit* sp = starports.back();
-
         // build another barrack next to starport
-        buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, RIGHT, 0);
-    }
-
-    if (supplies >= 46 && minerals >= 300 && vikings.size() == 1) {
-        // get star port
-        const Unit* sp = starports.back();
-
-        // build techlab on startport
-        Actions()->UnitCommand(sp, ABILITY_ID::BUILD_TECHLAB_FACTORY);
+        buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, FRONT, 1);
     }
 
     /***=========================================================================================
-     * Build Order # 21: siegetank == 1 and factories == 1
-     * Condition : build 2 more barracks next to the star port and factory
+     * Build Order # 21: build another tech lab
+     * Condition : once viking is finished
+     * Status: DONE
+    *========================================================================================= */
+    if (supplies >= 46 && minerals >= 300 && vikings.size() == 1 && starports.size() == 1) {
+        // get star port
+        const Unit* sp = starports.back();
+        // build techlab on startport
+        Actions()->UnitCommand(sp, ABILITY_ID::BUILD_TECHLAB_STARPORT);
+    }
+
+    /***=========================================================================================
+     * Build Order # 22: 
+     * Condition : 
      * Status: NOT DONE
     *========================================================================================= */
     //this is another tricky one, when the tank is FINISHED we want to move the factory on to a tech lab and the star port on to a reactor
-    if (CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) == 1 && factories.size() == 1) {
+    // if (CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) == 1 && factory_techlabs.size() == 1 && starports) {
 
-        // create tech lab on star port
+    //     // create tech lab on star port
 
-        // move factory and build another tech lab on it
-        const Unit* fa = factories.front();
+    //     // move factory and build another tech lab on it
+    //     const Unit* fa = factories.front();
 
-        cout << fa -> radius << endl;
+    //     cout << fa -> radius << endl;
 
-        BuildStructure(ABILITY_ID::BUILD_TECHLAB, startLocation.x + 3, startLocation.y + 3);
+    //     BuildStructure(ABILITY_ID::BUILD_TECHLAB, startLocation.x + 3, startLocation.y + 3);
 
-        // lift a factory
-        Actions() -> UnitCommand(fa, ABILITY_ID::LIFT_FACTORY);
+    //     // lift a factory
+    //     Actions() -> UnitCommand(fa, ABILITY_ID::LIFT_FACTORY);
 
-        // move tech lab and create a reactor
-    }
+    //     // move tech lab and create a reactor
+    // }
 
-    if (fly_factories.size() == 1) {
-        // get relative back location of flying factory
-        const Unit* fa = fly_factories.front();
+    // if (fly_factories.size() == 1) {
+    //     // get relative back location of flying factory
+    //     const Unit* fa = fly_factories.front();
         
-        // land factory
-        landFlyer(fa, BEHIND, ABILITY_ID::LAND_FACTORY);
-    }
+    //     // land factory
+    //     landFlyer(fa, LEFT, ABILITY_ID::LAND_FACTORY);
+    // }
 
     // if (Observation()->GetGameLoop() > 4320 && Observation()->GetMinerals() >= 200 && CountUnitType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY) == 0) { //4320 ticks ~ 4mins30sec
     //     //build engineering bay and a gas refinery at the 2nd comm center
@@ -1004,8 +1005,8 @@ void Hal9001::landFlyer(const Unit* flyer, RelDir relDir, ABILITY_ID aid_to_land
     // derived from mich's code
 
     // config coordinates
-    float x = (flyer -> pos.x) + (flyer -> radius) * 2;
-    float y = (flyer -> pos.y) + (flyer -> radius) * 2;
+    float x = (flyer -> pos.x) + (flyer -> radius) * 2 + 2;
+    float y = (flyer -> pos.y) + (flyer -> radius) * 2 + 2;
 
     cout << flyer -> radius << endl;
 
