@@ -249,7 +249,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: 26 supply + ??? minerals
      * Status: DONE
      *=========================================================================================*/
-    if (supplies >= 26 && minerals >= 75 && refineries.size() == 1) {
+    if (supplies >= 26 && minerals >= 75 && refineries.size() == 1 && orbcoms.size() == 1) {
 
         // build second refinery next to first command center
         BuildRefinery(orbcoms.front());
@@ -394,17 +394,19 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     //     // land factory
     //     landFlyer(fa, LEFT, ABILITY_ID::LAND_FACTORY);
     // }
-
-    if (supplies >= 48 && Observation()->GetMinerals() >= 200 && engbays.empty()) {
-        //build engineering bay and a gas refinery at the 2nd comm center
-        Point2D engbayLocation;
-        //TODO: get the location behind our second command center
-        BuildStructure(ABILITY_ID::BUILD_ENGINEERINGBAY, engbayLocation.x, engbayLocation.y, mainSCV);
-    }
-
-    //something about checking building positions here
-    if (/*factory and star port have been moved*/true) {
-        //move the 2 newest barracks to the tech labs that are now open
+    /***=========================================================================================
+     * Build Order # 23: build eng bay and gas near 2nd comm center
+     * Condition : we have 4 barracks
+     * Status: DONE
+    *========================================================================================= */
+    if (refineries.size() == 2 && engbays.empty() && barracks.size() == 4 && bases.size() == 1 && supplies >= 48 && minerals >= 200) {
+        const Unit *cc = bases.front();
+        Units builders = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, cc->pos, 2);
+        if (builders.size() == 2){
+            cout << "build 23" << endl;
+            buildNextTo(ABILITY_ID::BUILD_ENGINEERINGBAY, cc, FRONT, 3, builders.front());
+            BuildRefinery(cc, builders.back());
+        }
     }
 
     if (!factory_techlabs.empty()) {
@@ -422,7 +424,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition : 2nd command center's mineral line is full
      * Status: DONE
     *========================================================================================= */    
-    if (refineries.size() < 4 && bases.size() == 1 && orbcoms.size() == 1){
+    if (refineries.size() == 3 && bases.size() == 1 && orbcoms.size() == 1){
         const Unit *cc = bases.front();
         if (cc->assigned_harvesters < cc->ideal_harvesters){
             BuildRefinery(cc);
