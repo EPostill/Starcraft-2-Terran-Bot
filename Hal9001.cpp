@@ -71,7 +71,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
     Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
     Units factory_techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORYTECHLAB);
-    Units starport_techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORTTECHLAB);
+    Units starport_reactors = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORTREACTOR);
     Units barracks_reactors = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKSREACTOR);
     Units depots = getDepots();
     Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
@@ -345,40 +345,32 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         Units builders = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, fa->pos, 2);
         if (builders.size() == 2){
             // build barrack next to factory
-            buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, FRONT, 1, builders.front());
+            buildNextTo(ABILITY_ID::BUILD_REACTOR_BARRACKS, fa, FRONT, 1, builders.front());
             // build another barrack next to starport
-            buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, FRONT, 1, builders.back());
+            buildNextTo(ABILITY_ID::BUILD_REACTOR_BARRACKS, sp, FRONT, 1, builders.back());
         }
     }
 
     /***=========================================================================================
-     * Build Order # 21: build another tech lab
+     * Build Order # 21: build another reactor
      * Condition : once viking is finished
      * Status: DONE
     *========================================================================================= */
-    if (supplies >= 46 && minerals >= 300 && vikings.size() == 1 && starports.size() == 1) {
+    if (supplies >= 46 && minerals >= 300 && vikings.size() == 1 && starports.size() == 1 && starport_reactors.size() == 1) {
         // get star port
         const Unit* sp = starports.back();
-        // build techlab on startport
-        Actions()->UnitCommand(sp, ABILITY_ID::BUILD_TECHLAB_STARPORT);
+        // build reactor on startport
+        Actions()->UnitCommand(sp, ABILITY_ID::BUILD_REACTOR_STARPORT);
     }
 
     /***=========================================================================================
-     * Build Order # 22: 
-     * Condition : 
+     * Build Order # 22: move factory and starport, add a techlab to the factory and a reactor to the starport
+     * Condition : once tank is finished
      * Status: NOT DONE
     *========================================================================================= */
-    //this is another tricky one, when the tank is FINISHED we want to move the factory on to a tech lab and the star port on to a reactor
-    // if (CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) == 1 && factory_techlabs.size() == 1 && starports) {
-
-    //     // create tech lab on star port
-
+    // if (CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) == 1 && factories.size() == 1 && starports.size() == 1) {
     //     // move factory and build another tech lab on it
     //     const Unit* fa = factories.front();
-
-    //     cout << fa -> radius << endl;
-
-    //     BuildStructure(ABILITY_ID::BUILD_TECHLAB, startLocation.x + 3, startLocation.y + 3);
 
     //     // lift a factory
     //     Actions() -> UnitCommand(fa, ABILITY_ID::LIFT_FACTORY);
@@ -393,17 +385,18 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     //     // land factory
     //     landFlyer(fa, LEFT, ABILITY_ID::LAND_FACTORY);
     // }
-
-    if (supplies >= 48 && Observation()->GetMinerals() >= 200 && engbays.empty()) {
-        //build engineering bay and a gas refinery at the 2nd comm center
-        Point2D engbayLocation;
-        //TODO: get the location behind our second command center
-        BuildStructure(ABILITY_ID::BUILD_ENGINEERINGBAY, engbayLocation.x, engbayLocation.y, mainSCV);
-    }
-
-    //something about checking building positions here
-    if (/*factory and star port have been moved*/true) {
-        //move the 2 newest barracks to the tech labs that are now open
+    /***=========================================================================================
+     * Build Order # 23: build eng bay and gas near 2nd comm center
+     * Condition : we have 4 barracks
+     * Status: DONE
+    *========================================================================================= */
+    if (engbays.empty() && barracks.size() == 4 && bases.size() == 1 && supplies >= 48 && minerals >= 200) {
+        const Unit *cc = bases.front();
+        Units builders = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, cc->pos, 2);
+        if (builders.size() == 2){
+            buildNextTo(ABILITY_ID::BUILD_ENGINEERINGBAY, cc, FRONT, 3, builders.front());
+            BuildRefinery(cc, builders.back());
+        }
     }
 
     if (!factory_techlabs.empty()) {
@@ -421,9 +414,9 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition : 2nd command center's mineral line is full
      * Status: DONE
     *========================================================================================= */    
-    if (refineries.size() < 4 && bases.size() == 1 && orbcoms.size() == 1){
+    if (refineries.size() == 3 && bases.size() == 1 && orbcoms.size() == 1){
         const Unit *cc = bases.front();
-        if (cc->assigned_harvesters < cc->ideal_harvesters){
+        if (cc->assigned_harvesters == cc->ideal_harvesters){
             BuildRefinery(cc);
         }
     }
@@ -486,9 +479,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         }
     }
 
-    if (/*mineral line is fully saturated*/true && Observation()->GetMinerals() >= 75 && refineries.size() < 3) {
-        //build second refinery for the gas
-    }
 
     //At this point we have a few goals before we attack
     // we want to:
@@ -503,6 +493,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     //barracks -> marines (later on maurauders, although I doubt the game will go that far)
 
 }
+
 
 void Hal9001::ManageArmy() {
     const ObservationInterface *observation = Observation();
