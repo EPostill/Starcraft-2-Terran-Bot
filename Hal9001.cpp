@@ -339,15 +339,16 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
     *========================================================================================= */
     if (supplies >= 46 && minerals >= 300 && barracks.size() == 1 && factories.size() == 1 && starports.size() == 1) {
-        // get factories
         const Unit* fa = factories.back();
-        // build barrack next to factory
-        buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, FRONT, 1);
-
-        // get star port
         const Unit* sp = starports.back();
-        // build another barrack next to starport
-        buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, FRONT, 1);
+        // get two builders (so buildNextTo doesn't assign the same builder for both barracks)
+        Units builders = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, fa->pos, 2);
+        if (builders.size() == 2){
+            // build barrack next to factory
+            buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, FRONT, 1, builders.front());
+            // build another barrack next to starport
+            buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, FRONT, 1, builders.back());
+        }
     }
 
     /***=========================================================================================
