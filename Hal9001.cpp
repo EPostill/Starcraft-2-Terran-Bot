@@ -72,7 +72,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
     Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
     Units factory_techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORYTECHLAB);
-    Units starport_techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORTTECHLAB);
+    Units barrack_techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
     Units barracks_reactors = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKSREACTOR);
     Units depots = getDepots();
     Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
@@ -351,9 +351,19 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
             buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, FRONT, 1, builders.back());
         }
     }
+    // build tech labs on the 2 barracks (modification of build order)
+    if (barracks.size() == 3 && barrack_techlabs.empty()){
+        for (const auto &b : barracks){
+            // don't build on the one that has a reactor
+            if (b->unit_type != UNIT_TYPEID::TERRAN_BARRACKSREACTOR){
+                // TODO: it only builds a techlab on one of the barracks?
+                Actions()->UnitCommand(b, ABILITY_ID::BUILD_TECHLAB_BARRACKS);
+            }
+        }
+    }
 
     /***=========================================================================================
-     * Build Order # 21: build another tech lab
+     * Build Order # 21: build reactor on starport (modification of build order)
      * Condition : once viking is finished
      * Status: DONE
     *========================================================================================= */
@@ -361,7 +371,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // get star port
         const Unit* sp = starports.back();
         // build techlab on startport
-        Actions()->UnitCommand(sp, ABILITY_ID::BUILD_TECHLAB_STARPORT);
+        Actions()->UnitCommand(sp, ABILITY_ID::BUILD_REACTOR_STARPORT);
     }
 
     /***=========================================================================================
