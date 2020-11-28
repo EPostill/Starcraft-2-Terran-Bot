@@ -81,6 +81,8 @@ public:
 	@param	abilityId - BUILD_SUPPLYDEPOT, etc
 	*/
 	float radiusOfToBeBuilt(ABILITY_ID abilityId);
+	
+	Point2D PointTowardCenter(GameInfo game_info_, Point3D buildingloc, float ratio);
 
 	/*
 	@desc   This will return a tuple (1,0), (1, -1), etc. 
