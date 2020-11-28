@@ -402,7 +402,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         //move the 2 newest barracks to the tech labs that are now open
     }
 
-    if (!techlabs.empty()) {
+    if (!factory_techlabs.empty()) {
         TryBuildUnit(ABILITY_ID::RESEARCH_STIMPACK, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
         TryBuildUnit(ABILITY_ID::RESEARCH_COMBATSHIELD, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
         TryBuildUnit(ABILITY_ID::RESEARCH_CONCUSSIVESHELLS, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
