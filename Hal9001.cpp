@@ -425,7 +425,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     *========================================================================================= */    
     if (refineries.size() == 3 && bases.size() == 1 && orbcoms.size() == 1){
         const Unit *cc = bases.front();
-        if (cc->assigned_harvesters < cc->ideal_harvesters){
+        if (cc->assigned_harvesters >= cc->ideal_harvesters){
             BuildRefinery(cc);
         }
     }
