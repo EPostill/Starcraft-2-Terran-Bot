@@ -399,11 +399,10 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition : we have 4 barracks
      * Status: DONE
     *========================================================================================= */
-    if (refineries.size() == 2 && engbays.empty() && barracks.size() == 4 && bases.size() == 1 && supplies >= 48 && minerals >= 200) {
+    if (refineries.size() == 2 && engbays.empty() && barracks.size() == 3 && bases.size() == 1 && supplies >= 48 && minerals >= 200) {
         const Unit *cc = bases.front();
         Units builders = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, cc->pos, 2);
         if (builders.size() == 2){
-            cout << "build 23" << endl;
             buildNextTo(ABILITY_ID::BUILD_ENGINEERINGBAY, cc, FRONT, 3, builders.front());
             BuildRefinery(cc, builders.back());
         }
