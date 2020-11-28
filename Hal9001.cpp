@@ -3,6 +3,8 @@
 #include "cpp-sc2/src/sc2api/sc2_client.cc"
 using namespace std;
 
+#define DEBUG true
+
 struct IsArmy {
     IsArmy(const ObservationInterface* obs) : observation_(obs) {}
 
@@ -277,7 +279,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         if (doneConstruction(factory)){
             cout << "build 13" << endl;
             // build a star port next to the factory
-            buildNextTo(ABILITY_ID::BUILD_STARPORT, factory, RIGHT, 0);
+            buildNextTo(ABILITY_ID::BUILD_REACTOR_STARPORT, factory, RIGHT, 0);
             // build tech lab on factory
             Actions()->UnitCommand(factory, ABILITY_ID::BUILD_TECHLAB_FACTORY);
         }
@@ -364,9 +366,9 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         if (builders.size() == 2){
             cout << "build 20" << endl;
             // build barrack next to factory
-            buildNextTo(ABILITY_ID::BUILD_REACTOR_BARRACKS, fa, FRONT, 1, builders.front());
+            buildNextTo(ABILITY_ID::BUILD_TECHLAB_BARRACKS, fa, FRONT, 1, builders.front());
             // build another barrack next to starport
-            buildNextTo(ABILITY_ID::BUILD_REACTOR_BARRACKS, sp, FRONT, 1, builders.back());
+            buildNextTo(ABILITY_ID::BUILD_TECHLAB_BARRACKS, sp, FRONT, 1, builders.back());
         }
     }
 
@@ -854,7 +856,7 @@ void Hal9001::BuildStructure(ABILITY_ID ability_type_for_structure, float x, flo
         builder = units.back();
     }
 
-    Actions()->UnitCommand(builder, ability_type_for_structure, Point2D(x,y));   
+    Actions()->UnitCommand(builder, ability_type_for_structure, Point2D(x,y), true);   
 }
 
 bool Hal9001::TryBuildUnit(AbilityID ability_type_for_unit, UnitTypeID unit_type) {
@@ -1019,6 +1021,9 @@ void Hal9001::buildNextTo(ABILITY_ID ability_id, const Unit* ref, RelDir relDir,
     if (alreadyOrdered(ability_id)){
         return;
     }
+    #ifdef DEBUG
+    cout << "placement query called" << endl;
+    #endif
     // get radius of ref
     float radiusRE = ref -> radius;
 
@@ -1063,7 +1068,6 @@ void Hal9001::buildNextTo(ABILITY_ID ability_id, const Unit* ref, RelDir relDir,
 */
 float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
     // TODO:: add assertion that only "build-type" abilities will be accepted
-    
     // get observation
     const ObservationInterface *observation = Observation();
 
