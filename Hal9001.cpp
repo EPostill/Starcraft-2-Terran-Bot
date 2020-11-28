@@ -1,6 +1,7 @@
 #include "Hal9001.h"
 #include <iostream>
 #include "cpp-sc2/src/sc2api/sc2_client.cc"
+#define DEBUG true
 using namespace std;
 
 struct IsArmy {
@@ -1076,6 +1077,24 @@ float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
 
     // return the footprint radius of ability
     return abilities[index].footprint_radius;
+}
+
+
+/*
+@desc   This will return a Point towards the center from the building location
+@param  buildingloc - location of reference building
+        ratio - distance towards center eg. 2 is halfway to center
+*/
+Point2D Hal9001::PointTowardCenter(GameInfo game_info_, Point3D buildingloc, float ratio) {
+    Point2D mapcenter = Point2D(game_info_.playable_max.x / 2, game_info_.playable_max.y / 2);
+    float build_to_center_x = (buildingloc.x - mapcenter.x) / ratio;
+    float build_to_center_y = (buildingloc.y - mapcenter.y) / ratio;
+    #ifdef DEBUG
+        cout << "Map center is " << mapcenter.x << ", " << mapcenter.y << endl;
+        cout << "cc location is " << buildingloc.x << ", " << buildingloc.y << endl;
+        cout << "PointToCenter returns: " << buildingloc.x - build_to_center_x << ", " << buildingloc.y - build_to_center_y << endl;
+    #endif
+    return Point2D(buildingloc.x - build_to_center_x, buildingloc.y - build_to_center_y);
 }
 
 /*
