@@ -101,6 +101,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Status: DONE
     =========================================================================================**/
     if (supplies >= 14 && minerals > 100 && depots.empty()) {
+        cout << "build 2" << endl;
         // call BuildStructure
         BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, depotLocation.x, depotLocation.y, mainSCV);
     }
@@ -111,6 +112,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Status: DONE
     ========================================================================================= **/
     if (supplies >= 16 && minerals >= 150 && barracks.empty()) {
+        cout << "build 3" << endl;
         const Unit *depot = depots.front();
         buildNextTo(ABILITY_ID::BUILD_BARRACKS, depot, LEFT, 0, mainSCV);
     }
@@ -121,7 +123,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Status: DONE 
     =========================================================================================**/
     if (supplies >= 16 && minerals >= 75 && refineries.size() == 0) {
-
+        cout << "build 4" << endl;
         // Call BuildRefinery with no builder aka random scv will be assigned
         // This will seek for nearest gas supply
         BuildRefinery(bases.front());
@@ -135,9 +137,11 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Status: NOT DONE
     =========================================================================================**/
     if (supplies >= 17 && refineries.size() == 1 && depots.size() == 1 && barracks.size() == 1){
+        
         const Unit *barrack = barracks.front();
         // train one marine
         if (CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 0 && barrack->orders.empty()){
+            cout << "build 5" << endl;
             Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
 
         }
@@ -153,6 +157,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
      *=========================================================================================*/
     if (supplies >= 19 && minerals >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND) == 0) {
+        cout << "build 6" << endl;
         //upgrade command center to orbital command
         const Unit* commcenter = bases.front();
         Actions()->UnitCommand(commcenter, ABILITY_ID::MORPH_ORBITALCOMMAND, true);
@@ -164,6 +169,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
      *=========================================================================================*/
     if (supplies >= 20 && minerals >= 400 && CountUnitType(UNIT_TYPEID::TERRAN_COMMANDCENTER) == 0) {
+        cout << "build 7" << endl;
         //build command center
         Expand();
     } 
@@ -185,6 +191,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
     *========================================================================================= */
     if (marines.size() == 1 && bases.size() == 1 && orbcoms.size() == 1 && depots.size() == 1) {
+        cout << "build 8" << endl;
         // get barrack
         const Unit* barrack = barracks.front();
         // build reactor on barracks
@@ -202,6 +209,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
      *=========================================================================================*/
     if (factories.empty() && fly_factories.empty() && supplies >= 22 && vespene > 100 && minerals > 150 && bases.size() == 1 && orbcoms.size() == 1) {
+        cout << "build 9" << endl;
         // get 1st cc => orbital now
         const Unit* cc1 = orbcoms.front();
         buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 3); 
@@ -214,6 +222,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
      *=========================================================================================*/
     if (supplies >= 23 && minerals >= 100 && factories.size() == 1 && bunkers.size() == 0 && bases.size() == 1) {
+        cout << "build 10" << endl;
         // get command center
         const Unit* cc = bases.back();
         // build bunker towards the center from command center 2
@@ -232,6 +241,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // train 2 marines
         const Unit *barrack = barracks.front();
         if (barrack->orders.empty()){
+            cout << "build 11" << endl;
             Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
         }
     }
@@ -249,7 +259,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
      *=========================================================================================*/
     if (supplies >= 26 && minerals >= 75 && refineries.size() == 1) {
-
+        cout << "build 12" << endl;
         // build second refinery next to first command center
         BuildRefinery(orbcoms.front());
     }
@@ -263,6 +273,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // get factory
         const Unit* factory = factories.front();
         if (doneConstruction(factory)){
+            cout << "build 13" << endl;
             // build a star port next to the factory
             buildNextTo(ABILITY_ID::BUILD_STARPORT, factory, RIGHT, 0);
             // build tech lab on factory
@@ -280,6 +291,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         const Unit *factory = factories.front();
         const Unit *techlab = factory_techlabs.front();
         if (doneConstruction(techlab) && factory->orders.empty()){
+            cout << "build 15" << endl;
             Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_WIDOWMINE);
         }
     }
@@ -290,6 +302,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
     *========================================================================================= */
     if (supplies > 36 && minerals >= 100 && depots.size() == 2 && orbcoms.size() == 1 && bases.size() == 1) {
+        cout << "build 16" << endl;
         // get mineral patch near 2nd command center
         const Unit *mineralpatch = FindNearestMineralPatch(bases.front()->pos);
         // build depot
@@ -304,6 +317,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     if (starports.size() == 1 && vikings.empty()) {
         const Unit *sp = starports.front();
         if (doneConstruction(sp) && sp->orders.empty()){
+            cout << "build 17" << endl;
             Actions()->UnitCommand(sp, ABILITY_ID::TRAIN_VIKINGFIGHTER);
         }
     }
@@ -316,6 +330,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     if (tanks.empty() && factories.size() == 1 && widowmines.size() == 1) {
         const Unit *factory = factories.front();
         if (doneConstruction(factory) && factory->orders.empty()){
+            cout << "build 18" << endl;
             Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_SIEGETANK);
         }        
     }
@@ -328,6 +343,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // get depot thats close to 2nd commcenter
         const Unit *depot = FindNearestDepot(bases.front()->pos);
         if (mainSCV->orders.empty()){
+            cout << "build 19" << endl;
             buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, depot, BEHINDLEFT, 0, mainSCV);
         }
     }
@@ -344,6 +360,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // get two builders (so buildNextTo doesn't assign the same builder for both barracks)
         Units builders = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, fa->pos, 2);
         if (builders.size() == 2){
+            cout << "build 20" << endl;
             // build barrack next to factory
             buildNextTo(ABILITY_ID::BUILD_REACTOR_BARRACKS, fa, FRONT, 1, builders.front());
             // build another barrack next to starport
@@ -357,6 +374,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
     *========================================================================================= */
     if (supplies >= 46 && minerals >= 300 && vikings.size() == 1 && starports.size() == 1 && starport_reactors.size() == 0) {
+        cout << "build 21" << endl;
         // get star port
         const Unit* sp = starports.back();
         // build reactor on startport
@@ -394,6 +412,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         const Unit *cc = bases.front();
         Units builders = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, cc->pos, 2);
         if (builders.size() == 2){
+            cout << "build 23" << endl;
             buildNextTo(ABILITY_ID::BUILD_ENGINEERINGBAY, cc, FRONT, 3, builders.front());
             BuildRefinery(cc, builders.back());
         }
@@ -417,6 +436,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     if (refineries.size() == 3 && bases.size() == 1 && orbcoms.size() == 1){
         const Unit *cc = bases.front();
         if (cc->assigned_harvesters == cc->ideal_harvesters){
+            cout << "build 26" << endl;
             BuildRefinery(cc);
         }
     }
@@ -427,6 +447,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
     *========================================================================================= */    
     if (refineries.size() == 4 && bases.size() == 1){
+        cout << "build 28" << endl;
         buildNextTo(ABILITY_ID::BUILD_COMMANDCENTER, bases.front(), FRONTRIGHT, 7, mainSCV);
     }
 
