@@ -580,11 +580,21 @@ void Hal9001::MineIdleWorkers() {
             continue;
         }
         //find a base that needs workers and send scvs there
+        valid_mineral_patch = FindNearestMineralPatch(base->pos);
         for (const auto&worker : workers) {
             if (worker->orders.empty()) {
                 if (base->assigned_harvesters < base->ideal_harvesters) {
-                    valid_mineral_patch = FindNearestMineralPatch(base->pos);
                     Actions()->UnitCommand(worker, ABILITY_ID::HARVEST_GATHER, valid_mineral_patch);
+                }
+            }
+        }
+        //see if bases have too many workers
+        if (base->assigned_harvesters > base->ideal_harvesters) {
+            Units assigned_workers = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, base->pos, base->assigned_harvesters - base->ideal_harvesters);
+            for (const auto& base2 : bases) {
+                if (base2->assigned_harvesters < base2->ideal_harvesters) {
+                    valid_mineral_patch = FindNearestMineralPatch(base2->pos);
+                    Actions()->UnitCommand(assigned_workers, ABILITY_ID::HARVEST_GATHER, valid_mineral_patch);
                 }
             }
         }
@@ -620,7 +630,7 @@ void Hal9001::ManageSCVTraining(){
         // if any comm center is not full tell all comm centers to train an scv
         // mineidleworkers will send the scvs to the not full comm centers
         if (cc->assigned_harvesters < cc->ideal_harvesters){
-            if (cc->assigned_harvesters < cc->ideal_harvesters / 3) {
+            if (cc->assigned_harvesters < cc->ideal_harvesters / 4) {
                 for (const auto &cc2 : commcenters){
                     if (cc->orders.empty()){
                         Actions()->UnitCommand(cc2, ABILITY_ID::TRAIN_SCV);
@@ -937,6 +947,7 @@ Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
     // !!! maybe worry about if count < num after going thru all units list
     int count = 0;
     Units units = GetUnitsOfType(unit_type);
+    Units bases = getCommCenters();
     Units to_return;
     bool in_range = true;
     for (const auto &u : units){
@@ -952,18 +963,16 @@ Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
             if (u == scout && !enemyBaseFound){
                 continue;
             }
-            // don't return the scout if the base hasn't been found yet
-            if (u == scout && enemyBaseFound == false) {
-                continue;
-            }
             // only choose from scvs that are mining minerals or idle
-            if (u->orders.empty() || u->orders.front().ability_id == ABILITY_ID::HARVEST_GATHER || u->orders.front().ability_id == ABILITY_ID::HARVEST_RETURN){
-                if (location != Point3D(0,0,0) && DistanceSquared2D(u->pos, location) > 900){
-                    in_range = false;
-                }
-                if (in_range){
-                    to_return.push_back(u);
-                    ++count;
+            for (const auto &base : bases){
+                if (u->orders.empty() || u->orders.front().target_unit_tag == base->tag){
+                    if (location != Point3D(0,0,0) && DistanceSquared2D(u->pos, location) > 900){
+                        in_range = false;
+                    }
+                    if (in_range){
+                        to_return.push_back(u);
+                        ++count;
+                    }
                 }
             }
         // only choose from idle units
@@ -989,8 +998,11 @@ bool Hal9001::doneConstruction(const Unit *unit){
 void Hal9001::ManageRefineries(){
     Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
     for (const auto &refinery : refineries){
+        if (refinery->build_progress != 1) {
+            return;
+        }
         // refinery isn't full
-        if (refinery->build_progress == 1 && refinery->assigned_harvesters < refinery->ideal_harvesters){
+        if (refinery->assigned_harvesters < refinery->ideal_harvesters){
             // get missing amount of scvs
             int num = refinery->ideal_harvesters - refinery->assigned_harvesters;
             Units scvs = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, refinery->pos, num);
@@ -999,6 +1011,19 @@ void Hal9001::ManageRefineries(){
             }
 
             Actions()->UnitCommand(scvs, ABILITY_ID::HARVEST_GATHER, refinery);
+        }
+        //refinery is too full
+        if (refinery->assigned_harvesters > refinery->ideal_harvesters){
+            // get missing amount of scvs
+            int num = refinery->assigned_harvesters - refinery->ideal_harvesters;
+            Units scvs = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, refinery->pos, num);
+            if (scvs.empty()){
+                return;
+            }
+
+            for (const auto &scv : scvs) {
+                Actions()->UnitCommand(scv, ABILITY_ID::MOVE_MOVE, scv->pos);
+            }
         }
     }
 }
