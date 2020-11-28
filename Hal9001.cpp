@@ -619,9 +619,16 @@ void Hal9001::ManageSCVTraining(){
         // if any comm center is not full tell all comm centers to train an scv
         // mineidleworkers will send the scvs to the not full comm centers
         if (cc->assigned_harvesters < cc->ideal_harvesters){
-            for (const auto &cc2 : commcenters){
+            if (cc->assigned_harvesters < cc->ideal_harvesters / 3) {
+                for (const auto &cc2 : commcenters){
+                    if (cc->orders.empty()){
+                        Actions()->UnitCommand(cc2, ABILITY_ID::TRAIN_SCV);
+                    }
+                }
+            }
+            else {
                 if (cc->orders.empty()){
-                    Actions()->UnitCommand(cc2, ABILITY_ID::TRAIN_SCV);
+                    Actions()->UnitCommand(cc, ABILITY_ID::TRAIN_SCV);
                 }
             }
             return;
@@ -710,7 +717,6 @@ void Hal9001::OnStep() {
     BuildOrder(observation);
     ReconBase(observation);
     ManageArmy();
-
 
 }
 
