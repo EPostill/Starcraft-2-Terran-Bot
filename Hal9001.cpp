@@ -551,7 +551,7 @@ void Hal9001::initializeMainSCV(Units &bases){
         for (const auto &scv: scvs){
             const UnitOrder order = scv->orders.front();
             // this is the first trained scv
-            if (order.target_pos.x != 0 && order.target_pos.y != 0){
+            if (order.target_pos.x != 0 && order.target_pos.y != 0 && scv != scout){
                 mainSCV = scv;
             }
         }
