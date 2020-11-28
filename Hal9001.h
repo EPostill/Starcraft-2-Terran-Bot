@@ -44,6 +44,7 @@ public:
 	// build a refinery near the given command center
 	void BuildRefinery(const Unit *commcenter, const Unit *builder = nullptr);
 	void updateSupplies();
+	void ReconBase(const ObservationInterface* observation);
 	
 	// policy for training scvs
 	void ManageSCVTraining();
@@ -154,10 +155,22 @@ private:
 	bool doneConstruction(const Unit *unit);
 	bool build_complete = false;
 
+	// Check if we're currently scouting
+	bool scouting = false;
+	// Check if the enemybase has been found
+	bool enemyBaseFound = false;
+	
+	// Check which possible location we're currently checking
+	//bool L1;
+	//bool L2;
+	//bool L3;
+
     std::vector<Point3D> expansions;	// vector of all expansions
     Point3D startLocation;	// location of main base
 	Point2D depotLocation;	// location where to build the first depot
+	Point2D enemyBase;
 	const Unit *mainSCV;	// main scv worker
+	const Unit* scout;		// scout unit
 	int supplies;			// supply count
 	int minerals;			// mineral count
 	int vespene;			// gas count

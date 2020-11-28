@@ -141,6 +141,9 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
             Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
 
         }
+        //if (!builder) {
+        //    builder = units.back();
+        //}
         // FOR MAX - send scv scout
     }
 
@@ -625,6 +628,81 @@ void Hal9001::ManageSCVTraining(){
     }
 }
 
+
+/***=========================================================================================
+ * NEW FUNCTION FOR SCOUTING
+ *  
+ *=========================================================================================*/
+void Hal9001::ReconBase(const ObservationInterface* observation) {
+    
+    if (enemyBaseFound == false) {
+        // Get a random scv
+        Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
+        if (units.size() > 1) {
+            if (!scout) {
+                if (units.back() != mainSCV) {
+                    scout = units.back();
+                    cout << "got scout\n";
+                }
+                else {
+                    scout = units[units.size() - 2];
+                }
+            }
+            if (scout->is_alive == false) {
+                scout = units.back();
+            }
+
+            Point2D L1 = observation->GetGameInfo().enemy_start_locations[0];
+
+            // Placeholder values in case number of map starting points is less than 4
+            Point2D L2 = L1;
+            Point2D L3 = L1;
+
+
+            if (observation->GetGameInfo().enemy_start_locations.size() > 1) {
+                L2 = observation->GetGameInfo().enemy_start_locations[1];
+                L3 = observation->GetGameInfo().enemy_start_locations[2];
+            }
+
+            Units my_units = observation->GetUnits(Unit::Alliance::Enemy);
+            for (const auto unit : my_units) {
+                if (unit->unit_type == UNIT_TYPEID::TERRAN_COMMANDCENTER ||
+                    unit->unit_type == UNIT_TYPEID::TERRAN_SUPPLYDEPOT ||
+                    unit->unit_type == UNIT_TYPEID::ZERG_HATCHERY ||
+                    unit->unit_type == UNIT_TYPEID::PROTOSS_PYLON ||
+                    unit->unit_type == UNIT_TYPEID::PROTOSS_NEXUS) {
+                        enemyBase = Point2D(unit->pos.x, unit->pos.y);
+                        enemyBaseFound = true;
+                        moveUnit(scout, mainSCV->pos);
+                        scouting = false;
+                        return;
+                }
+            }
+
+            if (scouting == false) {
+                moveUnit(scout, L1);
+                scouting = true;
+                cout << "going to L1\n";
+            }
+            if (scouting == true) {
+                if (observation->GetGameInfo().enemy_start_locations.size() == 3) {
+                    if (scout->pos.x == L1.x && scout->pos.y == L1.y) {
+                        scouting = true;
+                        moveUnit(scout, L2);
+                        cout << "going to L2\n";
+                    }
+                    if (scout->pos.x == L2.x && scout->pos.y == L2.y) {
+                        enemyBase = L3;
+                        enemyBaseFound = true;
+                        moveUnit(scout, mainSCV->pos);
+                        scouting = false;
+                    }
+                }
+            }
+        }
+    }
+}
+
 void Hal9001::OnStep() { 
     // cout << Observation()->GetGameLoop() << endl;
     const ObservationInterface *observation = Observation();
@@ -636,7 +714,9 @@ void Hal9001::OnStep() {
     ManageRefineries();
 
     BuildOrder(observation);
+    ReconBase(observation);
     ManageArmy();
+
 
 }
 
@@ -865,6 +945,10 @@ Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
         if (unit_type == UNIT_TYPEID::TERRAN_SCV){
             // don't return mainScv
             if (u == mainSCV){
+                continue;
+            }
+            // don't return the scout if the base hasn't been found yet
+            if (u == scout && enemyBaseFound == false) {
                 continue;
             }
             // only choose from scvs that are mining minerals or idle
