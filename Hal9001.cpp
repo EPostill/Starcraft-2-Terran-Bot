@@ -78,6 +78,8 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Units engbays = GetUnitsOfType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
     Units orbcoms = GetUnitsOfType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND);
     Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
+    Units armories = GetUnitsOfType(UNIT_TYPEID::TERRAN_ARMORY);
+    Units fusioncores = GetUnitsOfType(UNIT_TYPEID::TERRAN_FUSIONCORE);
 
     // flying buildings
     Units fly_factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORYFLYING);
@@ -87,6 +89,8 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Units tanks = GetUnitsOfType(UNIT_TYPEID::TERRAN_SIEGETANK);
     Units widowmines = getWidowMines();
     Units vikings = GetUnitsOfType(UNIT_TYPEID::TERRAN_VIKINGFIGHTER);
+    //list of upgrades
+    auto upgrades = observation->GetUpgrades();
 
     // handle mainSCV behaviour for build orders < #2
     initializeMainSCV(bases);
@@ -312,7 +316,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
             Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_SIEGETANK);
         }        
     }
-
     /***=========================================================================================
      * Build Order # 19: build more 3 depots in succession behind minerals at 2nd comm center
      * Condition : we already have 3 depots and have less than 6 depots
@@ -387,20 +390,27 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     //     landFlyer(fa, LEFT, ABILITY_ID::LAND_FACTORY);
     // }
 
-    // if (Observation()->GetGameLoop() > 4320 && Observation()->GetMinerals() >= 200 && CountUnitType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY) == 0) { //4320 ticks ~ 4mins30sec
-    //     //build engineering bay and a gas refinery at the 2nd comm center
-    // }
+    if (supplies >= 48 && Observation()->GetMinerals() >= 200 && engbays.empty()) {
+        //build engineering bay and a gas refinery at the 2nd comm center
+        Point2D engbayLocation;
+        //TODO: get the location behind our second command center
+        BuildStructure(ABILITY_ID::BUILD_ENGINEERINGBAY, engbayLocation.x, engbayLocation.y, mainSCV);
+    }
 
-    // //something about checking building positions here
-    // if (/*factory and star port have been moved*/true) {
-    //     //move the 2 newest barracks to the tech labs that are now open
-    // }
+    //something about checking building positions here
+    if (/*factory and star port have been moved*/true) {
+        //move the 2 newest barracks to the tech labs that are now open
+    }
 
-    // // Units engbays = GetUnitsOfType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
-    // // const Unit* engbay = engbays.front();  // causes error because engbays is empty at start of game
-    // // if (doneConstruction(engbay)) {
-    // //     //upgrade infantry weapons to level 2 and research stim in the tech labs
-    // // }
+    if (!techlabs.empty()) {
+        TryBuildUnit(ABILITY_ID::RESEARCH_STIMPACK, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
+        TryBuildUnit(ABILITY_ID::RESEARCH_COMBATSHIELD, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
+        TryBuildUnit(ABILITY_ID::RESEARCH_CONCUSSIVESHELLS, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
+    }
+
+    if (!fusioncores.empty()) {
+        TryBuildUnit(ABILITY_ID::RESEARCH_RAPIDREIGNITIONSYSTEM, UNIT_TYPEID::TERRAN_FUSIONCORE);
+    }
 
     /***=========================================================================================
      * Build Order # 26: make another refinery near 2nd comm center
@@ -423,17 +433,70 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         buildNextTo(ABILITY_ID::BUILD_COMMANDCENTER, bases.front(), FRONTRIGHT, 7, mainSCV);
     }
 
-    // //At this point we have a few goals before we attack
-    // // we want to:
-    // //research combat shields
-    // //build another command center
-    // //research some amount of techs
+    //once we can research in the engbay, figure out the upgrades we need
+    if (!engbays.empty()){
+        for (const auto &upgrade : upgrades) {
+            if (!armories.empty()) {
+                //infantry upgrades
+                if (upgrade == UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYWEAPONS, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+                }
+                else if (upgrade == UPGRADE_ID::TERRANINFANTRYARMORSLEVEL1) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYARMOR, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+                }
+                if (upgrade == UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL2 && supplies >= 150) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYWEAPONS, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+                }
+                else if (upgrade == UPGRADE_ID::TERRANINFANTRYARMORSLEVEL2 && supplies >= 160) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYARMOR, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+                }
+                if (upgrade == UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL3 && supplies >= 180) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYWEAPONS, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+                }
+                else if (upgrade == UPGRADE_ID::TERRANINFANTRYARMORSLEVEL3 && supplies >= 190) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYARMOR, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+                }
 
-    // //more notes:
-    // //we should only build medivacs once combat shields has been researched
-    // //Star ports -> medivacs
-    // //Factories -> tanks
-    // //barracks -> marines (later on maurauders, although I doubt the game will go that far)
+                //vehicle and ship upgrades
+                if (upgrade == UPGRADE_ID::TERRANSHIPWEAPONSLEVEL1 && bases.size() > 2) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANSHIPWEAPONS, UNIT_TYPEID::TERRAN_ARMORY);
+                }
+                else if (upgrade == UPGRADE_ID::TERRANVEHICLEWEAPONSLEVEL1 && supplies >= 170) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANVEHICLEWEAPONS, UNIT_TYPEID::TERRAN_ARMORY);
+                }
+                else if (upgrade == UPGRADE_ID::TERRANVEHICLEANDSHIPARMORSLEVEL1 && bases.size() > 2) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANVEHICLEANDSHIPPLATING, UNIT_TYPEID::TERRAN_ARMORY);
+                }
+                if (upgrade == UPGRADE_ID::TERRANVEHICLEWEAPONSLEVEL2 && supplies >= 190) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANVEHICLEWEAPONS, UNIT_TYPEID::TERRAN_ARMORY);
+                }
+                else if (upgrade == UPGRADE_ID::TERRANVEHICLEANDSHIPARMORSLEVEL2 && supplies >= 190) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANVEHICLEANDSHIPPLATING, UNIT_TYPEID::ZERG_SPIRE);
+                }
+                else if (upgrade == UPGRADE_ID::TERRANSHIPWEAPONSLEVEL2 && supplies >= 190) {
+                    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANSHIPWEAPONS, UNIT_TYPEID::ZERG_SPIRE);
+                }
+            }
+            TryBuildUnit(ABILITY_ID::RESEARCH_HISECAUTOTRACKING, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+            TryBuildUnit(ABILITY_ID::RESEARCH_NEOSTEELFRAME, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+        }
+    }
+
+    if (/*mineral line is fully saturated*/true && Observation()->GetMinerals() >= 75 && refineries.size() < 3) {
+        //build second refinery for the gas
+    }
+
+    //At this point we have a few goals before we attack
+    // we want to:
+    //research combat shields
+    //build another command center
+    //research some amount of techs
+
+    //more notes:
+    //we should only build medivacs once combat shields has been researched
+    //Star ports -> medivacs
+    //Factories -> tanks
+    //barracks -> marines (later on maurauders, although I doubt the game will go that far)
 
 }
 
@@ -706,6 +769,25 @@ void Hal9001::BuildStructure(ABILITY_ID ability_type_for_structure, float x, flo
     Actions()->UnitCommand(builder, ability_type_for_structure, Point2D(x,y));   
 }
 
+bool Hal9001::TryBuildUnit(AbilityID ability_type_for_unit, UnitTypeID unit_type) {
+    const ObservationInterface* observation = Observation();
+
+    const Unit* unit = nullptr;
+    if (!GetRandomUnit(unit, observation, unit_type)) {
+        return false;
+    }
+    if (!unit->orders.empty()) {
+        return false;
+    }
+
+    if (unit->build_progress != 1) {
+        return false;
+    }
+
+    Actions()->UnitCommand(unit, ability_type_for_unit);
+    return true;
+}
+
 void Hal9001::BuildRefinery(const Unit *commcenter, const Unit *builder){
     // don't build if already being built
     if (alreadyOrdered(ABILITY_ID::BUILD_REFINERY)){
@@ -727,6 +809,15 @@ void Hal9001::BuildRefinery(const Unit *commcenter, const Unit *builder){
 
 void Hal9001::moveUnit(const Unit *unit, const Point2D &target){
     Actions()->UnitCommand(unit, ABILITY_ID::SMART, target);
+}
+
+bool Hal9001::GetRandomUnit(const Unit*& unit_out, const ObservationInterface* observation, UnitTypeID unit_type) {
+    Units my_units = observation->GetUnits(Unit::Alliance::Self, IsUnit(unit_type));
+    if (!my_units.empty()) {
+        unit_out = GetRandomEntry(my_units);
+        return true;
+    }
+    return false;
 }
 
 
