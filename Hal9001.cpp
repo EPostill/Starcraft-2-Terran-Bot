@@ -289,7 +289,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition : we have 2 supply depots and a 2nd command center
      * Status: DONE
     *========================================================================================= */
-    if (supplies > 36 && minerals >= 100 && depots.size() < 3 && orbcoms.size() == 1 && bases.size() == 1) {
+    if (supplies > 36 && minerals >= 100 && depots.size() == 2 && orbcoms.size() == 1 && bases.size() == 1) {
         // get mineral patch near 2nd command center
         const Unit *mineralpatch = FindNearestMineralPatch(bases.front()->pos);
         // build depot
@@ -315,12 +315,12 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     *========================================================================================= */
     if (tanks.empty() && factories.size() == 1 && widowmines.size() == 1) {
         const Unit *factory = factories.front();
-        if (factory->orders.empty()){
+        if (doneConstruction(factory) && factory->orders.empty()){
             Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_SIEGETANK);
         }        
     }
     /***=========================================================================================
-     * Build Order # 19: build more 3 depots in succession behind minerals at 2nd comm center
+     * Build Order # 19: build 3 more depots in succession behind minerals at 2nd comm center
      * Condition : we already have 3 depots and have less than 6 depots
      * Status: DONE
     *========================================================================================= */    
