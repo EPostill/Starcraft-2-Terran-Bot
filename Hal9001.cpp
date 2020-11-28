@@ -210,7 +210,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // get command center
         const Unit* cc = bases.back();
         // build bunker towards the center from command center 2
-        buildNextTo(ABILITY_ID::BUILD_BUNKER, cc, FRONT, 4);
+        buildNextTo(ABILITY_ID::BUILD_BUNKER, cc, FRONT, 3);
     }
 
     /***=========================================================================================
