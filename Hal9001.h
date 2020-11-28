@@ -82,6 +82,8 @@ public:
 	*/
 	float radiusOfToBeBuilt(ABILITY_ID abilityId);
 
+	Point2D PointToCenter(GameInfo game_info_, Point3D buildingloc, int ratio);
+
 	/*
 	@desc   This will return a tuple (1,0), (1, -1), etc. 
 	@param  anchor - a unit, will build relative to this
@@ -174,6 +176,7 @@ private:
 	int supplies;			// supply count
 	int minerals;			// mineral count
 	int vespene;			// gas count
+	int ticks = 0;          // game time ticks
 
 	// map name
 	MapName map_name;

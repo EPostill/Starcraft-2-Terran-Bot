@@ -1,5 +1,6 @@
 #include "Hal9001.h"
 #include <iostream>
+#include <cmath>
 #include "cpp-sc2/src/sc2api/sc2_client.cc"
 using namespace std;
 
@@ -91,6 +92,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Units vikings = GetUnitsOfType(UNIT_TYPEID::TERRAN_VIKINGFIGHTER);
     //list of upgrades
     auto upgrades = observation->GetUpgrades();
+    auto game_info_ = observation->GetGameInfo();
 
     // handle mainSCV behaviour for build orders < #2
     initializeMainSCV(bases);
@@ -216,8 +218,9 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     if (supplies >= 23 && minerals >= 100 && factories.size() == 1 && bunkers.size() == 0 && bases.size() == 1) {
         // get command center
         const Unit* cc = bases.back();
+        Point2D bunkerloc = PointToCenter(game_info_, cc->pos, 2);
         // build bunker towards the center from command center 2
-        buildNextTo(ABILITY_ID::BUILD_BUNKER, cc, FRONT, 3);
+        BuildStructure(ABILITY_ID::BUILD_BUNKER, bunkerloc.x, bunkerloc.y, mainSCV);
     }
 
     /***=========================================================================================
@@ -566,6 +569,7 @@ void Hal9001::MineIdleWorkers() {
     const ObservationInterface* observation = Observation();
     Units bases = getCommCenters();
     Units workers = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
+    Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
 
     const Unit* valid_mineral_patch = nullptr;
 
@@ -579,7 +583,7 @@ void Hal9001::MineIdleWorkers() {
             continue;
         }
         //find a base that needs workers and send scvs there
-        for (const auto&worker : workers) {
+        for (const auto &worker : workers) {
             if (worker->orders.empty()) {
                 if (base->assigned_harvesters < base->ideal_harvesters) {
                     valid_mineral_patch = FindNearestMineralPatch(base->pos);
@@ -706,16 +710,22 @@ void Hal9001::ReconBase(const ObservationInterface* observation) {
 
 void Hal9001::OnStep() { 
     // cout << Observation()->GetGameLoop() << endl;
+    ++ticks;
     const ObservationInterface *observation = Observation();
     minerals = observation->GetMinerals();
     supplies = observation->GetFoodUsed();
     vespene = observation->GetVespene();
-    ManageSCVTraining();
-    MineIdleWorkers();
-    ManageRefineries();
 
     BuildOrder(observation);
     ReconBase(observation);
+
+    if (ticks % 3 == 0){
+        ManageSCVTraining();
+    }
+    if (ticks % 5 == 0){
+        MineIdleWorkers();
+        ManageRefineries();
+    }
     ManageArmy();
 
 }
@@ -1076,6 +1086,13 @@ float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
 
     // return the footprint radius of ability
     return abilities[index].footprint_radius;
+}
+
+Point2D Hal9001::PointToCenter(GameInfo game_info_, Point3D buildingloc, int ratio) {
+    Point2D mapcenter = Point2D(game_info_.playable_max.x / 2, game_info_.playable_max.y / 2);
+    float build_to_center_x = (buildingloc.x - mapcenter.x) / ratio;
+    float build_to_center_y = (buildingloc.y - mapcenter.y) / ratio;
+    return Point2D(build_to_center_x + buildingloc.x, build_to_center_y + buildingloc.y);
 }
 
 /*
