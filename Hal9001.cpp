@@ -140,7 +140,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         
         const Unit *barrack = barracks.front();
         // train one marine
-        if (CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 0 && barrack->orders.empty()){
+        if (doneConstruction(barrack) && CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 0 && barrack->orders.empty()){
             cout << "build 5" << endl;
             Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
 
@@ -157,10 +157,12 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
      *=========================================================================================*/
     if (supplies >= 19 && minerals >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND) == 0) {
-        cout << "build 6" << endl;
         //upgrade command center to orbital command
         const Unit* commcenter = bases.front();
-        Actions()->UnitCommand(commcenter, ABILITY_ID::MORPH_ORBITALCOMMAND, true);
+        if (commcenter->orders.empty()){
+            cout << "build 6" << endl;
+            Actions()->UnitCommand(commcenter, ABILITY_ID::MORPH_ORBITALCOMMAND, true);
+        }
     }
 
     /***=========================================================================================
@@ -190,7 +192,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: Marine == 1, we have an orbital and a normal command center and one depot
      * Status: DONE
     *========================================================================================= */
-    if (marines.size() == 1 && bases.size() == 1 && orbcoms.size() == 1 && depots.size() == 1) {
+    if (marines.size() == 1 && bases.size() == 1 && orbcoms.size() == 1 && depots.size() == 1 && barracks_reactors.empty()) {
         cout << "build 8" << endl;
         // get barrack
         const Unit* barrack = barracks.front();
@@ -222,11 +224,11 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
      *=========================================================================================*/
     if (supplies >= 23 && minerals >= 100 && factories.size() == 1 && bunkers.size() == 0 && bases.size() == 1) {
-        cout << "build 10" << endl;
-        // get command center
-        const Unit* cc = bases.back();
-        // build bunker towards the center from command center 2
-        buildNextTo(ABILITY_ID::BUILD_BUNKER, cc, FRONT, 3);
+            cout << "build 10" << endl;
+            // get command center
+            const Unit* cc = bases.back();
+            // build bunker towards the center from command center 2
+            buildNextTo(ABILITY_ID::BUILD_BUNKER, cc, FRONT, 3);
     }
 
     /***=========================================================================================
