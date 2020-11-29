@@ -555,7 +555,7 @@ void Hal9001::ManageArmy() {
                 else {
                     Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, homebase->pos);
                 }
-                //break;
+                break;
             }
             default: {
                 if (buildOrderComplete && enemyBaseFound) {
@@ -564,6 +564,7 @@ void Hal9001::ManageArmy() {
                 else {
                     Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, homebase->pos);
                 }
+                break;
             }
         }
   
