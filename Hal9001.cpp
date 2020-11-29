@@ -525,6 +525,8 @@ void Hal9001::ManageArmy() {
     Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
     const Unit *homebase = bases.front();
 
+    bool defense_mode = EnemyWithinRadius(10, enemies, bases);
+
     for (const auto& unit : allies) {
         switch (unit->unit_type.ToType()) {
             case(UNIT_TYPEID::TERRAN_MARINE): {
@@ -543,6 +545,19 @@ void Hal9001::ManageArmy() {
     }
 
 
+}
+
+bool Hal9001::EnemyWithinRadius(int radius, Units enemies, Units bases) {
+    for (const auto& enemy : enemies) {
+        for (const auto& base : bases) {
+            //see if unit is within the radius
+            if (enemy->pos.x < base->pos.x + radius && enemy->pos.x > base->pos.x - radius &&
+                enemy->pos.y < base->pos.y + radius && enemy->pos.y > base->pos.y - radius) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 
