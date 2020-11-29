@@ -447,6 +447,8 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     *========================================================================================= */    
     if (refineries.size() == 4 && bases.size() == 1){
         buildNextTo(ABILITY_ID::BUILD_COMMANDCENTER, bases.front(), FRONTRIGHT, 7, mainSCV);
+        cout << "Done build order\n";
+        buildOrderComplete = true;
     }
 
     //once we can research in the engbay, figure out the upgrades we need
@@ -544,18 +546,28 @@ void Hal9001::ManageArmy() {
     for (const auto& unit : allies) {
         switch (unit->unit_type.ToType()) {
             case(UNIT_TYPEID::TERRAN_MARINE): {
-                if (!bunkers.empty()) {
+                if (buildOrderComplete && enemyBaseFound) {
+                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
+                }
+                else if (!bunkers.empty()) {
                     Actions()->UnitCommand(unit, ABILITY_ID::SMART, bunkers.front());
                 }
                 else {
                     Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, homebase->pos);
                 }
-                break;
+                //break;
             }
             default: {
-                Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, homebase->pos);
+                if (buildOrderComplete && enemyBaseFound) {
+                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
+                }
+                else {
+                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, homebase->pos);
+                }
             }
         }
+  
+
     }
 
 

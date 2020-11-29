@@ -161,6 +161,8 @@ private:
 	bool scouting = false;
 	// Check if the enemybase has been found
 	bool enemyBaseFound = false;
+	// Check if build order is finished
+	bool buildOrderComplete = false;
 	
 	// Check which possible location we're currently checking
 	//bool L1;
