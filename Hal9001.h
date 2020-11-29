@@ -41,8 +41,6 @@ public:
 	void BuildOrder(const ObservationInterface *observation);
 	// Manage our army
 	void ManageArmy();
-	//detects if an enemy is close to our bases
-	bool EnemyWithinRadius(int radius, Units enemies, Units bases);
 	// build a refinery near the given command center
 	void BuildRefinery(const Unit *commcenter, const Unit *builder = nullptr);
 	void updateSupplies();

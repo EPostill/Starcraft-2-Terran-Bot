@@ -524,8 +524,22 @@ void Hal9001::ManageArmy() {
     Units allies = observation->GetUnits(Unit::Alliance::Self, IsArmy(observation));
     Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
     const Unit *homebase = bases.front();
+    int defence_radius = 10;
 
-    bool defense_mode = EnemyWithinRadius(10, enemies, bases);
+    Units enemies_near_us;
+    bool enemy_in_radius = false;
+
+    for (const auto& enemy : enemies) {
+        for (const auto& base : bases) {
+            //see if unit is within the radius
+            if (enemy->pos.x < base->pos.x + defence_radius && enemy->pos.x > base->pos.x - defence_radius &&
+                enemy->pos.y < base->pos.y + defence_radius && enemy->pos.y > base->pos.y - defence_radius) {
+                    
+                enemy_in_radius = true;
+                enemies_near_us.push_back(enemy);
+            }
+        }
+    }
 
     for (const auto& unit : allies) {
         switch (unit->unit_type.ToType()) {
@@ -545,19 +559,6 @@ void Hal9001::ManageArmy() {
     }
 
 
-}
-
-bool Hal9001::EnemyWithinRadius(int radius, Units enemies, Units bases) {
-    for (const auto& enemy : enemies) {
-        for (const auto& base : bases) {
-            //see if unit is within the radius
-            if (enemy->pos.x < base->pos.x + radius && enemy->pos.x > base->pos.x - radius &&
-                enemy->pos.y < base->pos.y + radius && enemy->pos.y > base->pos.y - radius) {
-                return true;
-            }
-        }
-    }
-    return false;
 }
 
 
