@@ -45,6 +45,7 @@ void Hal9001::OnGameStart() {
     minerals = observation->GetMinerals();
     supplies = observation->GetFoodUsed();
     vespene = observation->GetVespene();
+    canRush = false;
 
     // store expansions and start location
     expansions = search::CalculateExpansionLocations(observation, Query());
@@ -527,7 +528,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     //     }
     // }
 
-
     //At this point we have a few goals before we attack
     // we want to:
     //research combat shields
@@ -559,6 +559,9 @@ void Hal9001::ManageArmy() {
                 if (buildOrderComplete && enemyBaseFound) {
                     cout << "went to staging\n";
                     Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
+                }
+                else if (buildOrderComplete && enemyBaseFound && canRush) {
+                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
                 }
                 else if (!bunkers.empty()) {
                     Actions()->UnitCommand(unit, ABILITY_ID::SMART, bunkers.front());
@@ -659,11 +662,27 @@ void Hal9001::ManageArmy() {
                 break;
             }
         }
-  
-
     }
+}
 
+void Hal9001::setCanRush(const ObservationInterface *observation){
+    bool hasStimpack = false;
+    bool hasCombatShield = false;
+    bool hasInfantry1 = false;
+    int numTanks = CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) + CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANKSIEGED);
 
+    // need stimpack, combat shield and terran infantry weapons lvl 1
+    auto upgrades = observation->GetUpgrades();
+    for (const auto &upgrade : upgrades){
+        if (upgrade == UPGRADE_ID::COMBATSHIELD){
+            hasCombatShield = true;
+        } else if (upgrade == UPGRADE_ID::STIMPACK){
+            hasStimpack = true;
+        } else if (upgrade == UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1){
+            hasInfantry1 = true;
+        }
+    }
+    canRush = hasStimpack && hasCombatShield && hasInfantry1 && numTanks >= 2;
 }
 
 void Hal9001::AttackWithUnit(const Unit* unit, const ObservationInterface* observation) {
@@ -875,6 +894,7 @@ void Hal9001::OnStep() {
     MineIdleWorkers();
     ManageRefineries();
 
+    setCanRush(observation);
     BuildOrder(observation);
     ReconBase(observation);
     ManageArmy();
