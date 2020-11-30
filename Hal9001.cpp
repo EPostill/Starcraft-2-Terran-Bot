@@ -202,7 +202,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: Marine == 1, we have an orbital and a normal command center and one depot
      * Status: DONE
     *========================================================================================= */
-    if (marines.size() == 1 && bases.size() == 1 && orbcoms.size() == 1 && depots.size() == 1 && barracks_reactors.empty()) {
+    if (marines.size() == 1 && bases.size() == 1 && orbcoms.size() == 1 && depots.size() == 1) {
         // cout << "build 8" << endl;
         // get barrack
         const Unit* barrack = barracks.front();
@@ -347,11 +347,11 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         }        
     }
     /***=========================================================================================
-     * Build Order # 19: build 3 more depots in succession behind minerals at 2nd comm center
+     * Build Order # 19: build 4 more depots in succession behind minerals at 2nd comm center
      * Condition : we already have 3 depots and have less than 6 depots
      * Status: DONE
     *========================================================================================= */    
-    if (depots.size() >= 3 && depots.size() < 5 && bases.size() == 1) {
+    if (depots.size() >= 3 && depots.size() < 6 && bases.size() == 1) {
         // get depot thats close to 2nd commcenter
         const Unit *depot = FindNearestDepot(bases.front()->pos);
         if (mainSCV->orders.empty()){
@@ -468,7 +468,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition : when we have 4 refineries
      * Status: DONE
     *========================================================================================= */    
-    if (refineries.size() == 4 && !starports.empty()){
+    if (minerals >= 400 && refineries.size() == 4 && !starports.empty() && bases.size() == 1){
         cout << "build 28" << endl;
         buildNextTo(ABILITY_ID::BUILD_COMMANDCENTER, starports.front(), BEHINDRIGHT, 1);
     }
