@@ -61,7 +61,14 @@ void Hal9001::OnGameStart() {
     // config map_name to enum
     if(map_name == "Cactus Valley LE (Void)"){
         this -> map_name = CACTUS;
-    } else{
+    }
+    else if (map_name == "BelShir Vestige LE") {
+        this->map_name = BELSHIR;
+    }
+    else if (map_name == "Proxima Station LE") {
+        this->map_name = PROXIMA;
+    }
+    else{
         cout << "Map Name Cannot be retrieved" << endl;
     }
     // set first depot location
@@ -657,8 +664,9 @@ void Hal9001::ManageArmy() {
         else {
             for (const auto& base : enemybases) {
                 if (Point2D(base->pos.x, base->pos.y) != enemyBase) {
-                    if (Distance3D(base->pos, startLocation) < distance) {
-                        distance = Distance3D(base->pos, startLocation);
+                    float d = Distance3D(base->pos, startLocation);
+                    if (d < distance) {
+                        distance = d;
                         base_to_rush = base;
                     }
                 }
