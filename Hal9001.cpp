@@ -474,6 +474,13 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         buildNextTo(ABILITY_ID::BUILD_COMMANDCENTER, starports.front(), BEHINDRIGHT, 1);
     }
 
+    // lower supply depots
+    for (const auto &depot: depots){
+        if (depot->unit_type != UNIT_TYPEID::TERRAN_SUPPLYDEPOTLOWERED && depot->orders.empty()){
+            Actions()->UnitCommand(depot, ABILITY_ID::MORPH_SUPPLYDEPOT_LOWER);
+        }
+    }
+
     //once we can research in the engbay, figure out the upgrades we need
     // if (!engbays.empty()){
     //     for (const auto &upgrade : upgrades) {
