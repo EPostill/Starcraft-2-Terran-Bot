@@ -632,6 +632,7 @@ void Hal9001::ManageArmy() {
     Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
     const Unit *homebase = bases.front();
     const Unit *base_to_rush;
+    float distance = std::numeric_limits<float>::max();;
 
     if (!canRush){
         // Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
@@ -656,7 +657,10 @@ void Hal9001::ManageArmy() {
         else {
             for (const auto& base : enemybases) {
                 if (Point2D(base->pos.x, base->pos.y) != enemyBase) {
-                    base_to_rush = base;
+                    if (Distance3D(base->pos, startLocation) < distance) {
+                        distance = Distance3D(base->pos, startLocation);
+                        base_to_rush = base;
+                    }
                 }
             }
         }
