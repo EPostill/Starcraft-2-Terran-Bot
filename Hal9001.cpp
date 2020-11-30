@@ -1,6 +1,7 @@
 #include "Hal9001.h"
 #include <iostream>
 #include "cpp-sc2/src/sc2api/sc2_client.cc"
+#define DEBUG true
 using namespace std;
 
 #define DEBUG true
@@ -74,6 +75,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
     Units factory_techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORYTECHLAB);
     Units starport_reactors = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORTREACTOR);
+    Units barrack_techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
     Units barracks_reactors = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKSREACTOR);
     Units depots = getDepots();
     Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
@@ -262,7 +264,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: 26 supply + ??? minerals
      * Status: DONE
      *=========================================================================================*/
-    if (supplies >= 26 && minerals >= 75 && refineries.size() == 1) {
+    if (supplies >= 26 && minerals >= 75 && refineries.size() == 1 && orbcoms.size() == 1) {
         cout << "build 12" << endl;
         // build second refinery next to first command center
         BuildRefinery(orbcoms.front());
@@ -371,9 +373,19 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
             buildNextTo(ABILITY_ID::BUILD_TECHLAB_BARRACKS, sp, FRONT, 1, builders.back());
         }
     }
+    // build tech labs on the 2 barracks (modification of build order)
+    if (barracks.size() == 3 && barrack_techlabs.empty()){
+        for (const auto &b : barracks){
+            // don't build on the one that has a reactor
+            if (b->unit_type != UNIT_TYPEID::TERRAN_BARRACKSREACTOR){
+                // TODO: it only builds a techlab on one of the barracks?
+                Actions()->UnitCommand(b, ABILITY_ID::BUILD_TECHLAB_BARRACKS);
+            }
+        }
+    }
 
     /***=========================================================================================
-     * Build Order # 21: build another reactor
+     * Build Order # 21: build reactor on starport (modification of build order)
      * Condition : once viking is finished
      * Status: DONE
     *========================================================================================= */
@@ -412,7 +424,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition : we have 4 barracks
      * Status: DONE
     *========================================================================================= */
-    if (engbays.empty() && barracks.size() == 4 && bases.size() == 1 && supplies >= 48 && minerals >= 200) {
+    if (refineries.size() == 2 && engbays.empty() && barracks.size() == 3 && bases.size() == 1 && supplies >= 48 && minerals >= 200) {
         const Unit *cc = bases.front();
         Units builders = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, cc->pos, 2);
         if (builders.size() == 2){
@@ -439,7 +451,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     *========================================================================================= */    
     if (refineries.size() == 3 && bases.size() == 1 && orbcoms.size() == 1){
         const Unit *cc = bases.front();
-        if (cc->assigned_harvesters == cc->ideal_harvesters){
+        if (cc->assigned_harvesters >= cc->ideal_harvesters){
             cout << "build 26" << endl;
             BuildRefinery(cc);
         }
@@ -528,6 +540,22 @@ void Hal9001::ManageArmy() {
     Units allies = observation->GetUnits(Unit::Alliance::Self, IsArmy(observation));
     Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
     const Unit *homebase = bases.front();
+    int defence_radius = 10;
+
+    Units enemies_near_us;
+    bool enemy_in_radius = false;
+
+    for (const auto& enemy : enemies) {
+        for (const auto& base : bases) {
+            //see if unit is within the radius
+            if (enemy->pos.x < base->pos.x + defence_radius && enemy->pos.x > base->pos.x - defence_radius &&
+                enemy->pos.y < base->pos.y + defence_radius && enemy->pos.y > base->pos.y - defence_radius) {
+                    
+                enemy_in_radius = true;
+                enemies_near_us.push_back(enemy);
+            }
+        }
+    }
 
     for (const auto& unit : allies) {
         switch (unit->unit_type.ToType()) {
@@ -595,11 +623,21 @@ void Hal9001::MineIdleWorkers() {
             continue;
         }
         //find a base that needs workers and send scvs there
+        valid_mineral_patch = FindNearestMineralPatch(base->pos);
         for (const auto&worker : workers) {
             if (worker->orders.empty()) {
                 if (base->assigned_harvesters < base->ideal_harvesters) {
-                    valid_mineral_patch = FindNearestMineralPatch(base->pos);
                     Actions()->UnitCommand(worker, ABILITY_ID::HARVEST_GATHER, valid_mineral_patch);
+                }
+            }
+        }
+        //see if bases have too many workers
+        if (base->assigned_harvesters > base->ideal_harvesters) {
+            Units assigned_workers = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, base->pos, base->assigned_harvesters - base->ideal_harvesters);
+            for (const auto& base2 : bases) {
+                if (base2->assigned_harvesters < base2->ideal_harvesters) {
+                    valid_mineral_patch = FindNearestMineralPatch(base2->pos);
+                    Actions()->UnitCommand(assigned_workers, ABILITY_ID::HARVEST_GATHER, valid_mineral_patch);
                 }
             }
         }
@@ -635,9 +673,16 @@ void Hal9001::ManageSCVTraining(){
         // if any comm center is not full tell all comm centers to train an scv
         // mineidleworkers will send the scvs to the not full comm centers
         if (cc->assigned_harvesters < cc->ideal_harvesters){
-            for (const auto &cc2 : commcenters){
+            if (cc->assigned_harvesters < cc->ideal_harvesters / 4) {
+                for (const auto &cc2 : commcenters){
+                    if (cc->orders.empty()){
+                        Actions()->UnitCommand(cc2, ABILITY_ID::TRAIN_SCV);
+                    }
+                }
+            }
+            else {
                 if (cc->orders.empty()){
-                    Actions()->UnitCommand(cc2, ABILITY_ID::TRAIN_SCV);
+                    Actions()->UnitCommand(cc, ABILITY_ID::TRAIN_SCV);
                 }
             }
             return;
@@ -726,7 +771,6 @@ void Hal9001::OnStep() {
     BuildOrder(observation);
     ReconBase(observation);
     ManageArmy();
-
 
 }
 
@@ -946,6 +990,7 @@ Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
     // !!! maybe worry about if count < num after going thru all units list
     int count = 0;
     Units units = GetUnitsOfType(unit_type);
+    Units bases = getCommCenters();
     Units to_return;
     bool in_range = true;
     for (const auto &u : units){
@@ -961,18 +1006,16 @@ Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
             if (u == scout && !enemyBaseFound){
                 continue;
             }
-            // don't return the scout if the base hasn't been found yet
-            if (u == scout && enemyBaseFound == false) {
-                continue;
-            }
             // only choose from scvs that are mining minerals or idle
-            if (u->orders.empty() || u->orders.front().ability_id == ABILITY_ID::HARVEST_GATHER || u->orders.front().ability_id == ABILITY_ID::HARVEST_RETURN){
-                if (location != Point3D(0,0,0) && DistanceSquared2D(u->pos, location) > 900){
-                    in_range = false;
-                }
-                if (in_range){
-                    to_return.push_back(u);
-                    ++count;
+            for (const auto &base : bases){
+                if (u->orders.empty() || u->orders.front().target_unit_tag == base->tag){
+                    if (location != Point3D(0,0,0) && DistanceSquared2D(u->pos, location) > 900){
+                        in_range = false;
+                    }
+                    if (in_range){
+                        to_return.push_back(u);
+                        ++count;
+                    }
                 }
             }
         // only choose from idle units
@@ -998,8 +1041,11 @@ bool Hal9001::doneConstruction(const Unit *unit){
 void Hal9001::ManageRefineries(){
     Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
     for (const auto &refinery : refineries){
+        if (refinery->build_progress != 1) {
+            return;
+        }
         // refinery isn't full
-        if (refinery->build_progress == 1 && refinery->assigned_harvesters < refinery->ideal_harvesters){
+        if (refinery->assigned_harvesters < refinery->ideal_harvesters){
             // get missing amount of scvs
             int num = refinery->ideal_harvesters - refinery->assigned_harvesters;
             Units scvs = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, refinery->pos, num);
@@ -1008,6 +1054,19 @@ void Hal9001::ManageRefineries(){
             }
 
             Actions()->UnitCommand(scvs, ABILITY_ID::HARVEST_GATHER, refinery);
+        }
+        //refinery is too full
+        if (refinery->assigned_harvesters > refinery->ideal_harvesters){
+            // get missing amount of scvs
+            int num = refinery->assigned_harvesters - refinery->ideal_harvesters;
+            Units scvs = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, refinery->pos, num);
+            if (scvs.empty()){
+                return;
+            }
+
+            for (const auto &scv : scvs) {
+                Actions()->UnitCommand(scv, ABILITY_ID::MOVE_MOVE, scv->pos);
+            }
         }
     }
 }
@@ -1088,6 +1147,24 @@ float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
 
     // return the footprint radius of ability
     return abilities[index].footprint_radius;
+}
+
+
+/*
+@desc   This will return a Point towards the center from the building location
+@param  buildingloc - location of reference building
+        ratio - distance towards center eg. 2 is halfway to center
+*/
+Point2D Hal9001::PointTowardCenter(GameInfo game_info_, Point3D buildingloc, float ratio) {
+    Point2D mapcenter = Point2D(game_info_.playable_max.x / 2, game_info_.playable_max.y / 2);
+    float build_to_center_x = (buildingloc.x - mapcenter.x) / ratio;
+    float build_to_center_y = (buildingloc.y - mapcenter.y) / ratio;
+    #ifdef DEBUG
+        cout << "Map center is " << mapcenter.x << ", " << mapcenter.y << endl;
+        cout << "cc location is " << buildingloc.x << ", " << buildingloc.y << endl;
+        cout << "PointToCenter returns: " << buildingloc.x - build_to_center_x << ", " << buildingloc.y - build_to_center_y << endl;
+    #endif
+    return Point2D(buildingloc.x - build_to_center_x, buildingloc.y - build_to_center_y);
 }
 
 /*
