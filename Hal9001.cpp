@@ -604,6 +604,21 @@ void Hal9001::ManageUpgrades(const ObservationInterface* observation){
 }
 
 void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
+    Units barracks = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
+    Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
+    Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
+    int numMarines = CountUnitType(UNIT_TYPEID::TERRAN_MARINE);
+    // 3:2:1 ratio
+    // have 20 marines
+    for (auto const &barrack : barracks){
+        if (barrack->orders.empty() && numMarines < 20){
+            Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
+        }
+    }
+    // 13 marauders
+    
+    // 13 medivacs
+    // 6 tanks
 
 }
 
