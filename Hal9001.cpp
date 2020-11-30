@@ -627,9 +627,11 @@ void Hal9001::ManageArmy() {
 
     Units enemies = observation->GetUnits(Unit::Alliance::Enemy);
     Units bases = observation->GetUnits(Unit::Alliance::Self, IsTownHall());
+    Units enemybases = observation->GetUnits(Unit::Alliance::Enemy, IsTownHall());
     Units allies = observation->GetUnits(Unit::Alliance::Self, IsArmy(observation));
     Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
     const Unit *homebase = bases.front();
+    const Unit *base_to_rush;
 
     if (!canRush){
         // Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
@@ -648,8 +650,18 @@ void Hal9001::ManageArmy() {
         #ifdef DEBUG
         cout << "rushing" << endl;
         #endif
+        if (enemybases.size() == 1) {
+            base_to_rush = enemybases.front();
+        }
+        else {
+            for (const auto& base : enemybases) {
+                if (Point2D(base->pos.x, base->pos.y) != enemyBase) {
+                    base_to_rush = base;
+                }
+            }
+        }
         for (const auto &unit : allies){
-            Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
+            Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush->pos);
         }
         return;
     }
