@@ -542,47 +542,61 @@ void Hal9001::setCanRush(const ObservationInterface *observation){
     bool hasStimpack = false;
     bool hasCombatShield = false;
     bool hasInfantry1 = false;
-    int numTanks = CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) + CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANKSIEGED);
+
+    // check marine hp == 55 for combat shielf
+    Units marines = GetUnitsOfType(UNIT_TYPEID::TERRAN_MARINE);
+    if (marines.empty()){
+        return;
+    }
+    const Unit *marine = marines.front();
+    if (marine->health_max >= 55){
+        hasCombatShield = true;
+    }
 
     // need stimpack, combat shield and terran infantry weapons lvl 1
     auto upgrades = observation->GetUpgrades();
     for (const auto &upgrade : upgrades){
         if (upgrade == UPGRADE_ID::COMBATSHIELD){
+            cout << "has combat shield" << endl;
             hasCombatShield = true;
         } else if (upgrade == UPGRADE_ID::STIMPACK){
+            cout << "has stimpack" << endl;
             hasStimpack = true;
         } else if (upgrade == UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1){
+            cout << "has infantry1" << endl;
             hasInfantry1 = true;
         }
     }
-    canRush = hasStimpack && hasCombatShield && hasInfantry1 && numTanks >= 2;
+    canRush = hasStimpack && hasCombatShield && hasInfantry1;
 }
 
 void Hal9001::ManageUpgrades(const ObservationInterface* observation){
     Units engbays = GetUnitsOfType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
-    // Units barrack_techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
+    Units barrack_techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
     auto upgrades = observation->GetUpgrades();
-    if (engbays.empty()){
-        return;
-    }
     // we have all our 3 upgrades
     if (upgrades.size() >= 3){
         return;
     }
-    TryBuildUnit(ABILITY_ID::RESEARCH_STIMPACK, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
-    TryBuildUnit(ABILITY_ID::RESEARCH_COMBATSHIELD, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
+    // TryBuildUnit(ABILITY_ID::RESEARCH_STIMPACK, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
+    // TryBuildUnit(ABILITY_ID::RESEARCH_COMBATSHIELD, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
     TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYWEAPONS, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
 
-    // // combat shield
-    // if (!barrack_techlabs.empty()){
-    //     const Unit *bt = barrack_techlabs.front();
-    //     if (bt->orders.empty()){
-    //         Actions()->UnitCommand(bt, ABILITY_ID::RESEARCH_COMBATSHIELD);
-    //     }
-    // }
+    // combat shield
+    if (barrack_techlabs.size() >= 2){
+        const Unit *bt = barrack_techlabs.front();
+        if (bt->orders.empty()){
+            Actions()->UnitCommand(bt, ABILITY_ID::RESEARCH_STIMPACK);
+        }
+        bt = barrack_techlabs.back();
+        if (bt->orders.empty()){
+            Actions()->UnitCommand(bt, ABILITY_ID::RESEARCH_COMBATSHIELD);
+        }        
+    }
 
-    
+}
 
+void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
 
 }
 
@@ -594,19 +608,31 @@ void Hal9001::ManageArmy() {
     Units allies = observation->GetUnits(Unit::Alliance::Self, IsArmy(observation));
     Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
     const Unit *homebase = bases.front();
-    
+
     if (!canRush){
-        Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
-        if (bunkers.empty()){
-            return;
-        }
-        const Unit *bunker = bunkers.front();
-        for (const auto& unit : allies) {
-            Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, bunker->pos);
+        // Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
+        // if (bunkers.empty()){
+        //     return;
+        // }
+        // const Unit *bunker = bunkers.front();
+        // if (!doneConstruction(bunker)){
+        //     return;
+        // }
+        // for (const auto& unit : allies) {
+        //     Actions()->UnitCommand(unit, ABILITY_ID::SMART, bunker->pos);
+        // }
+        return;
+    } else {
+        #ifdef DEBUG
+        cout << "rushing" << endl;
+        #endif
+        for (const auto &unit : allies){
+            Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
         }
         return;
     }
     
+
 
     for (const auto& unit : allies) {
         switch (unit->unit_type.ToType()) {
@@ -917,6 +943,7 @@ void Hal9001::OnStep() {
     MineIdleWorkers();
     ManageRefineries();
 
+    setCanRush(observation);
     BuildOrder(observation);
     ReconBase(observation);
     ManageArmy();

@@ -41,6 +41,8 @@ public:
 	void BuildOrder(const ObservationInterface *observation);
 	// Manage our army
 	void ManageArmy();
+	// Manage production of attacking units
+	void ManageArmyProduction(const ObservationInterface* observation);
 	// Manage upgrades
 	void ManageUpgrades(const ObservationInterface* observation);
 	// Make unit attack nearby enemies
