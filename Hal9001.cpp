@@ -281,7 +281,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         if (doneConstruction(factory)){
             cout << "build 13" << endl;
             // build a star port next to the factory
-            buildNextTo(ABILITY_ID::BUILD_REACTOR_STARPORT, factory, RIGHT, 0);
+            buildNextTo(ABILITY_ID::BUILD_STARPORT, factory, RIGHT, 0);
             // build tech lab on factory
             Actions()->UnitCommand(factory, ABILITY_ID::BUILD_TECHLAB_FACTORY);
         }
@@ -891,11 +891,12 @@ void Hal9001::BuildStructure(ABILITY_ID ability_type_for_structure, float x, flo
     if (alreadyOrdered(ability_type_for_structure)){
         return;
     }
-    // if no builder is given, make the builder a random scv
+    // if no builder is given, make the builder a random scv that's close to the build location
     if (!builder){
         Units units = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, Point3D(x,y,0.0));
+        // if none close make builder any random scv
         if (units.empty()){
-            return;
+            units = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV);
         }
         builder = units.back();
     }
