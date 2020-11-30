@@ -37,6 +37,7 @@ void Hal9001::OnGameStart() {
     minerals = observation->GetMinerals();
     supplies = observation->GetFoodUsed();
     vespene = observation->GetVespene();
+    canRush = false;
 
     // store expansions and start location
     expansions = search::CalculateExpansionLocations(observation, Query());
@@ -447,8 +448,9 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     *========================================================================================= */    
     if (refineries.size() == 4 && bases.size() == 1){
         buildNextTo(ABILITY_ID::BUILD_COMMANDCENTER, bases.front(), FRONTRIGHT, 7, mainSCV);
-        cout << "Done build order\n";
-        buildOrderComplete = true;
+        #ifdef DEBUG
+        cout << "build order done" << endl;
+        #endif
     }
 
     //once we can research in the engbay, figure out the upgrades we need
@@ -500,10 +502,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         }
     }
 
-    if (/*mineral line is fully saturated*/true && Observation()->GetMinerals() >= 75 && refineries.size() < 3) {
-        //build second refinery for the gas
-    }
-
     //At this point we have a few goals before we attack
     // we want to:
     //research combat shields
@@ -546,7 +544,7 @@ void Hal9001::ManageArmy() {
     for (const auto& unit : allies) {
         switch (unit->unit_type.ToType()) {
             case(UNIT_TYPEID::TERRAN_MARINE): {
-                if (buildOrderComplete && enemyBaseFound) {
+                if (buildOrderComplete && enemyBaseFound && canRush) {
                     Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
                 }
                 else if (!bunkers.empty()) {
@@ -558,7 +556,7 @@ void Hal9001::ManageArmy() {
                 break;
             }
             default: {
-                if (buildOrderComplete && enemyBaseFound) {
+                if (buildOrderComplete && enemyBaseFound && canRush) {
                     Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
                 }
                 else {
@@ -567,11 +565,27 @@ void Hal9001::ManageArmy() {
                 break;
             }
         }
-  
-
     }
+}
 
+void Hal9001::setCanRush(const ObservationInterface *observation){
+    bool hasStimpack = false;
+    bool hasCombatShield = false;
+    bool hasInfantry1 = false;
+    int numTanks = CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) + CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANKSIEGED);
 
+    // need stimpack, combat shield and terran infantry weapons lvl 1
+    auto upgrades = observation->GetUpgrades();
+    for (const auto &upgrade : upgrades){
+        if (upgrade == UPGRADE_ID::COMBATSHIELD){
+            hasCombatShield = true;
+        } else if (upgrade == UPGRADE_ID::STIMPACK){
+            hasStimpack = true;
+        } else if (upgrade == UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1){
+            hasInfantry1 = true;
+        }
+    }
+    canRush = hasStimpack && hasCombatShield && hasInfantry1 && numTanks >= 2;
 }
 
 
@@ -765,6 +779,7 @@ void Hal9001::OnStep() {
     MineIdleWorkers();
     ManageRefineries();
 
+    setCanRush(observation);
     BuildOrder(observation);
     ReconBase(observation);
     ManageArmy();
