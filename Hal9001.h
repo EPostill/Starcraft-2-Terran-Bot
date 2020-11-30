@@ -41,6 +41,8 @@ public:
 	void BuildOrder(const ObservationInterface *observation);
 	// Manage our army
 	void ManageArmy();
+	// Make unit attack nearby enemies
+	void AttackWithUnit(const Unit* unit, const ObservationInterface* observation);
 	// build a refinery near the given command center
 	void BuildRefinery(const Unit *commcenter, const Unit *builder = nullptr);
 	void updateSupplies();
@@ -178,6 +180,9 @@ private:
 	int supplies;			// supply count
 	int minerals;			// mineral count
 	int vespene;			// gas count
+
+	//Units that can be healed by medivacs
+	std::vector<UNIT_TYPEID> bio_types = { UNIT_TYPEID::TERRAN_MARINE, UNIT_TYPEID::TERRAN_MARAUDER, UNIT_TYPEID::TERRAN_GHOST, UNIT_TYPEID::TERRAN_REAPER /*reaper*/ };
 
 	// map name
 	MapName map_name;
