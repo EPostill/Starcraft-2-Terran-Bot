@@ -170,6 +170,7 @@ private:
 
 	// true if we can rush false otherwise
 	bool canRush;
+
 	
 	// Check which possible location we're currently checking
 	//bool L1;
