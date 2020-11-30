@@ -965,7 +965,9 @@ void Hal9001::OnStep() {
     MineIdleWorkers();
     ManageRefineries();
 
-    setCanRush(observation);
+    if (!canRush) {
+        setCanRush(observation);
+    }
     BuildOrder(observation);
     ReconBase(observation);
     ManageArmy();
