@@ -45,6 +45,7 @@ void Hal9001::OnGameStart() {
     minerals = observation->GetMinerals();
     supplies = observation->GetFoodUsed();
     vespene = observation->GetVespene();
+    canRush = false;
 
     // store expansions and start location
     expansions = search::CalculateExpansionLocations(observation, Query());
@@ -537,6 +538,53 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
 }
 
+void Hal9001::setCanRush(const ObservationInterface *observation){
+    bool hasStimpack = false;
+    bool hasCombatShield = false;
+    bool hasInfantry1 = false;
+    int numTanks = CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) + CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANKSIEGED);
+
+    // need stimpack, combat shield and terran infantry weapons lvl 1
+    auto upgrades = observation->GetUpgrades();
+    for (const auto &upgrade : upgrades){
+        if (upgrade == UPGRADE_ID::COMBATSHIELD){
+            hasCombatShield = true;
+        } else if (upgrade == UPGRADE_ID::STIMPACK){
+            hasStimpack = true;
+        } else if (upgrade == UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1){
+            hasInfantry1 = true;
+        }
+    }
+    canRush = hasStimpack && hasCombatShield && hasInfantry1 && numTanks >= 2;
+}
+
+void Hal9001::ManageUpgrades(const ObservationInterface* observation){
+    Units engbays = GetUnitsOfType(UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+    // Units barrack_techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
+    auto upgrades = observation->GetUpgrades();
+    if (engbays.empty()){
+        return;
+    }
+    // we have all our 3 upgrades
+    if (upgrades.size() >= 3){
+        return;
+    }
+    TryBuildUnit(ABILITY_ID::RESEARCH_STIMPACK, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
+    TryBuildUnit(ABILITY_ID::RESEARCH_COMBATSHIELD, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
+    TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYWEAPONS, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
+
+    // // combat shield
+    // if (!barrack_techlabs.empty()){
+    //     const Unit *bt = barrack_techlabs.front();
+    //     if (bt->orders.empty()){
+    //         Actions()->UnitCommand(bt, ABILITY_ID::RESEARCH_COMBATSHIELD);
+    //     }
+    // }
+
+    
+
+
+}
 
 void Hal9001::ManageArmy() {
     const ObservationInterface *observation = Observation();
@@ -546,6 +594,18 @@ void Hal9001::ManageArmy() {
     Units allies = observation->GetUnits(Unit::Alliance::Self, IsArmy(observation));
     Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
     const Unit *homebase = bases.front();
+    
+    if (!canRush){
+        Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
+        if (bunkers.empty()){
+            return;
+        }
+        const Unit *bunker = bunkers.front();
+        for (const auto& unit : allies) {
+            Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, bunker->pos);
+        }
+        return;
+    }
     
 
     for (const auto& unit : allies) {
@@ -860,6 +920,7 @@ void Hal9001::OnStep() {
     BuildOrder(observation);
     ReconBase(observation);
     ManageArmy();
+    ManageUpgrades(observation);
 
 }
 
