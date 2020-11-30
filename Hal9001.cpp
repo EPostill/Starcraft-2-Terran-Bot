@@ -238,7 +238,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
             // get command center
             const Unit* cc = bases.back();
             // build bunker towards the center from command center 2
-            buildNextTo(ABILITY_ID::BUILD_BUNKER, cc, FRONT, 3);
+            buildNextTo(ABILITY_ID::BUILD_BUNKER, cc, FRONTRIGHT, 2);
     }
 
     /***=========================================================================================
@@ -435,7 +435,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         Units builders = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, cc->pos, 2);
         if (builders.size() == 2){
             // cout << "build 23" << endl;
-            buildNextTo(ABILITY_ID::BUILD_ENGINEERINGBAY, cc, FRONT, 3, builders.front());
+            buildNextTo(ABILITY_ID::BUILD_ENGINEERINGBAY, cc, FRONTLEFT, 3, builders.front());
             BuildRefinery(cc, builders.back());
         }
     }
@@ -470,7 +470,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     *========================================================================================= */    
     if (refineries.size() == 4 && bases.size() == 1){
         // cout << "build 28" << endl;
-        buildNextTo(ABILITY_ID::BUILD_COMMANDCENTER, bases.front(), FRONTRIGHT, 2);
+        buildNextTo(ABILITY_ID::BUILD_COMMANDCENTER, bases.front(), FRONT, 2);
     }
 
     //once we can research in the engbay, figure out the upgrades we need
@@ -859,7 +859,7 @@ void Hal9001::OnStep() {
 
     BuildOrder(observation);
     ReconBase(observation);
-    ManageArmy();
+    // ManageArmy();
 
 }
 
