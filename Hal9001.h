@@ -174,7 +174,8 @@ private:
     std::vector<Point3D> expansions;	// vector of all expansions
     Point3D startLocation;	// location of main base
 	Point2D depotLocation;	// location where to build the first depot
-	Point2D enemyBase;
+	Point2D enemyBase;		// location of enemy base
+	Point2D stagingArea;	// location in which to stage our army
 	const Unit *mainSCV;	// main scv worker
 	const Unit* scout;		// scout unit
 	int supplies;			// supply count

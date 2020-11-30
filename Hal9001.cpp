@@ -260,6 +260,8 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     // load marines in bunker
     if (marines.size() == 3 && bunkers.size() == 1){
         const Unit *bunker = bunkers.front();
+        Point2D stagingLocation(bunker->pos.x, bunker->pos.y + 5.0);
+        stagingArea = stagingLocation;
         if (doneConstruction(bunker)){
             Actions()->UnitCommand(marines, ABILITY_ID::SMART, bunker);
         }
@@ -555,7 +557,8 @@ void Hal9001::ManageArmy() {
         switch (unit->unit_type.ToType()) {
             case(UNIT_TYPEID::TERRAN_MARINE): {
                 if (buildOrderComplete && enemyBaseFound) {
-                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE_ACQUIREMOVE, stagingArea);
+                    cout << "went to staging\n";
+                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
                 }
                 else if (!bunkers.empty()) {
                     Actions()->UnitCommand(unit, ABILITY_ID::SMART, bunkers.front());
@@ -647,7 +650,8 @@ void Hal9001::ManageArmy() {
             }
             default: {
                 if (buildOrderComplete && enemyBaseFound) {
-                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
+                    cout << "went to staging\n";
+                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
                 }
                 else {
                     Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, homebase->pos);
