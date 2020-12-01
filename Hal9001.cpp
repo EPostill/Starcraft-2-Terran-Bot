@@ -562,15 +562,11 @@ void Hal9001::setCanRush(const ObservationInterface *observation){
     bool hasStimpack = false;
     bool hasCombatShield = false;
     bool hasInfantry1 = false;
+    bool enoughMarines = false;
+    int numMarines = CountUnitType(UNIT_TYPEID::TERRAN_MARINE);
 
-    // check marine hp == 55 for combat shielf
-    Units marines = GetUnitsOfType(UNIT_TYPEID::TERRAN_MARINE);
-    if (marines.empty()){
-        return;
-    }
-    const Unit *marine = marines.front();
-    if (marine->health_max >= 55){
-        hasCombatShield = true;
+    if (numMarines >= 10) {
+        enoughMarines = true;
     }
 
     // need stimpack, combat shield and terran infantry weapons lvl 1
@@ -587,7 +583,7 @@ void Hal9001::setCanRush(const ObservationInterface *observation){
             hasInfantry1 = true;
         }
     }
-    canRush = hasStimpack && hasCombatShield && hasInfantry1;
+    canRush = hasStimpack && hasCombatShield && hasInfantry1 && enoughMarines;
 }
 
 void Hal9001::ManageUpgrades(const ObservationInterface* observation){
@@ -727,6 +723,9 @@ void Hal9001::ManageArmy() {
         if (!unit->orders.empty()) {
             if (unit->orders.front().ability_id != ABILITY_ID::ATTACK) {
                 if (!canRush && Distance2D(unit->pos, stagingArea) < 1) {
+                    #ifdef DEBUG
+                    cout << unit->pos.x << unit->pos.y << " " << stagingArea.x << stagingArea.y << endl;
+                    #endif
                     Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
                 }
                 if (buildOrderComplete && canRush) {
