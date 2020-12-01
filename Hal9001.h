@@ -74,8 +74,6 @@ public:
 	Units getWidowMines();
 	// gets all comm centers (orbital and normal)
 	Units getCommCenters();
-	// check if we can perform a rush
-	void setCanRush(const ObservationInterface *observation);
 
 
 	// Helper functions
@@ -193,7 +191,6 @@ private:
 	int supplies;			// supply count
 	int minerals;			// mineral count
 	int vespene;			// gas count
-	bool canRush;
 
 	//Units that can be healed by medivacs
 	std::vector<UNIT_TYPEID> bio_types = { UNIT_TYPEID::TERRAN_MARINE, UNIT_TYPEID::TERRAN_MARAUDER, UNIT_TYPEID::TERRAN_GHOST, UNIT_TYPEID::TERRAN_REAPER /*reaper*/ };
