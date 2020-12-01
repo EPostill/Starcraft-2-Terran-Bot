@@ -644,6 +644,7 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     Units barracks = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
     Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
     Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
+
     int numMarines = CountUnitType(UNIT_TYPEID::TERRAN_MARINE);
     int numMarauders = CountUnitType(UNIT_TYPEID::TERRAN_MARAUDER);
     int numMedivacs = CountUnitType(UNIT_TYPEID::TERRAN_MEDIVAC);
@@ -741,7 +742,7 @@ void Hal9001::ManageArmy() {
                 if (enemybases.size() == 1) {
                     base_to_rush = enemybases.front();
                 } else if (enemybases.size() == 0){
-                    continue;
+                    return;;
                 }
                 else {
                     //find which base is the closest
@@ -755,12 +756,10 @@ void Hal9001::ManageArmy() {
                         }
                     }
                 }
-                for (const auto &unit : allies){
-                    // #ifdef DEBUG
-                    // cout << "rushing, sending unit to " << base_to_rush->pos.x << base_to_rush->pos.y << endl;
-                    // #endif
-                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush->pos);
-                }
+                // #ifdef DEBUG
+                // cout << "rushing, sending unit to " << base_to_rush->pos.x << base_to_rush->pos.y << endl;
+                // #endif
+                Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush->pos);
             }
         }
 
