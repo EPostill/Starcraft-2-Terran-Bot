@@ -724,11 +724,15 @@ void Hal9001::ManageArmy() {
     for (const auto& unit : allies) {
 
         //MOVEMENT BEHAVIOUR
-        if (!canRush) {
-            Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
-        }
-        if (buildOrderComplete && canRush) {
-            Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
+        if (!unit->orders.empty()) {
+            if (unit->orders.front().ability_id != ABILITY_ID::ATTACK) {
+                if (!canRush && Distance2D(unit->pos, stagingArea) < 1) {
+                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
+                }
+                if (buildOrderComplete && canRush) {
+                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush);
+                }
+            }
         }
 
         //INDIVIDUAL UNIT BEHAVIOUR
@@ -756,7 +760,7 @@ void Hal9001::ManageArmy() {
                                 break;
                             }
                             //EXPERIMENTAL KITING
-                            if (distance < 5.5) {
+                            if (distance < 5) {
                                 float enemy_facing = closestEnemy->facing;
                                 Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, Point2D(unit->pos.x + sin(enemy_facing), unit->pos.y + cos(enemy_facing)));
                             }
