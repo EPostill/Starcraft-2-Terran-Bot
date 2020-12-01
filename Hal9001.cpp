@@ -2,10 +2,9 @@
 #include <iostream>
 #include <cmath>
 #include "cpp-sc2/src/sc2api/sc2_client.cc"
-#define DEBUG true
 using namespace std;
 
-#define DEBUG true
+#define DEBUG false
 
 struct IsArmy {
     IsArmy(const ObservationInterface* obs) : observation_(obs) {}
@@ -133,8 +132,10 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     ========================================================================================= **/
     if (supplies >= 16 && minerals >= 150 && barracks.empty()) {
         // cout << "build 3" << endl;
-        const Unit *depot = depots.front();
-        buildNextTo(ABILITY_ID::BUILD_BARRACKS, depot, LEFT, 0, mainSCV);
+        if (!depots.empty()){
+            const Unit *depot = depots.front();
+            buildNextTo(ABILITY_ID::BUILD_BARRACKS, depot, LEFT, 0, mainSCV);
+        }
     }
 
     /**=========================================================================================
@@ -156,27 +157,27 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Condition: supply >= 17 and Barracks == 1, Supply Depot == 1, Refinery == 1
     Status: NOT DONE
     =========================================================================================**/
-    if (supplies >= 17 && refineries.size() == 1 && depots.size() == 1 && barracks.size() == 1){
+    // if (supplies >= 17 && refineries.size() == 1 && depots.size() == 1 && barracks.size() == 1){
         
-        const Unit *barrack = barracks.front();
-        // train one marine
-        if (doneConstruction(barrack) && CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 0 && barrack->orders.empty()){
-            // cout << "build 5" << endl;
-            Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
+    //     const Unit *barrack = barracks.front();
+    //     // train one marine
+    //     if (doneConstruction(barrack) && CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 0 && barrack->orders.empty()){
+    //         // cout << "build 5" << endl;
+    //         Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
 
-        }
-        //if (!builder) {
-        //    builder = units.back();
-        //}
-        // FOR MAX - send scv scout
-    }
+    //     }
+    //     //if (!builder) {
+    //     //    builder = units.back();
+    //     //}
+    //     // FOR MAX - send scv scout
+    // }
 
     /**=========================================================================================
      * Build Order # 6: Upgrade to orbital command center
      * Condition: supply >= 19, minerals >= 150, Orbital Command == 0
      * Status: DONE
      *=========================================================================================*/
-    if (supplies >= 19 && minerals >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND) == 0) {
+    if (supplies >= 19 && minerals >= 150 && CountUnitType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND) == 0 && !bases.empty()) {
         //upgrade command center to orbital command
         const Unit* commcenter = bases.front();
         if (commcenter->orders.empty()){
@@ -197,30 +198,27 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     } 
 
     // set rally point of new command center to minerals
-    if (bases.size() == 1){
-        const Unit* commcenter = bases.front();
-        // only set it once
-        if (commcenter->build_progress == 0.5){
-            Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos), true);
-            // tell mainSCV to mine minerals too once its done building the command center
-            Actions()->UnitCommand(mainSCV, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos), true);
-        }
-    }
+    // if (bases.size() == 1){
+    //     const Unit* commcenter = bases.front();
+    //     // only set it once
+    //     if (commcenter->build_progress == 0.5){
+    //         Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos), true);
+    //         // tell mainSCV to mine minerals too once its done building the command center
+    //         Actions()->UnitCommand(mainSCV, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos), true);
+    //     }
+    // }
 
     /***=========================================================================================
      * Build Order # 8: Build reactor on barracks, and build second depot
      * Condition: Marine == 1, we have an orbital and a normal command center and one depot
      * Status: DONE
     *========================================================================================= */
-    if (marines.size() == 1 && bases.size() == 1 && orbcoms.size() == 1 && depots.size() == 1) {
+    if (barracks_reactors.empty() && bases.size() == 1 && orbcoms.size() == 1 && depots.size() == 1) {
         // cout << "build 8" << endl;
         // get barrack
         const Unit* barrack = barracks.front();
         // build reactor on barracks
         Actions()->UnitCommand(barrack, ABILITY_ID::BUILD_REACTOR_BARRACKS);
-        // lower first depot
-        const Unit *firstDepot = depots.front();
-        Actions()->UnitCommand(firstDepot, ABILITY_ID::MORPH_SUPPLYDEPOT_LOWER);
         // build a depot next to the reactor
         buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, barrack, LEFT, 0);
     }
@@ -230,7 +228,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: supply >= 22, vespene > 100, minerals > 150, we have orbital and normal comm center and no factories
      * Status: DONE
      *=========================================================================================*/
-    if (factories.empty() && fly_factories.empty() && supplies >= 22 && vespene > 100 && minerals > 150 && bases.size() == 1 && orbcoms.size() == 1) {
+    if (factories.empty() && supplies >= 22 && vespene > 100 && minerals > 150 && bases.size() == 1 && orbcoms.size() == 1) {
         // cout << "build 9" << endl;
         // get 1st cc => orbital now
         const Unit* cc1 = orbcoms.front();
@@ -252,28 +250,18 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     }
 
     /***=========================================================================================
-     * Build Order # 11: train 2 marines and move all marines to bunker
-     * Condition: once reactor from (8) finishes
+     * Build Order # 11: move 3 marines to bunker
+     * Condition: once bunker is done
      * Status: DONE
      *=========================================================================================*/
-    if (barracks_reactors.size() == 1 && marines.size() < 3 && minerals >= 50) {
-        // TODO: this will happen again once the marines go in the bunker, fix? 
-        // actually keep since its good to keep making some marines, but maybe
-        // move to a function like manageMarineTraining
-        // train 2 marines
-        const Unit *barrack = barracks.front();
-        if (barrack->orders.empty()){
-            // cout << "build 11" << endl;
-            Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
-        }
-    }
     // load marines in bunker
-    if (marines.size() == 3 && bunkers.size() == 1){
+    if (marines.size() >= 3 && bunkers.size() == 1){
         const Unit *bunker = bunkers.front();
         Point2D stagingLocation(bunker->pos.x, bunker->pos.y + 5.0);
         stagingArea = stagingLocation;
-        if (doneConstruction(bunker)){
-            Actions()->UnitCommand(marines, ABILITY_ID::SMART, bunker);
+        if (doneConstruction(bunker) && bunker->cargo_space_taken == 0){
+            Units chosen_marines = GetRandomUnits(UNIT_TYPEID::TERRAN_MARINE);
+            Actions()->UnitCommand(chosen_marines, ABILITY_ID::SMART, bunker);
         }
     }
 
@@ -310,15 +298,15 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition : we have a factory and factory tech lab 
      * Status: DONE
     *========================================================================================= */
-    if (factory_techlabs.size() == 1 && factories.size() == 1 && widowmines.empty() && minerals >= 75) {
-        //build widow mine for defence
-        const Unit *factory = factories.front();
-        const Unit *techlab = factory_techlabs.front();
-        if (doneConstruction(techlab) && factory->orders.empty()){
-            // cout << "build 15" << endl;
-            Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_WIDOWMINE);
-        }
-    }
+    // if (factory_techlabs.size() == 1 && factories.size() == 1 && widowmines.empty() && minerals >= 75) {
+    //     //build widow mine for defence
+    //     const Unit *factory = factories.front();
+    //     const Unit *techlab = factory_techlabs.front();
+    //     if (doneConstruction(techlab) && factory->orders.empty()){
+    //         // cout << "build 15" << endl;
+    //         Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_WIDOWMINE);
+    //     }
+    // }
 
     /***=========================================================================================
      * Build Order # 16: build third supply depot behind minerals at 2nd command center
@@ -333,37 +321,37 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, mineralpatch, BEHIND, 1, mainSCV);
     }
 
-    /***=========================================================================================
-     * Build Order # 17: train viking for defence
-     * Condition : we have a starport and no vikings
-     * Status: DONE
-    *========================================================================================= */
-    if (starports.size() == 1 && vikings.empty()) {
-        const Unit *sp = starports.front();
-        if (doneConstruction(sp) && sp->orders.empty()){
-            // cout << "build 17" << endl;
-            Actions()->UnitCommand(sp, ABILITY_ID::TRAIN_VIKINGFIGHTER);
-        }
-    }
+    // /***=========================================================================================
+    //  * Build Order # 17: train viking for defence
+    //  * Condition : we have a starport and no vikings
+    //  * Status: DONE
+    // *========================================================================================= */
+    // if (starports.size() == 1 && vikings.empty()) {
+    //     const Unit *sp = starports.front();
+    //     if (doneConstruction(sp) && sp->orders.empty()){
+    //         // cout << "build 17" << endl;
+    //         Actions()->UnitCommand(sp, ABILITY_ID::TRAIN_VIKINGFIGHTER);
+    //     }
+    // }
 
-    /***=========================================================================================
-     * Build Order # 18: train tank
-     * Condition : we have a factory, a widowmine and no tanks
-     * Status: DONE
-    *========================================================================================= */
-    if (tanks.empty() && factories.size() == 1 && widowmines.size() == 1) {
-        const Unit *factory = factories.front();
-        if (doneConstruction(factory) && factory->orders.empty()){
-            // cout << "build 18" << endl;
-            Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_SIEGETANK);
-        }        
-    }
+    // /***=========================================================================================
+    //  * Build Order # 18: train tank
+    //  * Condition : we have a factory, a widowmine and no tanks
+    //  * Status: DONE
+    // *========================================================================================= */
+    // if (tanks.empty() && factories.size() == 1 && widowmines.size() == 1) {
+    //     const Unit *factory = factories.front();
+    //     if (doneConstruction(factory) && factory->orders.empty()){
+    //         // cout << "build 18" << endl;
+    //         Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_SIEGETANK);
+    //     }        
+    // }
     /***=========================================================================================
      * Build Order # 19: build 4 more depots in succession behind minerals at 2nd comm center
      * Condition : we already have 3 depots and have less than 6 depots
      * Status: DONE
     *========================================================================================= */    
-    if (depots.size() >= 3 && depots.size() < 6 && bases.size() == 1) {
+    if (minerals >= 100 && depots.size() >= 3 && depots.size() < 6 && bases.size() == 1) {
         // get depot thats close to 2nd commcenter
         const Unit *depot = FindNearestDepot(bases.front()->pos);
         if (mainSCV->orders.empty()){
@@ -392,7 +380,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         }
     }
     // build tech labs on the 2 barracks (modification of build order)
-    if (barracks.size() == 3 && barrack_techlabs.size() < 2){
+    if (minerals >= 100 && vespene >= 50 && barracks.size() == 3 && barrack_techlabs.size() < 2){
         for (const auto &b : barracks){
             // don't build on the one that has a reactor
             if (b->unit_type != UNIT_TYPEID::TERRAN_BARRACKSREACTOR){
@@ -407,7 +395,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition : once viking is finished
      * Status: DONE
     *========================================================================================= */
-    if (supplies >= 46 && minerals >= 300 && vikings.size() == 1 && starports.size() == 1 && starport_reactors.size() == 0) {
+    if (supplies >= 46 && minerals >= 300 && starports.size() == 1 && starport_reactors.size() == 0) {
         // cout << "build 21" << endl;
         // get star port
         const Unit* sp = starports.back();
@@ -563,7 +551,17 @@ void Hal9001::setCanRush(const ObservationInterface *observation){
     bool hasCombatShield = false;
     bool hasInfantry1 = false;
     bool enoughMarines = false;
-    int numMarines = CountUnitType(UNIT_TYPEID::TERRAN_MARINE);
+    Units marines = GetUnitsOfType(UNIT_TYPEID::TERRAN_MARINE);
+    int numMarines = marines.size();
+
+    // check marine hp == 55 for combat shielf
+    if (marines.empty()){
+        return;
+    }
+    const Unit *marine = marines.front();
+    if (marine->health_max >= 55){
+        hasCombatShield = true;
+    }
 
     if (numMarines >= 10) {
         enoughMarines = true;
@@ -572,10 +570,7 @@ void Hal9001::setCanRush(const ObservationInterface *observation){
     // need stimpack, combat shield and terran infantry weapons lvl 1
     auto upgrades = observation->GetUpgrades();
     for (const auto &upgrade : upgrades){
-        if (upgrade == UPGRADE_ID::COMBATSHIELD){
-            cout << "has combat shield" << endl;
-            hasCombatShield = true;
-        } else if (upgrade == UPGRADE_ID::STIMPACK){
+        if (upgrade == UPGRADE_ID::STIMPACK){
             cout << "has stimpack" << endl;
             hasStimpack = true;
         } else if (upgrade == UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1){
@@ -620,7 +615,9 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     int numMarauders = CountUnitType(UNIT_TYPEID::TERRAN_MARAUDER);
     int numMedivacs = CountUnitType(UNIT_TYPEID::TERRAN_MEDIVAC);
     int numVikings = CountUnitType(UNIT_TYPEID::TERRAN_VIKINGFIGHTER);
-    int numTanks = CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK);
+    int numTanks = CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) + CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANKSIEGED);
+    int numWidowMines = CountUnitType(UNIT_TYPEID::TERRAN_WIDOWMINE) + CountUnitType(UNIT_TYPEID::TERRAN_WIDOWMINEBURROWED);
+
     // 3:2:1 ratio
     // have 20 marines
     if (observation->GetMinerals() < 400) {
@@ -648,14 +645,20 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
             }
         }
         for (auto const &starport : starports) {
-            if (starport->orders.empty() && numMedivacs < 6) {
+            if (starport->orders.empty() && numVikings < 6) {
                 Actions()->UnitCommand(starport, ABILITY_ID::TRAIN_VIKINGFIGHTER);
             }
         }
     }
     
-    //tanks
     if (!factories.empty()) {
+        // widow mines
+        for (auto const &factory : factories) {
+            if (factory->orders.empty() && numWidowMines < 1) {
+                Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_WIDOWMINE);
+            }
+        }        
+        //tanks
         for (auto const &factory : factories) {
             if (factory->orders.empty() && numTanks < 6) {
                 Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_SIEGETANK);
@@ -695,6 +698,11 @@ void Hal9001::ManageArmy() {
                 Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
             }
 
+            // bury widow mine at staging area
+            if (unit->unit_type == UNIT_TYPEID::TERRAN_WIDOWMINE && Distance2D(unit->pos, stagingArea) < 3){
+                Actions()->UnitCommand(unit, ABILITY_ID::BURROWDOWN_WIDOWMINE);
+            }
+
             if (buildOrderComplete && canRush) {
                 //if the main base is the only one left
                 if (enemybases.size() == 1) {
@@ -713,9 +721,9 @@ void Hal9001::ManageArmy() {
                     }
                 }
                 for (const auto &unit : allies){
-                    #ifdef DEBUG
-                    cout << "rushing, sending unit to " << base_to_rush->pos.x << base_to_rush->pos.y << endl;
-                    #endif
+                    // #ifdef DEBUG
+                    // cout << "rushing, sending unit to " << base_to_rush->pos.x << base_to_rush->pos.y << endl;
+                    // #endif
                     Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush->pos);
                 }
             }
