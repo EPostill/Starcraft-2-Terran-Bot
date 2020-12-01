@@ -268,6 +268,8 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     // load marines in bunker
     if (marines.size() == 3 && bunkers.size() == 1){
         const Unit *bunker = bunkers.front();
+        Point2D stagingLocation(bunker->pos.x, bunker->pos.y + 5.0);
+        stagingArea = stagingLocation;
         if (doneConstruction(bunker)){
             Actions()->UnitCommand(marines, ABILITY_ID::SMART, bunker);
         }
@@ -476,9 +478,12 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition : when we have 4 refineries
      * Status: DONE
     *========================================================================================= */    
+
     if (minerals >= 400 && refineries.size() == 4 && !starports.empty() && bases.size() == 1){
         cout << "build 28" << endl;
         buildNextTo(ABILITY_ID::BUILD_COMMANDCENTER, starports.front(), BEHINDRIGHT, 1);
+        cout << "Done build order\n";
+        buildOrderComplete = true;
     }
 
     // lower supply depots
@@ -536,7 +541,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     //         TryBuildUnit(ABILITY_ID::RESEARCH_NEOSTEELFRAME, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
     //     }
     // }
-
 
     //At this point we have a few goals before we attack
     // we want to:
@@ -682,8 +686,15 @@ void Hal9001::ManageArmy() {
 
     for (const auto& unit : allies) {
         switch (unit->unit_type.ToType()) {
-            case UNIT_TYPEID::TERRAN_MARINE: {
-                if (!bunkers.empty()) {
+            case(UNIT_TYPEID::TERRAN_MARINE): {
+                if (buildOrderComplete && enemyBaseFound) {
+                    cout << "went to staging\n";
+                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
+                }
+                else if (buildOrderComplete && enemyBaseFound && canRush) {
+                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
+                }
+                else if (!bunkers.empty()) {
                     Actions()->UnitCommand(unit, ABILITY_ID::SMART, bunkers.front());
                 }
                 else {
@@ -772,12 +783,37 @@ void Hal9001::ManageArmy() {
                 break;
             }
             default: {
-                Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, homebase->pos);
+                if (buildOrderComplete && enemyBaseFound) {
+                    cout << "went to staging\n";
+                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
+                }
+                else {
+                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, homebase->pos);
+                }
+                break;
             }
         }
     }
+}
 
+void Hal9001::setCanRush(const ObservationInterface *observation){
+    bool hasStimpack = false;
+    bool hasCombatShield = false;
+    bool hasInfantry1 = false;
+    int numTanks = CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) + CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANKSIEGED);
 
+    // need stimpack, combat shield and terran infantry weapons lvl 1
+    auto upgrades = observation->GetUpgrades();
+    for (const auto &upgrade : upgrades){
+        if (upgrade == UPGRADE_ID::COMBATSHIELD){
+            hasCombatShield = true;
+        } else if (upgrade == UPGRADE_ID::STIMPACK){
+            hasStimpack = true;
+        } else if (upgrade == UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1){
+            hasInfantry1 = true;
+        }
+    }
+    canRush = hasStimpack && hasCombatShield && hasInfantry1 && numTanks >= 2;
 }
 
 void Hal9001::AttackWithUnit(const Unit* unit, const ObservationInterface* observation) {
@@ -988,6 +1024,7 @@ void Hal9001::OnStep() {
     ManageSCVTraining();
     MineIdleWorkers();
     ManageRefineries();
+
 
     if (!canRush) {
         setCanRush(observation);

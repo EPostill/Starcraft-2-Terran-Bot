@@ -74,6 +74,8 @@ public:
 	Units getWidowMines();
 	// gets all comm centers (orbital and normal)
 	Units getCommCenters();
+	// check if we can perform a rush
+	void setCanRush(const ObservationInterface *observation);
 
 
 	// Helper functions
@@ -169,6 +171,12 @@ private:
 	bool scouting = false;
 	// Check if the enemybase has been found
 	bool enemyBaseFound = false;
+	// Check if build order is finished
+	bool buildOrderComplete = false;
+
+	// true if we can rush false otherwise
+	bool canRush;
+
 	
 	// Check which possible location we're currently checking
 	//bool L1;
@@ -178,7 +186,8 @@ private:
     std::vector<Point3D> expansions;	// vector of all expansions
     Point3D startLocation;	// location of main base
 	Point2D depotLocation;	// location where to build the first depot
-	Point2D enemyBase;
+	Point2D enemyBase;		// location of enemy base
+	Point2D stagingArea;	// location in which to stage our army
 	const Unit *mainSCV;	// main scv worker
 	const Unit* scout;		// scout unit
 	int supplies;			// supply count
