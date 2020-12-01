@@ -739,6 +739,9 @@ void Hal9001::ManageArmy() {
                 if (enemybases.size() == 1) {
                     base_to_rush = enemybases.front();
                 } else if (enemybases.empty()){
+                    //we may have never seen the enemy base, try moving to the supposed location
+                    //if the enemy really doesn't have any bases, this won't matter anyway
+                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
                     return;
                 }
                 else {
