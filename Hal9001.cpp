@@ -829,26 +829,6 @@ void Hal9001::ManageArmy() {
     }
 }
 
-void Hal9001::setCanRush(const ObservationInterface *observation){
-    bool hasStimpack = false;
-    bool hasCombatShield = false;
-    bool hasInfantry1 = false;
-    int numTanks = CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) + CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANKSIEGED);
-
-    // need stimpack, combat shield and terran infantry weapons lvl 1
-    auto upgrades = observation->GetUpgrades();
-    for (const auto &upgrade : upgrades){
-        if (upgrade == UPGRADE_ID::COMBATSHIELD){
-            hasCombatShield = true;
-        } else if (upgrade == UPGRADE_ID::STIMPACK){
-            hasStimpack = true;
-        } else if (upgrade == UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1){
-            hasInfantry1 = true;
-        }
-    }
-    canRush = hasStimpack && hasCombatShield && hasInfantry1 && numTanks >= 2;
-}
-
 void Hal9001::AttackWithUnit(const Unit* unit, const ObservationInterface* observation) {
     //If unit isn't doing anything make it attack.
     Units enemy_units = observation->GetUnits(Unit::Alliance::Enemy);
