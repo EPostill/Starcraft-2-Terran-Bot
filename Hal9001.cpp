@@ -260,7 +260,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     // load marines in bunker
     if (marines.size() >= 3 && bunkers.size() == 1){
         const Unit *bunker = bunkers.front();
-        if (doneConstruction(bunker) && bunker->cargo_space_taken == 0){
+        if (doneConstruction(bunker) && bunker->cargo_space_taken < bunker->cargo_space_max){
             Units chosen_marines = GetRandomUnits(UNIT_TYPEID::TERRAN_MARINE);
             Actions()->UnitCommand(chosen_marines, ABILITY_ID::SMART, bunker);
         }
@@ -310,16 +310,13 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     // }
 
     /***=========================================================================================
-     * Build Order # 16: build third supply depot behind minerals at 2nd command center
+     * Build Order # 16: build a 3rd supply depot in front of 2nd comm center
      * Condition : we have 2 supply depots and a 2nd command center
      * Status: DONE
     *========================================================================================= */
-    if (supplies > 36 && minerals >= 100 && depots.size() == 2 && orbcoms.size() == 1 && bases.size() == 1) {
-        // cout << "build 16" << endl;
-        // get mineral patch near 2nd command center
-        const Unit *mineralpatch = FindNearestMineralPatch(bases.front()->pos);
+    if (supplies > 36 && minerals >= 100 && depots.size() == 2 && orbcoms.size() == 1 && bunkers.size() == 1) {
         // build depot
-        buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, mineralpatch, BEHIND, 1, mainSCV);
+        buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, bunkers.front(), LEFT, 2, mainSCV);
     }
 
     // /***=========================================================================================
@@ -348,7 +345,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     //     }        
     // }
     /***=========================================================================================
-     * Build Order # 19: build 4 more depots in succession behind minerals at 2nd comm center
+     * Build Order # 19: build 3 more depots in succession behind minerals at 2nd comm center
      * Condition : we already have 3 depots and have less than 6 depots
      * Status: DONE
     *========================================================================================= */    
@@ -357,7 +354,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         const Unit *depot = FindNearestDepot(bases.front()->pos);
         if (mainSCV->orders.empty()){
             // cout << "build 19" << endl;
-            buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, depot, BEHINDLEFT, 0, mainSCV);
+            buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, depot, RIGHT, 0, mainSCV);
         }
     }
 
@@ -548,6 +545,21 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     //Factories -> tanks
     //barracks -> marines (later on maurauders, although I doubt the game will go that far)
 
+    // spam depots at a random location
+    if (buildOrderComplete){
+        if (supplies >= observation->GetFoodCap() - 2){
+            Units commcenters = getCommCenters();
+            if (commcenters.empty()){
+                return;
+            }
+            Point3D basePos = commcenters.front()->pos;
+            float rx = GetRandomScalar();
+            float ry = GetRandomScalar();
+            Point2D loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
+            BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y, mainSCV);
+        }
+    }
+
 }
 
 void Hal9001::setStagingArea(const ObservationInterface *observation){
@@ -711,7 +723,7 @@ void Hal9001::ManageArmy() {
         if (stagingArea != Point2D(0,0) && unit->orders.empty()) {
 
             //if we can't rush chill in staging area
-            if (!canRush && Distance2D(unit->pos, stagingArea) > 3 && !bunkers.empty()) {
+            if (!canRush && Distance2D(unit->pos, stagingArea) > 3) {
                 // #ifdef DEBUG
                 // cout << "Unit pos, Staging area pos" << endl;
                 // cout << unit->pos.x << "," << unit->pos.y << " " << stagingArea.x << "," << stagingArea.y << endl;
@@ -728,6 +740,8 @@ void Hal9001::ManageArmy() {
                 //if the main base is the only one left
                 if (enemybases.size() == 1) {
                     base_to_rush = enemybases.front();
+                } else if (enemybases.size() == 0){
+                    continue;
                 }
                 else {
                     //find which base is the closest
@@ -863,11 +877,8 @@ void Hal9001::ManageArmy() {
                 break;
             }
             default: {
-                if (buildOrderComplete && enemyBaseFound) {
+                if (!canRush) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
-                }
-                else {
-                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, homebase->pos);
                 }
                 break;
             }
@@ -1188,7 +1199,7 @@ const Unit* Hal9001::FindNearestDepot(const Point2D &start) {
     const Unit *target = nullptr;
     for (const auto &u : units) {
         float d = DistanceSquared2D(u->pos, start);
-        if (d < distance) {
+        if (d < distance && d > 0.1) {
             distance = d;
             target = u;
         }
