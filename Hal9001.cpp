@@ -367,7 +367,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition : we have a starport, factory techlab and only one barracks so far
      * Status: DONE
     *========================================================================================= */
-    if (supplies >= 46 && minerals >= 300 && barracks.size() == 1 && factories.size() == 1 && starports.size() == 1) {
+    if (supplies >= 46 && minerals >= 300 && barracks.size() >= 1 && barracks.size() < 3 && factories.size() == 1 && starports.size() == 1) {
         const Unit* fa = factories.back();
         const Unit* sp = starports.back();
         // get two builders (so buildNextTo doesn't assign the same builder for both barracks)
@@ -387,7 +387,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
                 continue;
             }
             // don't build on the one that has a reactor
-            if (b->unit_type != UNIT_TYPEID::TERRAN_BARRACKSREACTOR){
+            if (b->unit_type != UNIT_TYPEID::TERRAN_BARRACKSREACTOR && b->orders.empty()){
                 // TODO: it only builds a techlab on one of the barracks?
                 Actions()->UnitCommand(b, ABILITY_ID::BUILD_TECHLAB_BARRACKS);
             }
