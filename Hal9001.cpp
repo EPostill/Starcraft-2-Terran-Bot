@@ -380,8 +380,11 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         }
     }
     // build tech labs on the 2 barracks (modification of build order)
-    if (minerals >= 100 && vespene >= 50 && barracks.size() == 3 && barrack_techlabs.size() < 2){
+    if (minerals >= 100 && vespene >= 50 && barracks.size() == 3 && barrack_techlabs.size() < 3){
         for (const auto &b : barracks){
+            if (!doneConstruction(b)){
+                continue;
+            }
             // don't build on the one that has a reactor
             if (b->unit_type != UNIT_TYPEID::TERRAN_BARRACKSREACTOR){
                 // TODO: it only builds a techlab on one of the barracks?
@@ -470,7 +473,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     *========================================================================================= */    
 
     if (minerals >= 400 && refineries.size() == 4 && !starports.empty() && bases.size() == 1){
-        cout << "build 28" << endl;
+        // cout << "build 28" << endl;
         buildNextTo(ABILITY_ID::BUILD_COMMANDCENTER, starports.front(), BEHINDRIGHT, 1);
         cout << "Done build order\n";
         buildOrderComplete = true;
@@ -843,7 +846,6 @@ void Hal9001::ManageArmy() {
             }
             default: {
                 if (buildOrderComplete && enemyBaseFound) {
-                    cout << "went to staging\n";
                     Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
                 }
                 else {
@@ -1388,7 +1390,7 @@ void Hal9001::buildNextTo(ABILITY_ID ability_id, const Unit* ref, RelDir relDir,
         return;
     }
     #ifdef DEBUG
-    cout << "placement query called" << endl;
+    // cout << "placement query called" << endl;
     #endif
     // get radius of ref
     float radiusRE = ref -> radius;
