@@ -684,41 +684,39 @@ void Hal9001::ManageArmy() {
 
     for (const auto& unit : allies) {
         //MOVEMENT BEHAVIOUR
-        if (!unit->orders.empty()) {
-            if (unit->orders.front().ability_id != ABILITY_ID::ATTACK) {
+        if (unit->orders.empty()) {
 
-                //if we can't rush chill in staging area
-                if (!canRush && Distance2D(unit->pos, stagingArea) > 2) {
-                    #ifdef DEBUG
-                    cout << "Unit pos, Staging area pos" << endl;
-                    cout << unit->pos.x << "," << unit->pos.y << " " << stagingArea.x << "," << stagingArea.y << endl;
-                    #endif
-                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
+            //if we can't rush chill in staging area
+            if (!canRush && Distance2D(unit->pos, stagingArea) > 3 && !bunkers.empty()) {
+                #ifdef DEBUG
+                cout << "Unit pos, Staging area pos" << endl;
+                cout << unit->pos.x << "," << unit->pos.y << " " << stagingArea.x << "," << stagingArea.y << endl;
+                #endif
+                Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
+            }
+
+            if (buildOrderComplete && canRush) {
+                //if the main base is the only one left
+                if (enemybases.size() == 1) {
+                    base_to_rush = enemybases.front();
                 }
-
-                if (buildOrderComplete && canRush) {
-                    //if the main base is the only one left
-                    if (enemybases.size() == 1) {
-                        base_to_rush = enemybases.front();
-                    }
-                    else {
-                        //find which base is the closest
-                        for (const auto& base : enemybases) {
-                            if (Point2D(base->pos.x, base->pos.y) != enemyBase) {
-                                float d = Distance3D(base->pos, startLocation);
-                                if (d < distance) {
-                                    distance = d;
-                                    base_to_rush = base;
-                                }
+                else {
+                    //find which base is the closest
+                    for (const auto& base : enemybases) {
+                        if (Point2D(base->pos.x, base->pos.y) != enemyBase) {
+                            float d = Distance3D(base->pos, startLocation);
+                            if (d < distance) {
+                                distance = d;
+                                base_to_rush = base;
                             }
                         }
                     }
-                    for (const auto &unit : allies){
-                        #ifdef DEBUG
-                        cout << "rushing, sending unit to " << base_to_rush->pos.x << base_to_rush->pos.y << endl;
-                        #endif
-                        Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush->pos);
-                    }
+                }
+                for (const auto &unit : allies){
+                    #ifdef DEBUG
+                    cout << "rushing, sending unit to " << base_to_rush->pos.x << base_to_rush->pos.y << endl;
+                    #endif
+                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush->pos);
                 }
             }
         }
