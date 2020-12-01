@@ -623,6 +623,9 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     int numTanks = CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK);
     // 3:2:1 ratio
     // have 20 marines
+    if (observation->GetMinerals() < 400) {
+        return;
+    }
     if (!barracks.empty()) {
         for (auto const &barrack : barracks){
             if (barrack->orders.empty() && numMarines < 20){
@@ -690,7 +693,7 @@ void Hal9001::ManageArmy() {
                 #endif
 
                 //if we can't rush chill in staging area
-                if (!canRush && Distance2D(unit->pos, stagingArea) < 1) {
+                if (!canRush && Distance2D(unit->pos, stagingArea) > 2) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
                 }
 
@@ -753,7 +756,6 @@ void Hal9001::ManageArmy() {
                         }
 
                     }
-                    AttackWithUnit(unit, observation);
                 break;
             }
             //WIDOWMINES
@@ -774,6 +776,9 @@ void Hal9001::ManageArmy() {
             case UNIT_TYPEID::TERRAN_SIEGETANK: {
                 float distance = std::numeric_limits<float>::max();
                 for (const auto& enemy : enemies) {
+                    if (enemy->is_flying) {
+                        continue;
+                    }
                     float d = Distance2D(enemy->pos, unit->pos);
                     if (d < distance) {
                         distance = d;
@@ -781,9 +786,6 @@ void Hal9001::ManageArmy() {
                 }
                 if (distance < 11) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SIEGEMODE);
-                }
-                else {
-                    AttackWithUnit(unit, observation);
                 }
                 break;
             }
@@ -797,9 +799,6 @@ void Hal9001::ManageArmy() {
                 }
                 if (distance > 13) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_UNSIEGE);
-                }
-                else {
-                    AttackWithUnit(unit, observation);
                 }
                 break;
             }
@@ -834,9 +833,6 @@ void Hal9001::ManageArmy() {
                 Units flying_units = observation->GetUnits(Unit::Enemy, IsFlying());
                 if (!flying_units.empty()) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_VIKINGFIGHTERMODE);
-                }
-                else {
-                    AttackWithUnit(unit, observation);
                 }
                 break;
             }
@@ -1069,6 +1065,7 @@ void Hal9001::OnStep() {
     }
     BuildOrder(observation);
     ReconBase(observation);
+    ManageArmyProduction(observation);
     ManageArmy();
     ManageUpgrades(observation);
 
