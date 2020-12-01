@@ -592,10 +592,10 @@ void Hal9001::setCanRush(const ObservationInterface *observation){
     auto upgrades = observation->GetUpgrades();
     for (const auto &upgrade : upgrades){
         if (upgrade == UPGRADE_ID::STIMPACK){
-            cout << "has stimpack" << endl;
+            // cout << "has stimpack" << endl;
             hasStimpack = true;
         } else if (upgrade == UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1){
-            cout << "has infantry1" << endl;
+            // cout << "has infantry1" << endl;
             hasInfantry1 = true;
         }
     }
