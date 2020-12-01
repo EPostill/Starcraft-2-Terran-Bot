@@ -687,13 +687,12 @@ void Hal9001::ManageArmy() {
         if (!unit->orders.empty()) {
             if (unit->orders.front().ability_id != ABILITY_ID::ATTACK) {
 
-                #ifdef DEBUG
-                cout << "Unit pos, Staging area pos" << endl;
-                cout << unit->pos.x << "," << unit->pos.y << " " << stagingArea.x << "," << stagingArea.y << endl;
-                #endif
-
                 //if we can't rush chill in staging area
                 if (!canRush && Distance2D(unit->pos, stagingArea) > 2) {
+                    #ifdef DEBUG
+                    cout << "Unit pos, Staging area pos" << endl;
+                    cout << unit->pos.x << "," << unit->pos.y << " " << stagingArea.x << "," << stagingArea.y << endl;
+                    #endif
                     Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
                 }
 
