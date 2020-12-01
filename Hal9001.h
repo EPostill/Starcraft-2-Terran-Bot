@@ -41,12 +41,18 @@ public:
 	void BuildOrder(const ObservationInterface *observation);
 	// Manage our army
 	void ManageArmy();
+	// Manage production of attacking units
+	void ManageArmyProduction(const ObservationInterface* observation);
+	// Manage upgrades
+	void ManageUpgrades(const ObservationInterface* observation);
 	// Make unit attack nearby enemies
 	void AttackWithUnit(const Unit* unit, const ObservationInterface* observation);
 	// build a refinery near the given command center
 	void BuildRefinery(const Unit *commcenter, const Unit *builder = nullptr);
 	void updateSupplies();
 	void ReconBase(const ObservationInterface* observation);
+	// checks if we can perform a rush
+	void setCanRush(const ObservationInterface *observation);
 	
 	// policy for training scvs
 	void ManageSCVTraining();
@@ -187,6 +193,7 @@ private:
 	int supplies;			// supply count
 	int minerals;			// mineral count
 	int vespene;			// gas count
+	bool canRush;
 
 	//Units that can be healed by medivacs
 	std::vector<UNIT_TYPEID> bio_types = { UNIT_TYPEID::TERRAN_MARINE, UNIT_TYPEID::TERRAN_MARAUDER, UNIT_TYPEID::TERRAN_GHOST, UNIT_TYPEID::TERRAN_REAPER /*reaper*/ };
