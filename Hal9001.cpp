@@ -619,17 +619,50 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
     Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
     int numMarines = CountUnitType(UNIT_TYPEID::TERRAN_MARINE);
+    int numMarauders = CountUnitType(UNIT_TYPEID::TERRAN_MARAUDER);
+    int numMedivacs = CountUnitType(UNIT_TYPEID::TERRAN_MEDIVAC);
+    int numVikings = CountUnitType(UNIT_TYPEID::TERRAN_VIKINGFIGHTER);
+    int numTanks = CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK);
     // 3:2:1 ratio
     // have 20 marines
-    for (auto const &barrack : barracks){
-        if (barrack->orders.empty() && numMarines < 20){
-            Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
+    if (!barracks.empty()) {
+        for (auto const &barrack : barracks){
+            if (barrack->orders.empty() && numMarines < 20){
+                Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
+            }
+        }
+        // 13 marauders
+        for (auto const &barrack : barracks){
+            if (barrack->orders.empty() && numMarauders < 13){
+                Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARAUDER);
+            }
         }
     }
-    // 13 marauders
     
-    // 13 medivacs
-    // 6 tanks
+    //Medivacs
+    if (!starports.empty()) {
+        for (auto const &starport : starports) {
+            if (starport->orders.empty() && numMedivacs < 13) {
+                Actions()->UnitCommand(starport, ABILITY_ID::TRAIN_MEDIVAC);
+            }
+        }
+        for (auto const &starport : starports) {
+            if (starport->orders.empty() && numMedivacs < 6) {
+                Actions()->UnitCommand(starport, ABILITY_ID::TRAIN_VIKINGFIGHTER);
+            }
+        }
+    }
+    
+    //tanks
+    if (!factories.empty()) {
+        for (auto const &factory : factories) {
+            if (factory->orders.empty() && numTanks < 6) {
+                Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_SIEGETANK);
+            }
+        }
+    }
+    
+    
 
 }
 
