@@ -1,5 +1,6 @@
 #include "Hal9001.h"
 #include <iostream>
+#include <cmath>
 #include "cpp-sc2/src/sc2api/sc2_client.cc"
 #define DEBUG true
 using namespace std;
@@ -46,6 +47,7 @@ void Hal9001::OnGameStart() {
     supplies = observation->GetFoodUsed();
     vespene = observation->GetVespene();
     canRush = false;
+    hasStimpack = false;
 
     // store expansions and start location
     expansions = search::CalculateExpansionLocations(observation, Query());
@@ -674,6 +676,9 @@ void Hal9001::ManageArmy() {
     Units enemybases = observation->GetUnits(Unit::Alliance::Enemy, IsTownHall());
     Units allies = observation->GetUnits(Unit::Alliance::Self, IsArmy(observation));
     Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
+
+    const Unit *closestEnemy;
+
     const Unit *homebase = bases.front();
     const Unit *base_to_rush;
     float distance = std::numeric_limits<float>::max();;
@@ -690,7 +695,7 @@ void Hal9001::ManageArmy() {
         // for (const auto& unit : allies) {
         //     Actions()->UnitCommand(unit, ABILITY_ID::SMART, bunker->pos);
         // }
-        return;
+        //return;
     } else {
         #ifdef DEBUG
         cout << "rushing" << endl;
@@ -712,29 +717,56 @@ void Hal9001::ManageArmy() {
         for (const auto &unit : allies){
             Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush->pos);
         }
-        return;
     }
     
 
 
     for (const auto& unit : allies) {
+
+        //MOVEMENT BEHAVIOUR
+        if (!canRush) {
+            Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
+        }
+        if (buildOrderComplete && canRush) {
+            Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
+        }
+
+        //INDIVIDUAL UNIT BEHAVIOUR
         switch (unit->unit_type.ToType()) {
+            //MARINES
             case(UNIT_TYPEID::TERRAN_MARINE): {
-                if (buildOrderComplete && enemyBaseFound) {
-                    cout << "went to staging\n";
-                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
-                }
-                else if (buildOrderComplete && enemyBaseFound && canRush) {
-                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
-                }
-                else if (!bunkers.empty()) {
-                    Actions()->UnitCommand(unit, ABILITY_ID::SMART, bunkers.front());
-                }
-                else {
-                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, homebase->pos);
-                }
+                if (hasStimpack && !unit->orders.empty()) {
+                        if (unit->orders.front().ability_id == ABILITY_ID::ATTACK) {
+                            float distance = std::numeric_limits<float>::max();
+                            for (const auto& enemy : enemies) {
+                                float d = Distance2D(enemy->pos, unit->pos);
+                                if (d < distance) {
+                                    closestEnemy = enemy;
+                                    distance = d;
+                                }
+                            }
+                            bool has_stimmed = false;
+                            for (const auto& buff : unit->buffs) {
+                                if (buff == BUFF_ID::STIMPACK) {
+                                    has_stimmed = true;
+                                }
+                            }
+                            if (distance < 6 && !has_stimmed) {
+                                Actions()->UnitCommand(unit, ABILITY_ID::EFFECT_STIM);
+                                break;
+                            }
+                            //EXPERIMENTAL KITING
+                            if (distance < 5.5) {
+                                float enemy_facing = closestEnemy->facing;
+                                Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, Point2D(unit->pos.x + sin(enemy_facing), unit->pos.y + cos(enemy_facing)));
+                            }
+                        }
+
+                    }
+                    AttackWithUnit(unit, observation);
                 break;
             }
+            //WIDOWMINES
             case UNIT_TYPEID::TERRAN_WIDOWMINE: {
                 float distance = std::numeric_limits<float>::max();
                 for (const auto& enemy : enemies) {
@@ -748,6 +780,7 @@ void Hal9001::ManageArmy() {
                 }
                 break;
             }
+            //TANKS
             case UNIT_TYPEID::TERRAN_SIEGETANK: {
                 float distance = std::numeric_limits<float>::max();
                 for (const auto& enemy : enemies) {
@@ -765,21 +798,22 @@ void Hal9001::ManageArmy() {
                 break;
             }
             case UNIT_TYPEID::TERRAN_SIEGETANKSIEGED: {
-                    float distance = std::numeric_limits<float>::max();
-                    for (const auto& enemy : enemies) {
-                        float d = Distance2D(enemy->pos, unit->pos);
-                        if (d < distance) {
-                            distance = d;
-                        }
+                float distance = std::numeric_limits<float>::max();
+                for (const auto& enemy : enemies) {
+                    float d = Distance2D(enemy->pos, unit->pos);
+                    if (d < distance) {
+                        distance = d;
                     }
-                    if (distance > 13) {
-                        Actions()->UnitCommand(unit, ABILITY_ID::MORPH_UNSIEGE);
-                    }
-                    else {
-                        AttackWithUnit(unit, observation);
-                    }
-                    break;
                 }
+                if (distance > 13) {
+                    Actions()->UnitCommand(unit, ABILITY_ID::MORPH_UNSIEGE);
+                }
+                else {
+                    AttackWithUnit(unit, observation);
+                }
+                break;
+            }
+            //MEDIVACS
             case UNIT_TYPEID::TERRAN_MEDIVAC: {
                 Units bio_units = observation->GetUnits(Unit::Self, IsUnits(bio_types));
                 if (unit->orders.empty()) {
@@ -795,6 +829,7 @@ void Hal9001::ManageArmy() {
                 }
                 break;
             }
+            //VIKINGS
             case UNIT_TYPEID::TERRAN_VIKINGFIGHTER: {
                 Units flying_units = observation->GetUnits(Unit::Enemy, IsFlying());
                 if (flying_units.empty()) {

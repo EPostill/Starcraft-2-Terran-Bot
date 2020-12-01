@@ -171,9 +171,10 @@ private:
 	bool enemyBaseFound = false;
 	// Check if build order is finished
 	bool buildOrderComplete = false;
-
 	// true if we can rush false otherwise
 	bool canRush;
+	//check if we have stim
+	bool hasStimpack;
 
 	
 	// Check which possible location we're currently checking
