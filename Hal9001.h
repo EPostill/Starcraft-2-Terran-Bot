@@ -45,8 +45,6 @@ public:
 	void ManageArmyProduction(const ObservationInterface* observation);
 	// Manage upgrades
 	void ManageUpgrades(const ObservationInterface* observation);
-	// Make unit attack nearby enemies
-	void AttackWithUnit(const Unit* unit, const ObservationInterface* observation);
 	// build a refinery near the given command center
 	void BuildRefinery(const Unit *commcenter, const Unit *builder = nullptr);
 	void updateSupplies();
