@@ -76,6 +76,9 @@ void Hal9001::OnGameStart() {
     depotLocation = getFirstDepotLocation(GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front());
     mainSCV = nullptr;
 
+    // set staging area to 0,0
+    stagingArea = Point2D(0,0);
+
     // set corner loc of base
     Corner corner_loc = cornerLoc(GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front());
 }
@@ -257,8 +260,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     // load marines in bunker
     if (marines.size() >= 3 && bunkers.size() == 1){
         const Unit *bunker = bunkers.front();
-        Point2D stagingLocation(bunker->pos.x, bunker->pos.y + 5.0);
-        stagingArea = stagingLocation;
         if (doneConstruction(bunker) && bunker->cargo_space_taken == 0){
             Units chosen_marines = GetRandomUnits(UNIT_TYPEID::TERRAN_MARINE);
             Actions()->UnitCommand(chosen_marines, ABILITY_ID::SMART, bunker);
@@ -549,6 +550,23 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
 }
 
+void Hal9001::setStagingArea(const ObservationInterface *observation){
+    Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
+    if (bunkers.empty()){
+        return;
+    }
+    if (stagingArea != Point2D(0,0)){
+        return;
+    }
+    const Unit *bunker = bunkers.front();
+    std::pair<int, int> relCor = getRelativeDir(bunker, FRONT);
+    // config coordinates for building barracks
+    float x = (bunker->pos.x) + 4 * relCor.first;
+    float y = (bunker->pos.y) + 4 * relCor.second;
+    stagingArea = Point2D(x,y);
+
+}
+
 void Hal9001::setCanRush(const ObservationInterface *observation){
     bool hasStimpack = false;
     bool hasCombatShield = false;
@@ -690,14 +708,14 @@ void Hal9001::ManageArmy() {
 
     for (const auto& unit : allies) {
         //MOVEMENT BEHAVIOUR
-        if (unit->orders.empty()) {
+        if (stagingArea != Point2D(0,0) && unit->orders.empty()) {
 
             //if we can't rush chill in staging area
             if (!canRush && Distance2D(unit->pos, stagingArea) > 3 && !bunkers.empty()) {
-                #ifdef DEBUG
-                cout << "Unit pos, Staging area pos" << endl;
-                cout << unit->pos.x << "," << unit->pos.y << " " << stagingArea.x << "," << stagingArea.y << endl;
-                #endif
+                // #ifdef DEBUG
+                // cout << "Unit pos, Staging area pos" << endl;
+                // cout << unit->pos.x << "," << unit->pos.y << " " << stagingArea.x << "," << stagingArea.y << endl;
+                // #endif
                 Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
             }
 
@@ -1072,6 +1090,7 @@ void Hal9001::OnStep() {
     }
     BuildOrder(observation);
     ReconBase(observation);
+    setStagingArea(observation);
     ManageArmyProduction(observation);
     ManageArmy();
     ManageUpgrades(observation);

@@ -53,6 +53,7 @@ public:
 	void ReconBase(const ObservationInterface* observation);
 	// checks if we can perform a rush
 	void setCanRush(const ObservationInterface *observation);
+	void setStagingArea(const ObservationInterface *observation);
 	
 	// policy for training scvs
 	void ManageSCVTraining();
