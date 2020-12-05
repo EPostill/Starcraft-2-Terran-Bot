@@ -681,12 +681,12 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
 
     if (!barracks.empty()) {
         for (auto const &barrack : barracks){
-            if (barrack->orders.empty() && numMarines < unit_ratios[game_stage][MARINE]){
+            if (barrack->orders.empty() && numMarines < unit_ratios[game_stage][MARINE] * 2){
                 Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
             }
         }
         for (auto const &barrack : barracks){
-            if (barrack->orders.empty() && numMarauders < unit_ratios[game_stage][MARAUDER]){
+            if (barrack->orders.empty() && numMarauders < unit_ratios[game_stage][MARAUDER] * 2){
                 Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARAUDER);
             }
         }
@@ -695,12 +695,12 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     //Medivacs
     if (!starports.empty()) {
         for (auto const &starport : starports) {
-            if (starport->orders.empty() && numMedivacs < unit_ratios[game_stage][MEDIVAC]) {
+            if (starport->orders.empty() && numMedivacs < unit_ratios[game_stage][MEDIVAC] * 2) {
                 Actions()->UnitCommand(starport, ABILITY_ID::TRAIN_MEDIVAC);
             }
         }
         for (auto const &starport : starports) {
-            if (starport->orders.empty() && numVikings < unit_ratios[game_stage][VIKING]) {
+            if (starport->orders.empty() && numVikings < unit_ratios[game_stage][VIKING] * 2) {
                 Actions()->UnitCommand(starport, ABILITY_ID::TRAIN_VIKINGFIGHTER);
             }
         }
@@ -709,13 +709,13 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     if (!factories.empty()) {
         // widow mines
         for (auto const &factory : factories) {
-            if (factory->orders.empty() && numWidowMines < 1) {
+            if (factory->orders.empty() && numWidowMines < 3) {
                 Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_WIDOWMINE);
             }
         }        
         //tanks
         for (auto const &factory : factories) {
-            if (factory->orders.empty() && numTanks < unit_ratios[game_stage][TANK]) {
+            if (factory->orders.empty() && numTanks < unit_ratios[game_stage][TANK] * 2) {
                 Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_SIEGETANK);
             }
         }
