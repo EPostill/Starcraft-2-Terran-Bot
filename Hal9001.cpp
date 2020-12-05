@@ -731,7 +731,7 @@ void Hal9001::ManageArmy() {
     const Unit *closestEnemy;
 
     const Unit *homebase = bases.front();
-    const Unit *base_to_rush;
+    const Unit *base_to_rush = nullptr;
     float distance = std::numeric_limits<float>::max();;
 
 
@@ -768,6 +768,9 @@ void Hal9001::ManageArmy() {
                 }
             }
             for (const auto &unit : attacking_army) {
+                if (base_to_rush == nullptr){
+                    cout << "base_to_rush is null" << endl;
+                }
                 Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush);
             }
         }
