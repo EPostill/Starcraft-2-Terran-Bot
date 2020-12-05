@@ -658,6 +658,15 @@ void Hal9001::ManageUpgrades(const ObservationInterface* observation){
 
 }
 
+void Hal9001::ShouldRetreat(const ObservationInterface* observation) {
+    //TODO determine retreat condition
+    if (false /*retreat condition*/) {
+        game_stage++;
+        attacking = false;
+    }
+
+}
+
 void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     Units barracks = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
     Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
@@ -732,6 +741,10 @@ void Hal9001::ManageArmy() {
     if (attacking) {
         //first check if we should retreat
         //TODO
+        if (false /*retreat condition*/) {
+            game_stage++;
+            attacking = false
+        }
 
         //then determine a base to attack
         //if the main base is the only one left
@@ -757,7 +770,7 @@ void Hal9001::ManageArmy() {
                     }
                 }
             }
-            for (const auto &unit : attacking_army) {
+            for (const auto &unit : allies) {
                 if (base_to_rush == nullptr){
                     cout << "base_to_rush is null" << endl;
                 }
@@ -768,11 +781,11 @@ void Hal9001::ManageArmy() {
     else {
 
         for (const auto& unit : allies) {
-            //MOVEMENT BEHAVIOUR
+            //Movement handler if we are not attacking
             if (stagingArea != Point2D(0,0) && unit->orders.empty()) {
 
                 //if we can't rush chill in staging area
-                if (Distance2D(unit->pos, stagingArea) > 3) {
+                if (Distance2D(unit->pos, stagingArea) > 4) {
                     // #ifdef DEBUG
                     // cout << "Unit pos, Staging area pos" << endl;
                     // cout << unit->pos.x << "," << unit->pos.y << " " << stagingArea.x << "," << stagingArea.y << endl;
@@ -1161,6 +1174,9 @@ void Hal9001::OnStep() {
     ManageArmyProduction(observation);
     ManageArmy();
     ManageUpgrades(observation);
+    if (attacking) {
+        ShouldRetreat(observation);
+    }
 
 }
 

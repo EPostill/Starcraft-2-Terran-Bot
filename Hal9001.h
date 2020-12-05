@@ -42,6 +42,8 @@ public:
 	const Point3D FindNearestExpansion();
 	void BuildStructure(ABILITY_ID ability_type_for_structure, float x, float y, const Unit *builder = nullptr);
 	void BuildOrder(const ObservationInterface *observation);
+	//Determine retreat condition
+	void ShouldRetreat(const ObservationInterface* observation);
 	// Manage our army
 	void ManageArmy();
 	// Manage production of attacking units
