@@ -47,6 +47,7 @@ void Hal9001::OnGameStart() {
     vespene = observation->GetVespene();
     canRush = false;
     hasStimpack = false;
+    attacking = false;
     game_stage = 0;
 
     // store expansions and start location
