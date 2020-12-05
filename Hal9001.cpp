@@ -670,15 +670,6 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     int numTanks = CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) + CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANKSIEGED);
     int numWidowMines = CountUnitType(UNIT_TYPEID::TERRAN_WIDOWMINE) + CountUnitType(UNIT_TYPEID::TERRAN_WIDOWMINEBURROWED);
 
-    // build new army if currently attacking
-    if (attacking){
-        numMarines -= unit_ratios[game_stage][MARINE];
-        numMarauders -= unit_ratios[game_stage][MARAUDER];
-        numMedivacs -= unit_ratios[game_stage][MEDIVAC];
-        numVikings -= unit_ratios[game_stage][VIKING];
-        numTanks -= unit_ratios[game_stage][TANK];
-    }
-
     if (!barracks.empty()) {
         for (auto const &barrack : barracks){
             if (barrack->orders.empty() && numMarines < unit_ratios[game_stage][MARINE]){
@@ -739,14 +730,10 @@ void Hal9001::ManageArmy() {
 
 
     if (attacking) {
-        #ifdef DEBUG
-        cout << "attack commands start, attacking army is:" << endl;
-        int attacking_army_size = 0;
-        for (const auto &unit : attacking_army) {
-            attacking_army_size++;
-        }
-        cout << attacking_army_size << endl;
-        #endif
+        //first check if we should retreat
+        //TODO
+
+        //then determine a base to attack
         //if the main base is the only one left
         if (enemybases.size() == 1) {
             base_to_rush = enemybases.front();
@@ -760,7 +747,7 @@ void Hal9001::ManageArmy() {
             }
         }
         else {
-            //find which base is the closest
+            //if they have multiple, find which base is the closest
             for (const auto &base : enemybases) {
                 if (Point2D(base->pos.x, base->pos.y) != enemyBase) {
                     float d = Distance3D(base->pos, startLocation);
@@ -824,6 +811,7 @@ void Hal9001::ManageArmy() {
                                     has_stimmed = true;
                                 }
                             }
+                            //if we are within combat range and are not stimmed, use it
                             if (distance < 6 && !has_stimmed) {
                                 Actions()->UnitCommand(unit, ABILITY_ID::EFFECT_STIM);
                                 break;
@@ -842,7 +830,7 @@ void Hal9001::ManageArmy() {
             case UNIT_TYPEID::TERRAN_MARAUDER: {
                 if (hasStimpack && !unit->orders.empty()) {
                     if (unit->orders.front().ability_id == ABILITY_ID::ATTACK) {
-                        distance = std::numeric_limits<float>::max();
+                        distance = numeric_limits<float>::max();
                         for (const auto& enemy : enemies) {
                             float d = Distance2D(enemy->pos, unit->pos);
                             if (d < distance) {
@@ -855,6 +843,7 @@ void Hal9001::ManageArmy() {
                                 has_stimmed = true;
                             }
                         }
+                        //same condition as marines
                         if (distance < 7 && !has_stimmed) {
                             Actions()->UnitCommand(unit, ABILITY_ID::EFFECT_STIM);
                             break;
@@ -865,13 +854,14 @@ void Hal9001::ManageArmy() {
 
             //WIDOWMINES
             case UNIT_TYPEID::TERRAN_WIDOWMINE: {
-                float distance = std::numeric_limits<float>::max();
+                float distance = numeric_limits<float>::max();
                 for (const auto& enemy : enemies) {
                     float d = Distance2D(enemy->pos, unit->pos);
                     if (d < distance) {
                         distance = d;
                     }
                 }
+                //burrow if within range
                 if (distance < 6) {
                     Actions()->UnitCommand(unit, ABILITY_ID::BURROWDOWN);
                 }
@@ -880,7 +870,7 @@ void Hal9001::ManageArmy() {
             
             //TANKS
             case UNIT_TYPEID::TERRAN_SIEGETANK: {
-                distance = std::numeric_limits<float>::max();
+                distance = numeric_limits<float>::max();
                 for (const auto& enemy : enemies) {
                     if (enemy->is_flying) {
                         continue;
@@ -890,20 +880,22 @@ void Hal9001::ManageArmy() {
                         distance = d;
                     }
                 }
-                if (distance < 11) {
+                //seige if within range (modified from 11 to 10 to give tanks a little extra headroom)
+                if (distance < 10) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SIEGEMODE);
                 }
                 break;
             }
             case UNIT_TYPEID::TERRAN_SIEGETANKSIEGED: {
-                distance = std::numeric_limits<float>::max();
+                distance = numeric_limits<float>::max();
                 for (const auto& enemy : enemies) {
                     float d = Distance2D(enemy->pos, unit->pos);
                     if (d < distance) {
                         distance = d;
                     }
                 }
-                if (distance > 13) {
+                //if there are no enemies nearby 
+                if (distance > 13 || distance == numeric_limits<float>::max()) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_UNSIEGE);
                 }
                 break;
@@ -914,11 +906,13 @@ void Hal9001::ManageArmy() {
                 Units bio_units = observation->GetUnits(Unit::Self, IsUnits(bio_types));
                 if (unit->orders.empty()) {
                     for (const auto& bio_unit : bio_units) {
+                        //heal low health army units
                         if (bio_unit->health < bio_unit->health_max) {
                             Actions()->UnitCommand(unit, ABILITY_ID::EFFECT_HEAL, bio_unit);
                             break;
                         }
                     }
+                    //heal whoever is closest
                     if (!bio_units.empty()) {
                         Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, bio_units.front());
                     }
@@ -930,6 +924,7 @@ void Hal9001::ManageArmy() {
             case UNIT_TYPEID::TERRAN_VIKINGFIGHTER: {
                 Units flying_units = observation->GetUnits(Unit::Enemy, IsFlying());
 
+                //no flying units, should go into ground mode
                 if (flying_units.empty()) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_VIKINGASSAULTMODE);
                 }
@@ -941,7 +936,8 @@ void Hal9001::ManageArmy() {
 
             case UNIT_TYPEID::TERRAN_VIKINGASSAULT: {
                 Units flying_units = observation->GetUnits(Unit::Enemy, IsFlying());
-
+                
+                //enemy has flying units, go into air mode
                 if (!flying_units.empty()) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_VIKINGFIGHTERMODE);
                 }
