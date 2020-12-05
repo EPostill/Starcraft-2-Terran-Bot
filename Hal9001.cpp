@@ -318,7 +318,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     *========================================================================================= */
     if (supplies > 36 && minerals >= 100 && depots.size() == 2 && orbcoms.size() == 1 && bunkers.size() == 1) {
         // build depot
-        buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, bunkers.front(), LEFT, 2, mainSCV);
+        buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, bunkers.front(), LEFT, 3, mainSCV);
     }
 
     // /***=========================================================================================
@@ -351,7 +351,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition : we already have 3 depots and have less than 6 depots
      * Status: DONE
     *========================================================================================= */    
-    if (minerals >= 100 && depots.size() >= 3 && depots.size() < 6 && bases.size() == 1) {
+    if (minerals >= 100 && depots.size() >= 3 && depots.size() < 6 && !bases.empty()) {
         // get depot thats close to 2nd commcenter
         const Unit *depot = FindNearestDepot(bases.front()->pos);
         if (mainSCV->orders.empty()){
@@ -614,7 +614,7 @@ void Hal9001::CanAttack(const ObservationInterface *observation) {
     int numMarines = CountUnitType(UNIT_TYPEID::TERRAN_MARINE);
     int numMarauders = CountUnitType(UNIT_TYPEID::TERRAN_MARAUDER);
     int numMedivacs = CountUnitType(UNIT_TYPEID::TERRAN_MEDIVAC);
-    int numVikings = CountUnitType(UNIT_TYPEID::TERRAN_VIKINGFIGHTER);
+    int numVikings = CountUnitType(UNIT_TYPEID::TERRAN_VIKINGFIGHTER) + CountUnitType(UNIT_TYPEID::TERRAN_VIKINGASSAULT);
     int numTanks = CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) + CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANKSIEGED);
 
     if (numMarines >= unit_ratios[game_stage][MARINE] &&
@@ -666,24 +666,27 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     int numMarines = CountUnitType(UNIT_TYPEID::TERRAN_MARINE);
     int numMarauders = CountUnitType(UNIT_TYPEID::TERRAN_MARAUDER);
     int numMedivacs = CountUnitType(UNIT_TYPEID::TERRAN_MEDIVAC);
-    int numVikings = CountUnitType(UNIT_TYPEID::TERRAN_VIKINGFIGHTER);
+    int numVikings = CountUnitType(UNIT_TYPEID::TERRAN_VIKINGFIGHTER) + CountUnitType(UNIT_TYPEID::TERRAN_VIKINGASSAULT);
     int numTanks = CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) + CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANKSIEGED);
     int numWidowMines = CountUnitType(UNIT_TYPEID::TERRAN_WIDOWMINE) + CountUnitType(UNIT_TYPEID::TERRAN_WIDOWMINEBURROWED);
 
-    // 3:2:1 ratio
-    // have 20 marines
-    if (observation->GetMinerals() < 400) {
-        return;
+    // build new army if currently attacking
+    if (attacking){
+        numMarines -= unit_ratios[game_stage][MARINE];
+        numMarauders -= unit_ratios[game_stage][MARAUDER];
+        numMedivacs -= unit_ratios[game_stage][MEDIVAC];
+        numVikings -= unit_ratios[game_stage][VIKING];
+        numTanks -= unit_ratios[game_stage][TANK];
     }
+
     if (!barracks.empty()) {
         for (auto const &barrack : barracks){
-            if (barrack->orders.empty() && numMarines < 20){
+            if (barrack->orders.empty() && numMarines < unit_ratios[game_stage][MARINE]){
                 Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
             }
         }
-        // 13 marauders
         for (auto const &barrack : barracks){
-            if (barrack->orders.empty() && numMarauders < 13){
+            if (barrack->orders.empty() && numMarauders < unit_ratios[game_stage][MARAUDER]){
                 Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARAUDER);
             }
         }
@@ -692,12 +695,12 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     //Medivacs
     if (!starports.empty()) {
         for (auto const &starport : starports) {
-            if (starport->orders.empty() && numMedivacs < 13) {
+            if (starport->orders.empty() && numMedivacs < unit_ratios[game_stage][MEDIVAC]) {
                 Actions()->UnitCommand(starport, ABILITY_ID::TRAIN_MEDIVAC);
             }
         }
         for (auto const &starport : starports) {
-            if (starport->orders.empty() && numVikings < 6) {
+            if (starport->orders.empty() && numVikings < unit_ratios[game_stage][VIKING]) {
                 Actions()->UnitCommand(starport, ABILITY_ID::TRAIN_VIKINGFIGHTER);
             }
         }
@@ -712,7 +715,7 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
         }        
         //tanks
         for (auto const &factory : factories) {
-            if (factory->orders.empty() && numTanks < 6) {
+            if (factory->orders.empty() && numTanks < unit_ratios[game_stage][TANK]) {
                 Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_SIEGETANK);
             }
         }
