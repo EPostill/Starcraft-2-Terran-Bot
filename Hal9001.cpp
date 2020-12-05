@@ -47,6 +47,7 @@ void Hal9001::OnGameStart() {
     vespene = observation->GetVespene();
     canRush = false;
     hasStimpack = false;
+    game_stage = 0;
 
     // store expansions and start location
     expansions = search::CalculateExpansionLocations(observation, Query());
@@ -583,9 +584,7 @@ void Hal9001::setCanRush(const ObservationInterface *observation){
     bool hasStimpack = false;
     bool hasCombatShield = false;
     bool hasInfantry1 = false;
-    bool enoughMarines = false;
     Units marines = GetUnitsOfType(UNIT_TYPEID::TERRAN_MARINE);
-    int numMarines = marines.size();
 
     // check marine hp == 55 for combat shielf
     if (marines.empty()){
@@ -594,10 +593,6 @@ void Hal9001::setCanRush(const ObservationInterface *observation){
     const Unit *marine = marines.front();
     if (marine->health_max >= 55){
         hasCombatShield = true;
-    }
-
-    if (numMarines >= 10) {
-        enoughMarines = true;
     }
 
     // need stimpack, combat shield and terran infantry weapons lvl 1
@@ -611,7 +606,29 @@ void Hal9001::setCanRush(const ObservationInterface *observation){
             hasInfantry1 = true;
         }
     }
-    canRush = hasStimpack && hasCombatShield && hasInfantry1 && enoughMarines;
+    canRush = hasStimpack && hasCombatShield && hasInfantry1;
+}
+
+void Hal9001::CanAttack(const ObservationInterface *observation) {
+    int numMarines = CountUnitType(UNIT_TYPEID::TERRAN_MARINE);
+    int numMarauders = CountUnitType(UNIT_TYPEID::TERRAN_MARAUDER);
+    int numMedivacs = CountUnitType(UNIT_TYPEID::TERRAN_MEDIVAC);
+    int numVikings = CountUnitType(UNIT_TYPEID::TERRAN_VIKINGFIGHTER);
+    int numTanks = CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) + CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANKSIEGED);
+
+    if (numMarines >= unit_ratios[game_stage][MARINE] &&
+    numMarauders >= unit_ratios[game_stage][MARAUDER] &&
+    numVikings >= unit_ratios[game_stage][VIKING] &&
+    numTanks >= unit_ratios[game_stage][TANK] &&
+    numMedivacs >= unit_ratios[game_stage][MEDIVAC]) {
+        #ifdef DEBUG
+        cout << "attack conditions met, attacking flag set" << endl;
+        #endif
+        attacking_army = observation->GetUnits(Unit::Alliance::Self, IsArmy(observation));
+        attacking = true;
+        return;
+    }
+    return;
 }
 
 void Hal9001::ManageUpgrades(const ObservationInterface* observation){
@@ -716,60 +733,77 @@ void Hal9001::ManageArmy() {
     const Unit *base_to_rush;
     float distance = std::numeric_limits<float>::max();;
 
-    for (const auto& unit : allies) {
-        //MOVEMENT BEHAVIOUR
-        if (stagingArea != Point2D(0,0) && unit->orders.empty()) {
 
-            //if we can't rush chill in staging area
-            if (!canRush && Distance2D(unit->pos, stagingArea) > 3) {
-                // #ifdef DEBUG
-                // cout << "Unit pos, Staging area pos" << endl;
-                // cout << unit->pos.x << "," << unit->pos.y << " " << stagingArea.x << "," << stagingArea.y << endl;
-                // #endif
-                Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, stagingArea);
-            }
-
-            // bury widow mine at staging area
-            if (unit->unit_type == UNIT_TYPEID::TERRAN_WIDOWMINE && Distance2D(unit->pos, stagingArea) < 3){
-                Actions()->UnitCommand(unit, ABILITY_ID::BURROWDOWN_WIDOWMINE);
-            }
-
-            if (buildOrderComplete && canRush) {
-                //if the main base is the only one left
-                if (enemybases.size() == 1) {
-                    base_to_rush = enemybases.front();
-                } else if (enemybases.empty()){
-                    //we may have never seen the enemy base, try moving to the supposed location
-                    //if the enemy really doesn't have any bases, this won't matter anyway
+    if (attacking) {
+        #ifdef DEBUG
+        cout << "attack commands start, attacking army is:" << endl;
+        int attacking_army_size = 0;
+        for (const auto &unit : attacking_army) {
+            attacking_army_size++;
+        }
+        cout << attacking_army_size << endl;
+        #endif
+        //if the main base is the only one left
+        if (enemybases.size() == 1) {
+            base_to_rush = enemybases.front();
+        } else if (enemybases.empty()){
+            //we may have never seen the enemy base, try moving to the supposed location
+            //if the enemy really doesn't have any bases, this won't matter anyway
+            for (const auto &unit : attacking_army) {
+                if (unit->orders.empty()) {
                     Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
-                    return;
                 }
-                else {
-                    //find which base is the closest
-                    for (const auto& base : enemybases) {
-                        if (Point2D(base->pos.x, base->pos.y) != enemyBase) {
-                            float d = Distance3D(base->pos, startLocation);
-                            if (d < distance) {
-                                distance = d;
-                                base_to_rush = base;
-                            }
-                        }
-                    }
-                }
-                // #ifdef DEBUG
-                // cout << "rushing, sending unit to " << base_to_rush->pos.x << base_to_rush->pos.y << endl;
-                // #endif
-                Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush->pos);
             }
         }
+        else {
+            //find which base is the closest
+            for (const auto &base : enemybases) {
+                if (Point2D(base->pos.x, base->pos.y) != enemyBase) {
+                    float d = Distance3D(base->pos, startLocation);
+                    if (d < distance) {
+                        distance = d;
+                        base_to_rush = base;
+                    }
+                }
+            }
+            for (const auto &unit : attacking_army) {
+                Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush);
+            }
+        }
+    }
+    else {
 
+        for (const auto& unit : allies) {
+            //MOVEMENT BEHAVIOUR
+            if (stagingArea != Point2D(0,0) && unit->orders.empty()) {
+
+                //if we can't rush chill in staging area
+                if (Distance2D(unit->pos, stagingArea) > 3) {
+                    // #ifdef DEBUG
+                    // cout << "Unit pos, Staging area pos" << endl;
+                    // cout << unit->pos.x << "," << unit->pos.y << " " << stagingArea.x << "," << stagingArea.y << endl;
+                    // #endif
+                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, stagingArea);
+                }
+
+                // bury widow mine at staging area
+                if (unit->unit_type == UNIT_TYPEID::TERRAN_WIDOWMINE && Distance2D(unit->pos, stagingArea) < 3){
+                    Actions()->UnitCommand(unit, ABILITY_ID::BURROWDOWN_WIDOWMINE);
+                }
+            }
+        }
+    }
+
+
+
+    for (const auto &unit : allies) {
         //INDIVIDUAL UNIT BEHAVIOUR
         switch (unit->unit_type.ToType()) {
             //MARINES
             case UNIT_TYPEID::TERRAN_MARINE: {
                 if (hasStimpack && !unit->orders.empty()) {
-                        if (unit->orders.front().ability_id == ABILITY_ID::ATTACK) {
-                            float distance = std::numeric_limits<float>::max();
+                        if (unit->orders.front().ability_id == ABILITY_ID::ATTACK_ATTACK) {
+                            distance = std::numeric_limits<float>::max();
                             for (const auto& enemy : enemies) {
                                 float d = Distance2D(enemy->pos, unit->pos);
                                 if (d < distance) {
@@ -801,7 +835,7 @@ void Hal9001::ManageArmy() {
             case UNIT_TYPEID::TERRAN_MARAUDER: {
                 if (hasStimpack && !unit->orders.empty()) {
                     if (unit->orders.front().ability_id == ABILITY_ID::ATTACK) {
-                        float distance = std::numeric_limits<float>::max();
+                        distance = std::numeric_limits<float>::max();
                         for (const auto& enemy : enemies) {
                             float d = Distance2D(enemy->pos, unit->pos);
                             if (d < distance) {
@@ -839,7 +873,7 @@ void Hal9001::ManageArmy() {
             
             //TANKS
             case UNIT_TYPEID::TERRAN_SIEGETANK: {
-                float distance = std::numeric_limits<float>::max();
+                distance = std::numeric_limits<float>::max();
                 for (const auto& enemy : enemies) {
                     if (enemy->is_flying) {
                         continue;
@@ -855,7 +889,7 @@ void Hal9001::ManageArmy() {
                 break;
             }
             case UNIT_TYPEID::TERRAN_SIEGETANKSIEGED: {
-                float distance = std::numeric_limits<float>::max();
+                distance = std::numeric_limits<float>::max();
                 for (const auto& enemy : enemies) {
                     float d = Distance2D(enemy->pos, unit->pos);
                     if (d < distance) {
@@ -1111,6 +1145,9 @@ void Hal9001::OnStep() {
 
     if (!canRush) {
         setCanRush(observation);
+    }
+    if (!attacking) {
+        CanAttack(observation);
     }
     BuildOrder(observation);
     ReconBase(observation);

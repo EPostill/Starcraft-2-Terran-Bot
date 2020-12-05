@@ -16,6 +16,7 @@ enum MapName { CACTUS, BELSHIR, PROXIMA };
 
 // For easy identification of where to place a structure relative to another
 enum RelDir { LEFT, RIGHT, FRONT, FRONTLEFT, FRONTRIGHT, BEHINDLEFT, BEHINDRIGHT, BEHIND };
+enum UnitNames {MARINE, MARAUDER, VIKING, TANK, MEDIVAC};
 
 // For easy identification of location in the map
 // M for missing
@@ -51,6 +52,8 @@ public:
 	void ReconBase(const ObservationInterface* observation);
 	// checks if we can perform a rush
 	void setCanRush(const ObservationInterface *observation);
+	//checks if we have a strong enough army to attack
+	void CanAttack(const ObservationInterface *observation);
 	void setStagingArea(const ObservationInterface *observation);
 	
 	// policy for training scvs
@@ -162,7 +165,9 @@ private:
 	Units GetRandomUnits(UNIT_TYPEID unit_type, Point3D location = Point3D(0,0,0), int num = 1);
 	// returns true if unit has finished being built
 	bool doneConstruction(const Unit *unit);
+
 	bool build_complete = false;
+	Units attacking_army;
 
 	// Check if we're currently scouting
 	bool scouting = false;
@@ -172,6 +177,8 @@ private:
 	bool buildOrderComplete = false;
 	// true if we can rush false otherwise
 	bool canRush;
+	//true if we are launching an attack currently
+	bool attacking;
 	//check if we have stim
 	bool hasStimpack;
 
@@ -194,6 +201,12 @@ private:
 
 	//Units that can be healed by medivacs
 	std::vector<UNIT_TYPEID> bio_types = { UNIT_TYPEID::TERRAN_MARINE, UNIT_TYPEID::TERRAN_MARAUDER, UNIT_TYPEID::TERRAN_GHOST, UNIT_TYPEID::TERRAN_REAPER /*reaper*/ };
+	std::vector<int> stage1_ratio = {10, 3, 3, 4, 4};
+	//TODO: get ratios for stages 1 and 2
+	std::vector<int> stage2_ratio = {10, 3, 3, 5, 5};
+	std::vector<int> stage3_ratio = {10, 3, 3, 5, 5};
+	std::vector<std::vector<int>> unit_ratios = {stage1_ratio, stage2_ratio, stage3_ratio};
+	int game_stage;
 
 	// map name
 	MapName map_name;
