@@ -1016,6 +1016,7 @@ void Hal9001::MineIdleWorkers() {
                 if (base2->assigned_harvesters < base2->ideal_harvesters) {
                     valid_mineral_patch = FindNearestMineralPatch(base2->pos);
                     Actions()->UnitCommand(assigned_workers, ABILITY_ID::HARVEST_GATHER, valid_mineral_patch);
+                    return;
                 }
             }
         }
@@ -1047,24 +1048,23 @@ const Point2D Hal9001::getFirstDepotLocation(const Unit *commcenter){
 
 void Hal9001::ManageSCVTraining(){
     Units commcenters = getCommCenters();
+    Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
+    int scv_count = CountUnitType(UNIT_TYPEID::TERRAN_SCV);
+    int ideal_count = 0;
+    // count how many scvs we need in total
+    for (const auto &cc : commcenters){
+        ideal_count += cc->ideal_harvesters;
+    }
+    for (const auto &rf : refineries){
+        ideal_count += rf->ideal_harvesters;
+    }
 
+    if (scv_count < ideal_count)
     for (const auto &cc : commcenters){
         // if any comm center is not full tell all comm centers to train an scv
         // mineidleworkers will send the scvs to the not full comm centers
-        if (cc->assigned_harvesters < cc->ideal_harvesters){
-            if (cc->assigned_harvesters < cc->ideal_harvesters / 4) {
-                for (const auto &cc2 : commcenters){
-                    if (cc->orders.empty()){
-                        Actions()->UnitCommand(cc2, ABILITY_ID::TRAIN_SCV);
-                    }
-                }
-            }
-            else {
-                if (cc->orders.empty()){
-                    Actions()->UnitCommand(cc, ABILITY_ID::TRAIN_SCV);
-                }
-            }
-            return;
+        if (cc->orders.empty()){
+            Actions()->UnitCommand(cc, ABILITY_ID::TRAIN_SCV);
         }
     }
 }
@@ -1141,6 +1141,7 @@ void Hal9001::ReconBase(const ObservationInterface* observation) {
 void Hal9001::OnStep() { 
     // cout << Observation()->GetGameLoop() << endl;
     const ObservationInterface *observation = Observation();
+
     minerals = observation->GetMinerals();
     supplies = observation->GetFoodUsed();
     vespene = observation->GetVespene();
@@ -1251,6 +1252,20 @@ const Unit* Hal9001::FindNearestGeyser(const Point2D &start) {
 
 const Unit* Hal9001::FindNearestDepot(const Point2D &start) {
     Units units = getDepots();
+    float distance = std::numeric_limits<float>::max();
+    const Unit *target = nullptr;
+    for (const auto &u : units) {
+        float d = DistanceSquared2D(u->pos, start);
+        if (d < distance && d > 0.1) {
+            distance = d;
+            target = u;
+        }
+    }
+    return target;
+}
+
+const Unit* Hal9001::FindNearestSCV(const Point2D &start) {
+    Units units = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
     float distance = std::numeric_limits<float>::max();
     const Unit *target = nullptr;
     for (const auto &u : units) {
@@ -1437,7 +1452,7 @@ void Hal9001::ManageRefineries(){
     Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
     for (const auto &refinery : refineries){
         if (refinery->build_progress != 1) {
-            return;
+            continue;
         }
         // refinery isn't full
         if (refinery->assigned_harvesters < refinery->ideal_harvesters){
@@ -1452,16 +1467,9 @@ void Hal9001::ManageRefineries(){
         }
         //refinery is too full
         if (refinery->assigned_harvesters > refinery->ideal_harvesters){
-            // get missing amount of scvs
-            int num = refinery->assigned_harvesters - refinery->ideal_harvesters;
-            Units scvs = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, refinery->pos, num);
-            if (scvs.empty()){
-                return;
-            }
-
-            for (const auto &scv : scvs) {
-                Actions()->UnitCommand(scv, ABILITY_ID::MOVE_MOVE, scv->pos);
-            }
+            const Unit *scv = FindNearestSCV(refinery->pos);
+            const Unit *mpatch = FindNearestMineralPatch(scv->pos);
+            Actions()->UnitCommand(scv, ABILITY_ID::HARVEST_GATHER, mpatch);
         }
     }
 }
