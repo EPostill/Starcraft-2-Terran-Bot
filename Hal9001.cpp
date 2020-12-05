@@ -660,9 +660,23 @@ void Hal9001::ManageUpgrades(const ObservationInterface* observation){
 
 void Hal9001::ShouldRetreat(const ObservationInterface* observation) {
     //TODO determine retreat condition
-    if (false /*retreat condition*/) {
+    Units enemies = observation->GetUnits(Unit::Alliance::Enemy, IsArmy(observation));
+    int enemyCount = enemies.size();
+    int aliveCount = 0;
+    int threshold = attacking_army.size() / 2;
+    for (const auto &unit : attacking_army){
+        if (unit->is_alive){
+            ++aliveCount;
+        }
+    }
+    cout << "enemy count " << enemyCount << endl;
+    cout << "our alive count" << aliveCount << endl;
+    // retreat if we lost more than half of our units and
+    // the enemy still has more units than us
+    if (aliveCount < threshold && enemyCount > aliveCount) {
         game_stage++;
         attacking = false;
+        attacking_army.clear();
     }
 
 }
@@ -739,21 +753,12 @@ void Hal9001::ManageArmy() {
 
 
     if (attacking) {
-        //first check if we should retreat
-        //TODO
-        if (false /*retreat condition*/) {
-            game_stage++;
-            attacking = false;
-        }
-
         //then determine a base to attack
         //if the main base is the only one left
-        if (enemybases.size() == 1) {
-            base_to_rush = enemybases.front();
-        } else if (enemybases.empty()){
+        if (enemybases.empty()){
             //we may have never seen the enemy base, try moving to the supposed location
             //if the enemy really doesn't have any bases, this won't matter anyway
-            for (const auto &unit : attacking_army) {
+            for (const auto &unit : allies) {
                 if (unit->orders.empty()) {
                     Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
                 }
@@ -762,18 +767,13 @@ void Hal9001::ManageArmy() {
         else {
             //if they have multiple, find which base is the closest
             for (const auto &base : enemybases) {
-                if (Point2D(base->pos.x, base->pos.y) != enemyBase) {
-                    float d = Distance3D(base->pos, startLocation);
-                    if (d < distance) {
-                        distance = d;
-                        base_to_rush = base;
-                    }
+                float d = DistanceSquared3D(base->pos, startLocation);
+                if (d < distance) {
+                    distance = d;
+                    base_to_rush = base;
                 }
             }
             for (const auto &unit : allies) {
-                if (base_to_rush == nullptr){
-                    cout << "base_to_rush is null" << endl;
-                }
                 Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush);
             }
         }
@@ -1111,7 +1111,6 @@ void Hal9001::ReconBase(const ObservationInterface* observation) {
             L2 = observation->GetGameInfo().enemy_start_locations[1];
             L3 = observation->GetGameInfo().enemy_start_locations[2];
         }
-
         Units my_units = observation->GetUnits(Unit::Alliance::Enemy);
         for (const auto unit : my_units) {
             if (unit->unit_type == UNIT_TYPEID::TERRAN_COMMANDCENTER ||
