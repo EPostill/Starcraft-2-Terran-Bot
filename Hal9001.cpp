@@ -754,7 +754,7 @@ void Hal9001::ManageArmy() {
             //we may have never seen the enemy base, try moving to the supposed location
             //if the enemy really doesn't have any bases, this won't matter anyway
             for (const auto &unit : attacking_army) {
-                if (unit->orders.empty()) {
+                if (Distance2D(enemyBase, unit->pos) > 5) {
                     Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
                 }
             }
@@ -774,7 +774,9 @@ void Hal9001::ManageArmy() {
                 if (base_to_rush == nullptr){
                     cout << "base_to_rush is null" << endl;
                 }
-                Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush);
+                else if (Distance2D(base_to_rush->pos, unit->pos) > 5) {
+                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush);
+                }
             }
         }
     }
@@ -842,7 +844,7 @@ void Hal9001::ManageArmy() {
             //MARAUDERS
             case UNIT_TYPEID::TERRAN_MARAUDER: {
                 if (hasStimpack && !unit->orders.empty()) {
-                    if (unit->orders.front().ability_id == ABILITY_ID::ATTACK) {
+                    if (unit->orders.front().ability_id == ABILITY_ID::ATTACK_ATTACK) {
                         distance = numeric_limits<float>::max();
                         for (const auto& enemy : enemies) {
                             float d = Distance2D(enemy->pos, unit->pos);
