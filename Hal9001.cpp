@@ -692,15 +692,17 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
         }
     }
     
-    //Medivacs
     if (!starports.empty()) {
+        //Medivacs
         for (auto const &starport : starports) {
-            if (starport->orders.empty() && numMedivacs < unit_ratios[game_stage][MEDIVAC] * 2) {
+            //additionally check we aren't overbuilding medivacs instead of vikings
+            if (starport->orders.empty() && numMedivacs < unit_ratios[game_stage][MEDIVAC] * 2 && numMedivacs < 2 * numVikings) {
                 Actions()->UnitCommand(starport, ABILITY_ID::TRAIN_MEDIVAC);
             }
         }
+        //Vikings
         for (auto const &starport : starports) {
-            if (starport->orders.empty() && numVikings < unit_ratios[game_stage][VIKING] * 2) {
+            if (starport->orders.empty() && numVikings < unit_ratios[game_stage][VIKING]) {
                 Actions()->UnitCommand(starport, ABILITY_ID::TRAIN_VIKINGFIGHTER);
             }
         }
@@ -751,12 +753,10 @@ void Hal9001::ManageArmy() {
         else {
             //if they have multiple, find which base is the closest
             for (const auto &base : enemybases) {
-                if (Point2D(base->pos.x, base->pos.y) != enemyBase) {
-                    float d = Distance3D(base->pos, startLocation);
-                    if (d < distance) {
-                        distance = d;
-                        base_to_rush = base;
-                    }
+                float d = Distance3D(base->pos, startLocation);
+                if (d < distance) {
+                    distance = d;
+                    base_to_rush = base;
                 }
             }
             for (const auto &unit : allies) {
