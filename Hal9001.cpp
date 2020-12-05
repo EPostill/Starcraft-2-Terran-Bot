@@ -743,7 +743,7 @@ void Hal9001::ManageArmy() {
         //TODO
         if (false /*retreat condition*/) {
             game_stage++;
-            attacking = false
+            attacking = false;
         }
 
         //then determine a base to attack
