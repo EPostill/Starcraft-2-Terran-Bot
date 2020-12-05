@@ -206,9 +206,10 @@ private:
 
 	//Units that can be healed by medivacs
 	std::vector<UNIT_TYPEID> bio_types = { UNIT_TYPEID::TERRAN_MARINE, UNIT_TYPEID::TERRAN_MARAUDER, UNIT_TYPEID::TERRAN_GHOST, UNIT_TYPEID::TERRAN_REAPER /*reaper*/ };
-	std::vector<int> stage1_ratio = {10, 3, 4, 3, 4};
+	//ratios represent respectively: MARINES, MARAUDERS, VIKINGS, TANKS, MEDIVACS
+	std::vector<int> stage1_ratio = {10, 3, 2, 3, 4};
 	//TODO: get ratios for stages 2 and 3
-	std::vector<int> stage2_ratio = {15, 5, 6, 5, 6};
+	std::vector<int> stage2_ratio = {15, 5, 5, 5, 6};
 	std::vector<int> stage3_ratio = {15, 10, 8, 8, 10};
 	std::vector<std::vector<int>> unit_ratios = {stage1_ratio, stage2_ratio, stage3_ratio};
 	int game_stage;

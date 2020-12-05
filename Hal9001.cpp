@@ -472,7 +472,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
     *========================================================================================= */    
 
-    if (minerals >= 400 && refineries.size() == 4 && !starports.empty() && bases.size() == 1){
+    if (minerals >= 400 && refineries.size() == 4 && !starports.empty() && bases.size() == 1 && !buildOrderComplete){
         // cout << "build 28" << endl;
         buildNextTo(ABILITY_ID::BUILD_COMMANDCENTER, starports.front(), BEHINDRIGHT, 1);
         cout << "Done build order\n";
@@ -735,22 +735,11 @@ void Hal9001::ManageArmy() {
 
     const Unit *homebase = bases.front();
     const Unit *base_to_rush = nullptr;
-    float distance = std::numeric_limits<float>::max();;
+    float distance = std::numeric_limits<float>::max();
 
 
     if (attacking) {
-        //first check if we should retreat
-        //TODO
-        if (false /*retreat condition*/) {
-            game_stage++;
-            attacking = false;
-        }
-
-        //then determine a base to attack
-        //if the main base is the only one left
-        if (enemybases.size() == 1) {
-            base_to_rush = enemybases.front();
-        } else if (enemybases.empty()){
+        if (enemybases.empty()){
             //we may have never seen the enemy base, try moving to the supposed location
             //if the enemy really doesn't have any bases, this won't matter anyway
             for (const auto &unit : attacking_army) {
@@ -910,7 +899,7 @@ void Hal9001::ManageArmy() {
                     }
                 }
                 //if there are no enemies nearby 
-                if (distance > 13 || distance == numeric_limits<float>::max()) {
+                if (distance > 13 || enemies.empty()) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_UNSIEGE);
                 }
                 break;
@@ -960,8 +949,8 @@ void Hal9001::ManageArmy() {
             }
 
             default: {
-                if (!canRush) {
-                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
+                if (!attacking) {
+                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, stagingArea);
                 }
                 break;
             }
