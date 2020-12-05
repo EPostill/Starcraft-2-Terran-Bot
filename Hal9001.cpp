@@ -1020,6 +1020,7 @@ void Hal9001::MineIdleWorkers() {
             }
         }
     }
+    
 }
 
 const Point2D Hal9001::getFirstDepotLocation(const Unit *commcenter){
@@ -1084,6 +1085,7 @@ void Hal9001::ReconBase(const ObservationInterface* observation) {
                 return;
             }
             scout = units.front();
+            scouting = false;
         }
 
         Point2D L1 = observation->GetGameInfo().enemy_start_locations[0];
