@@ -318,7 +318,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     *========================================================================================= */
     if (supplies > 36 && minerals >= 100 && depots.size() == 2 && orbcoms.size() == 1 && bunkers.size() == 1) {
         // build depot
-        buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, bunkers.front(), LEFT, 3, mainSCV);
+        buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, bunkers.front(), LEFT, 1, mainSCV);
     }
 
     // /***=========================================================================================
@@ -548,7 +548,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     //barracks -> marines (later on maurauders, although I doubt the game will go that far)
 
     // spam depots at a random location
-    if (buildOrderComplete){
+    if (depots.size() >= 3 || buildOrderComplete){
         if (supplies >= observation->GetFoodCap() - 2){
             Units commcenters = getCommCenters();
             if (commcenters.empty()){
