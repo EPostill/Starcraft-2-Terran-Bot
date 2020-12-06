@@ -1158,6 +1158,7 @@ const Unit* Hal9001::FindNearestMineralPatch(const Point2D &start) {
 
 // returns nearest vespene geyser or nullptr if none found
 const Unit* Hal9001::FindNearestGeyser(const Point2D &start) {
+
     // gets all neutral units
     Units units = Observation()->GetUnits(Unit::Alliance::Neutral);
     float distance = std::numeric_limits<float>::max();
@@ -1165,7 +1166,7 @@ const Unit* Hal9001::FindNearestGeyser(const Point2D &start) {
     Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
     bool valid = true;
     for (const auto &u : units) {
-        if (u->unit_type == UNIT_TYPEID::NEUTRAL_VESPENEGEYSER){
+        if (u->unit_type == (map_name == PROXIMA ? UNIT_TYPEID::NEUTRAL_SPACEPLATFORMGEYSER : UNIT_TYPEID::NEUTRAL_VESPENEGEYSER)){
             valid = true;
             // check if geyser already has a refinery on it
             for (const auto &r : refineries){
