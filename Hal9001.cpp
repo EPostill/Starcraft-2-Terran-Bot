@@ -752,32 +752,32 @@ void Hal9001::ManageArmy() {
     const Unit *closestEnemy;
 
     const Unit *homebase = bases.front();
-    const Unit *base_to_rush = nullptr;
+    Point2D base_to_rush = Point2D(-1,-1);
     float distance = std::numeric_limits<float>::max();
 
 
     if (attacking) {
-        //then determine a base to attack
-        //if the main base is the only one left
         if (enemybases.empty()){
             //we may have never seen the enemy base, try moving to the supposed location
             //if the enemy really doesn't have any bases, this won't matter anyway
-            for (const auto &unit : allies) {
-                if (unit->orders.empty()) {
-                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
-                }
-            }
+            base_to_rush = enemyBase;
         }
         else {
             //if they have multiple, find which base is the closest
             for (const auto &base : enemybases) {
-                float d = DistanceSquared3D(base->pos, startLocation);
+                float d = Distance3D(base->pos, startLocation);
                 if (d < distance) {
                     distance = d;
-                    base_to_rush = base;
+                    base_to_rush = base->pos;
                 }
             }
-            for (const auto &unit : allies) {
+        }
+        for (const auto &unit : allies) {
+            if (base_to_rush == Point2D(-1,-1)){
+                cout << "base_to_rush is null" << endl;
+                continue;
+            }
+            else if (Distance2D(base_to_rush, unit->pos) > 5) {
                 Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush);
             }
         }
@@ -1115,6 +1115,7 @@ void Hal9001::ReconBase(const ObservationInterface* observation) {
             L2 = observation->GetGameInfo().enemy_start_locations[1];
             L3 = observation->GetGameInfo().enemy_start_locations[2];
         }
+
         Units my_units = observation->GetUnits(Unit::Alliance::Enemy);
         for (const auto unit : my_units) {
             if (unit->unit_type == UNIT_TYPEID::TERRAN_COMMANDCENTER ||
