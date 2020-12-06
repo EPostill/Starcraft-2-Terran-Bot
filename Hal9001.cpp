@@ -122,16 +122,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     //list of upgrades
     auto upgrades = observation->GetUpgrades();
 
-
-     //NOT PART OF BUILD ORDER - EXTRA FUNCTION FROM EMMETT
-    if (supplies >= observation->GetFoodCap() - 2 && depots.size() >= 5) {
-        Point3D basePos = commcenters.front()->pos;
-        float rx = GetRandomScalar();
-        float ry = GetRandomScalar();
-        Point2D loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
-        BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y, mainSCV);
-    }
-
     // handle mainSCV behaviour for build orders < #2
     initializeMainSCV(bases);
 
