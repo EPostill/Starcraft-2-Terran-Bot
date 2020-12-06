@@ -203,6 +203,7 @@ private:
 	int supplies;			// supply count
 	int minerals;			// mineral count
 	int vespene;			// gas count
+	int steps;              // number of steps that we have progressed
 
 	//Units that can be healed by medivacs
 	std::vector<UNIT_TYPEID> bio_types = { UNIT_TYPEID::TERRAN_MARINE, UNIT_TYPEID::TERRAN_MARAUDER, UNIT_TYPEID::TERRAN_GHOST, UNIT_TYPEID::TERRAN_REAPER /*reaper*/ };

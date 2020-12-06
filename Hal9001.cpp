@@ -49,6 +49,7 @@ void Hal9001::OnGameStart() {
     hasStimpack = false;
     attacking = false;
     game_stage = 0;
+    steps = 0;
 
     // store expansions and start location
     expansions = search::CalculateExpansionLocations(observation, Query());
@@ -426,9 +427,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
 void Hal9001::setStagingArea(const ObservationInterface *observation){
     Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
     if (bunkers.empty()){
-        return;
-    }
-    if (stagingArea != Point2D(0,0)){
         return;
     }
     const Unit *bunker = bunkers.front();
@@ -1012,6 +1010,7 @@ void Hal9001::ReconBase(const ObservationInterface* observation) {
 }
 
 void Hal9001::OnStep() { 
+    ++steps;
     // cout << Observation()->GetGameLoop() << endl;
     const ObservationInterface *observation = Observation();
 
@@ -1023,19 +1022,25 @@ void Hal9001::OnStep() {
     ManageRefineries();
 
 
-    if (!canRush) {
+    if (!canRush && steps % 2 == 0) {
         setCanRush(observation);
     }
-    if (!attacking) {
+    if (!attacking && steps % 2 == 0) {
         CanAttack(observation);
     }
-    BuildOrder(observation);
-    ReconBase(observation);
-    setStagingArea(observation);
+    if (steps % 3 == 0) {
+        BuildOrder(observation);
+        ReconBase(observation);
+        ManageUpgrades(observation);
+    }
+    if (stagingArea == Point2D(0,0)) {
+        setStagingArea(observation);
+    }
+
     ManageArmyProduction(observation);
     ManageArmy();
-    ManageUpgrades(observation);
-    if (attacking) {
+
+    if (attacking && steps % 2 == 0) {
         ShouldRetreat(observation);
     }
 
