@@ -659,15 +659,18 @@ void Hal9001::ManageArmy() {
             }
         }
         for (const auto &unit : allies) {
+            if (!unit->is_flying && !unit->orders.empty() && unit->orders.front().target_pos == base_to_rush) {
+                continue;
+            }
             #ifdef DEBUG
-            cout << "Enemy location is" << base_to_rush.x << "," << base_to_rush.y << endl;
+            cout << "Enemy location is " << base_to_rush.x << "," << base_to_rush.y << endl;
             #endif
             if (base_to_rush == Point2D(0,0)){
                 cout << "base_to_rush is null" << endl;
                 continue;
             }
             else if (DistanceSquared2D(base_to_rush, unit->pos) > 25) {
-                if (unit->is_flying && DistanceSquared2D(unit->pos, squadleader->pos) > 50) {
+                if (unit->is_flying && DistanceSquared2D(unit->pos, squadleader->pos) > 40) {
                     Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, squadleader->pos);
                 }
                 else {
