@@ -969,6 +969,14 @@ void Hal9001::ManageSCVTraining(){
     Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
     int scv_count = CountUnitType(UNIT_TYPEID::TERRAN_SCV);
     int ideal_count = 0;
+
+    for (const auto &cc : commcenters) {
+        if (cc->unit_type == UNIT_TYPEID::TERRAN_ORBITALCOMMAND && cc->energy > 50) {
+            if (FindNearestMineralPatch(cc->pos)) {
+                Actions()->UnitCommand(cc, ABILITY_ID::EFFECT_CALLDOWNMULE);
+            }
+        }
+    }
     // count how many scvs we need in total
     for (const auto &cc : commcenters){
         ideal_count += cc->ideal_harvesters;
