@@ -61,11 +61,13 @@ void Hal9001::OnGameStart() {
     // get raw map_name
     std::string map_name = observation -> GetGameInfo().map_name;
 
+    cout << map_name << endl;
+
     // config map_name to enum
     if(map_name == "Cactus Valley LE (Void)"){
         this -> map_name = CACTUS;
     }
-    else if (map_name == "BelShir Vestige LE") {
+    else if (map_name == "Bel'Shir Vestige LE (Void)") {
         this->map_name = BELSHIR;
     }
     else if (map_name == "Proxima Station LE") {
@@ -83,6 +85,8 @@ void Hal9001::OnGameStart() {
 
     // set corner loc of base
     Corner corner_loc = cornerLoc(GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front());
+
+    cout << "corner loc " << corner_loc << endl;
 }
 
 //This function contains the steps we take at the start to establish ourselves
@@ -1029,7 +1033,7 @@ void Hal9001::OnStep() {
     if (!attacking) {
         CanAttack(observation);
     }
-    BuildOrder(observation);
+    // BuildOrder(observation);
     ReconBase(observation);
     setStagingArea(observation);
     ManageArmyProduction(observation);
@@ -1456,107 +1460,104 @@ std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir
     // get which corner in the map base is
     Corner loc = cornerLoc(anchor);
 
-    // if cactus
-    if(map_name == CACTUS){
+    // anchor is located in the SW part of Map
+    if( loc == SW ){
+    
+        switch(dir){
+            case(FRONT):
+                return std::make_pair(1, 1);
+            case(LEFT):
+                return std::make_pair(-1, 1);
+            case(RIGHT):
+                return std::make_pair(1, -1);
+            case(FRONTLEFT):
+                return std::make_pair(0, 1);
+            case(FRONTRIGHT):
+                return std::make_pair(1, 0);
+            case(BEHIND):
+                return std::make_pair(-1, -1);
+            case(BEHINDLEFT):
+                return std::make_pair(-1, 0);
+            case(BEHINDRIGHT):
+                return std::make_pair(0, -1);
+            default:
+                return std::make_pair(0,0);
+        }
+        
+    // anchor is located in NW part of Map
+    } else if( loc == NW ){
 
-        // anchor is located in the SW part of Map
-        if( loc == SW ){
-       
-            switch(dir){
-                case(FRONT):
-                    return std::make_pair(1, 1);
-                case(LEFT):
-                    return std::make_pair(-1, 1);
-                case(RIGHT):
-                    return std::make_pair(1, -1);
-                case(FRONTLEFT):
-                    return std::make_pair(0, 1);
-                case(FRONTRIGHT):
-                    return std::make_pair(1, 0);
-                case(BEHIND):
-                    return std::make_pair(-1, -1);
-                case(BEHINDLEFT):
-                    return std::make_pair(-1, 0);
-                case(BEHINDRIGHT):
-                    return std::make_pair(0, -1);
-                default:
-                    return std::make_pair(0,0);
-            }
-            
-        // anchor is located in NW part of Map
-        } else if( loc == NW ){
+        switch(dir){
+            case(FRONT):
+                return std::make_pair(1, -1);
+            case(LEFT):
+                return std::make_pair(1, 1);
+            case(RIGHT):
+                return std::make_pair(-1, -1);
+            case(FRONTLEFT):
+                return std::make_pair(1, 0);
+            case(FRONTRIGHT):
+                return std::make_pair(0, -1);
+            case(BEHIND):
+                return std::make_pair(-1, 1);
+            case(BEHINDLEFT):
+                return std::make_pair(0, 1);
+            case(BEHINDRIGHT):
+                return std::make_pair(-1, 0);
+            default:
+                return std::make_pair(0,0);
+        }
+        
+    // anchor is located in SE part of Map
+    } else if( loc == SE ){
 
-            switch(dir){
-                case(FRONT):
-                    return std::make_pair(1, -1);
-                case(LEFT):
-                    return std::make_pair(1, 1);
-                case(RIGHT):
-                    return std::make_pair(-1, -1);
-                case(FRONTLEFT):
-                    return std::make_pair(1, 0);
-                case(FRONTRIGHT):
-                    return std::make_pair(0, -1);
-                case(BEHIND):
-                    return std::make_pair(-1, 1);
-                case(BEHINDLEFT):
-                    return std::make_pair(0, 1);
-                case(BEHINDRIGHT):
-                    return std::make_pair(-1, 0);
-                default:
-                    return std::make_pair(0,0);
-            }
-            
-        // anchor is located in SE part of Map
-        } else if( loc == SE ){
-
-            switch(dir){
-                case(FRONT):
-                    return std::make_pair(-1, 1);
-                case(LEFT):
-                    return std::make_pair(-1, -1);
-                case(RIGHT):
-                    return std::make_pair(1, 1);
-                case(FRONTLEFT):
-                    return std::make_pair(-1, 0);
-                case(FRONTRIGHT):
-                    return std::make_pair(0, 1);
-                case(BEHIND):
-                    return std::make_pair(1, -1);
-                case(BEHINDLEFT):
-                    return std::make_pair(0, -1);
-                case(BEHINDRIGHT):
-                    return std::make_pair(1, 0);
-                default:
-                    return std::make_pair(0,0);
-            }
-
-        // anchor is located in NE part of Map
-        } else if( loc == NE ){
-
-            switch(dir){
-                case(FRONT):
-                    return std::make_pair(-1, -1);
-                case(LEFT):
-                    return std::make_pair(1, -1);
-                case(RIGHT):
-                    return std::make_pair(-1, 1);
-                case(FRONTLEFT):
-                    return std::make_pair(0, -1);
-                case(FRONTRIGHT):
-                    return std::make_pair(-1, 0);
-                case(BEHIND):
-                    return std::make_pair(1, 1);
-                case(BEHINDLEFT):
-                    return std::make_pair(1, 0);
-                case(BEHINDRIGHT):
-                    return std::make_pair(0, 1);
-                default:
-                    return std::make_pair(0,0);
-            }
+        switch(dir){
+            case(FRONT):
+                return std::make_pair(-1, 1);
+            case(LEFT):
+                return std::make_pair(-1, -1);
+            case(RIGHT):
+                return std::make_pair(1, 1);
+            case(FRONTLEFT):
+                return std::make_pair(-1, 0);
+            case(FRONTRIGHT):
+                return std::make_pair(0, 1);
+            case(BEHIND):
+                return std::make_pair(1, -1);
+            case(BEHINDLEFT):
+                return std::make_pair(0, -1);
+            case(BEHINDRIGHT):
+                return std::make_pair(1, 0);
+            default:
+                return std::make_pair(0,0);
         }
 
+    // anchor is located in NE part of Map
+    } else if( loc == NE ){
+
+        switch(dir){
+            case(FRONT):
+                return std::make_pair(-1, -1);
+            case(LEFT):
+                return std::make_pair(1, -1);
+            case(RIGHT):
+                return std::make_pair(-1, 1);
+            case(FRONTLEFT):
+                return std::make_pair(0, -1);
+            case(FRONTRIGHT):
+                return std::make_pair(-1, 0);
+            case(BEHIND):
+                return std::make_pair(1, 1);
+            case(BEHINDLEFT):
+                return std::make_pair(1, 0);
+            case(BEHINDRIGHT):
+                return std::make_pair(0, 1);
+            default:
+                return std::make_pair(0,0);
+        }
     }
+
+    
 
     return std::make_pair(0, 0);
 }
@@ -1580,24 +1581,23 @@ RelDir Hal9001::getHandSide(const Unit* anchor, const Unit *target){
     // diff of x_dis - y_dis, if > 0 then x_dis is greater
     int diff = x_dis - y_dis;
 
-    // if cactus
-    if(map_name == CACTUS){
-        Corner loc = cornerLoc(anchor);
-        if(loc == SW || loc == NE){
-            if(diff > 0){
-                return RIGHT;
-            } else{
-                return LEFT;
-            }
 
-        } else if(loc == SE || loc == NW){
-            if(diff > 0){
-                return LEFT;
-            } else{
-                return RIGHT;
-            }
+    Corner loc = cornerLoc(anchor);
+    if(loc == SW || loc == NE){
+        if(diff > 0){
+            return RIGHT;
+        } else{
+            return LEFT;
         }
-    } 
+
+    } else if(loc == SE || loc == NW){
+        if(diff > 0){
+            return LEFT;
+        } else{
+            return RIGHT;
+        }
+    }
+    
     return FRONT;
 }
 
@@ -1607,22 +1607,19 @@ RelDir Hal9001::getHandSide(const Unit* anchor, const Unit *target){
 @return Corner enum
 */
 Corner Hal9001::cornerLoc(const Unit* unit){
-    if(map_name == CACTUS){
-        
-        if( ((map_width / 2) > (unit -> pos.x)) && ((map_height /2) > (unit -> pos.y)) ){
-            return SW;
-        
-        } else if( ((map_width / 2) > (unit -> pos.x)) && ((map_height /2) < (unit -> pos.y)) ){
-            return NW;
-        
-        } else if( ((map_width / 2) < (unit -> pos.x)) && ((map_height /2) > (unit -> pos.y)) ) {
-            return SE;
+    if( ((map_width / 2) > (unit -> pos.x)) && ((map_height /2) > (unit -> pos.y)) ){
+        return SW;
+    
+    } else if( ((map_width / 2) > (unit -> pos.x)) && ((map_height /2) < (unit -> pos.y)) ){
+        return NW;
+    
+    } else if( ((map_width / 2) < (unit -> pos.x)) && ((map_height /2) > (unit -> pos.y)) ) {
+        return SE;
 
-        } else if( ((map_width / 2) < (unit -> pos.x)) && ((map_height /2) < (unit -> pos.y))){
-            return NE;
-        }
+    } else if( ((map_width / 2) < (unit -> pos.x)) && ((map_height /2) < (unit -> pos.y))){
+        return NE;
     }
-
+    
     return M;
 }
 
