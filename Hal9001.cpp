@@ -340,7 +340,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition : we have a starport, factory techlab and only one barracks so far
      * Status: DONE
     *========================================================================================= */
-    if (supplies >= 46 && minerals >= 300 && barracks.size() >= 1 && barracks.size() < 3 && factories.size() == 1 && starports.size() >= 1) {
+    if (supplies >= 46 && minerals >= 300 && barracks.size() >= 1 && barracks.size() < 3 && factories.size() == 1 && starport_reactors.size() >= 2) {
         const Unit* fa = factories.back();
         const Unit* sp = starports.back();
         // get two builders (so buildNextTo doesn't assign the same builder for both barracks)
@@ -558,6 +558,9 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     int numTanks = CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) + CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANKSIEGED);
     int numWidowMines = CountUnitType(UNIT_TYPEID::TERRAN_WIDOWMINE) + CountUnitType(UNIT_TYPEID::TERRAN_WIDOWMINEBURROWED);
 
+    int numFactTechlabs = CountUnitType(UNIT_TYPEID::TERRAN_FACTORYTECHLAB);
+    int numStarReactors = CountUnitType(UNIT_TYPEID::TERRAN_STARPORTREACTOR);
+
     if (observation->GetMinerals() < 300) {
         return;
     }
@@ -575,7 +578,7 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
         }
     }
     
-    if (!starports.empty()) {
+    if (!starports.empty() && numStarReactors >= 2) {
         //Medivacs
         for (auto const &starport : starports) {
             if (starport->orders.empty() && numMedivacs < unit_ratios[game_stage][MEDIVAC] * 2) {
@@ -590,7 +593,7 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
         }
     }
     
-    if (!factories.empty()) {
+    if (!factories.empty() && numFactTechlabs >= 1) {
         // widow mines
         for (auto const &factory : factories) {
             if (factory->orders.empty() && numWidowMines < 1) {
