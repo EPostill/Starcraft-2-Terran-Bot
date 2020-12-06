@@ -637,7 +637,7 @@ void Hal9001::ManageArmy() {
                 continue;
             }
             else if (Distance2D(base_to_rush, unit->pos) > 5) {
-                Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush);
+                Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, base_to_rush);
             }
         }
     }
@@ -672,7 +672,7 @@ void Hal9001::ManageArmy() {
             //MARINES
             case UNIT_TYPEID::TERRAN_MARINE: {
                 if (hasStimpack && !unit->orders.empty()) {
-                        if (unit->orders.front().ability_id == ABILITY_ID::ATTACK_ATTACK) {
+                        if (unit->orders.front().ability_id == ABILITY_ID::ATTACK) {
                             distance = std::numeric_limits<float>::max();
                             for (const auto& enemy : enemies) {
                                 float d = Distance2D(enemy->pos, unit->pos);
@@ -705,7 +705,7 @@ void Hal9001::ManageArmy() {
             //MARAUDERS
             case UNIT_TYPEID::TERRAN_MARAUDER: {
                 if (hasStimpack && !unit->orders.empty()) {
-                    if (unit->orders.front().ability_id == ABILITY_ID::ATTACK_ATTACK) {
+                    if (unit->orders.front().ability_id == ABILITY_ID::ATTACK) {
                         distance = numeric_limits<float>::max();
                         for (const auto& enemy : enemies) {
                             float d = Distance2D(enemy->pos, unit->pos);
