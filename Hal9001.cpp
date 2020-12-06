@@ -755,7 +755,6 @@ void Hal9001::ManageArmy() {
 
 
     if (attacking) {
-<<<<<<< HEAD
         //then determine a base to attack
         //if the main base is the only one left
         if (enemybases.empty()){
@@ -763,13 +762,6 @@ void Hal9001::ManageArmy() {
             //if the enemy really doesn't have any bases, this won't matter anyway
             for (const auto &unit : allies) {
                 if (unit->orders.empty()) {
-=======
-        if (enemybases.empty()){
-            //we may have never seen the enemy base, try moving to the supposed location
-            //if the enemy really doesn't have any bases, this won't matter anyway
-            for (const auto &unit : attacking_army) {
-                if (Distance2D(enemyBase, unit->pos) > 5) {
->>>>>>> 5ab38d6a389618d5659432a022d5c3d7d8198846
                     Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
                 }
             }
@@ -777,27 +769,14 @@ void Hal9001::ManageArmy() {
         else {
             //if they have multiple, find which base is the closest
             for (const auto &base : enemybases) {
-<<<<<<< HEAD
                 float d = DistanceSquared3D(base->pos, startLocation);
-=======
-                float d = Distance3D(base->pos, startLocation);
->>>>>>> 5ab38d6a389618d5659432a022d5c3d7d8198846
                 if (d < distance) {
                     distance = d;
                     base_to_rush = base;
                 }
             }
             for (const auto &unit : allies) {
-<<<<<<< HEAD
                 Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush);
-=======
-                if (base_to_rush == nullptr){
-                    cout << "base_to_rush is null" << endl;
-                }
-                else if (Distance2D(base_to_rush->pos, unit->pos) > 5) {
-                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush);
-                }
->>>>>>> 5ab38d6a389618d5659432a022d5c3d7d8198846
             }
         }
     }
