@@ -472,7 +472,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
     *========================================================================================= */    
 
-    if (minerals >= 400 && refineries.size() == 4 && !starports.empty() && bases.size() == 1){
+    if (minerals >= 400 && refineries.size() == 4 && !starports.empty() && bases.size() == 1 && !buildOrderComplete){
         // cout << "build 28" << endl;
         buildNextTo(ABILITY_ID::BUILD_COMMANDCENTER, starports.front(), BEHINDRIGHT, 1);
         cout << "Done build order\n";
@@ -695,24 +695,26 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
 
     if (!barracks.empty()) {
         for (auto const &barrack : barracks){
-            if (barrack->orders.empty() && numMarines < unit_ratios[game_stage][MARINE]){
+            if (barrack->orders.empty() && numMarines < unit_ratios[game_stage][MARINE] * 2){
                 Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
             }
         }
         for (auto const &barrack : barracks){
-            if (barrack->orders.empty() && numMarauders < unit_ratios[game_stage][MARAUDER]){
+            if (barrack->orders.empty() && numMarauders < unit_ratios[game_stage][MARAUDER] * 2){
                 Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARAUDER);
             }
         }
     }
     
-    //Medivacs
     if (!starports.empty()) {
+        //Medivacs
         for (auto const &starport : starports) {
-            if (starport->orders.empty() && numMedivacs < unit_ratios[game_stage][MEDIVAC]) {
+            //additionally check we aren't overbuilding medivacs instead of vikings
+            if (starport->orders.empty() && numMedivacs < unit_ratios[game_stage][MEDIVAC] * 2 && numMedivacs < 2 * numVikings) {
                 Actions()->UnitCommand(starport, ABILITY_ID::TRAIN_MEDIVAC);
             }
         }
+        //Vikings
         for (auto const &starport : starports) {
             if (starport->orders.empty() && numVikings < unit_ratios[game_stage][VIKING]) {
                 Actions()->UnitCommand(starport, ABILITY_ID::TRAIN_VIKINGFIGHTER);
@@ -723,13 +725,13 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     if (!factories.empty()) {
         // widow mines
         for (auto const &factory : factories) {
-            if (factory->orders.empty() && numWidowMines < 1) {
+            if (factory->orders.empty() && numWidowMines < 3) {
                 Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_WIDOWMINE);
             }
         }        
         //tanks
         for (auto const &factory : factories) {
-            if (factory->orders.empty() && numTanks < unit_ratios[game_stage][TANK]) {
+            if (factory->orders.empty() && numTanks < unit_ratios[game_stage][TANK] * 2) {
                 Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_SIEGETANK);
             }
         }
@@ -749,10 +751,11 @@ void Hal9001::ManageArmy() {
 
     const Unit *homebase = bases.front();
     const Unit *base_to_rush = nullptr;
-    float distance = std::numeric_limits<float>::max();;
+    float distance = std::numeric_limits<float>::max();
 
 
     if (attacking) {
+<<<<<<< HEAD
         //then determine a base to attack
         //if the main base is the only one left
         if (enemybases.empty()){
@@ -760,6 +763,13 @@ void Hal9001::ManageArmy() {
             //if the enemy really doesn't have any bases, this won't matter anyway
             for (const auto &unit : allies) {
                 if (unit->orders.empty()) {
+=======
+        if (enemybases.empty()){
+            //we may have never seen the enemy base, try moving to the supposed location
+            //if the enemy really doesn't have any bases, this won't matter anyway
+            for (const auto &unit : attacking_army) {
+                if (Distance2D(enemyBase, unit->pos) > 5) {
+>>>>>>> 5ab38d6a389618d5659432a022d5c3d7d8198846
                     Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, enemyBase);
                 }
             }
@@ -767,14 +777,27 @@ void Hal9001::ManageArmy() {
         else {
             //if they have multiple, find which base is the closest
             for (const auto &base : enemybases) {
+<<<<<<< HEAD
                 float d = DistanceSquared3D(base->pos, startLocation);
+=======
+                float d = Distance3D(base->pos, startLocation);
+>>>>>>> 5ab38d6a389618d5659432a022d5c3d7d8198846
                 if (d < distance) {
                     distance = d;
                     base_to_rush = base;
                 }
             }
             for (const auto &unit : allies) {
+<<<<<<< HEAD
                 Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush);
+=======
+                if (base_to_rush == nullptr){
+                    cout << "base_to_rush is null" << endl;
+                }
+                else if (Distance2D(base_to_rush->pos, unit->pos) > 5) {
+                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK_ATTACK, base_to_rush);
+                }
+>>>>>>> 5ab38d6a389618d5659432a022d5c3d7d8198846
             }
         }
     }
@@ -842,7 +865,7 @@ void Hal9001::ManageArmy() {
             //MARAUDERS
             case UNIT_TYPEID::TERRAN_MARAUDER: {
                 if (hasStimpack && !unit->orders.empty()) {
-                    if (unit->orders.front().ability_id == ABILITY_ID::ATTACK) {
+                    if (unit->orders.front().ability_id == ABILITY_ID::ATTACK_ATTACK) {
                         distance = numeric_limits<float>::max();
                         for (const auto& enemy : enemies) {
                             float d = Distance2D(enemy->pos, unit->pos);
@@ -908,7 +931,7 @@ void Hal9001::ManageArmy() {
                     }
                 }
                 //if there are no enemies nearby 
-                if (distance > 13 || distance == numeric_limits<float>::max()) {
+                if (distance > 13 || enemies.empty()) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_UNSIEGE);
                 }
                 break;
@@ -958,8 +981,8 @@ void Hal9001::ManageArmy() {
             }
 
             default: {
-                if (!canRush) {
-                    Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, stagingArea);
+                if (!attacking) {
+                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, stagingArea);
                 }
                 break;
             }
