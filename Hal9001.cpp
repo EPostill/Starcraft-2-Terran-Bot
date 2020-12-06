@@ -622,7 +622,7 @@ void Hal9001::ManageArmy() {
         else {
             //if they have multiple, find which base is the closest
             for (const auto &base : enemybases) {
-                float d = Distance3D(base->pos, startLocation);
+                float d = DistanceSquared3D(base->pos, startLocation);
                 if (d < distance) {
                     distance = d;
                     base_to_rush = base->pos;
@@ -634,7 +634,7 @@ void Hal9001::ManageArmy() {
                 cout << "base_to_rush is null" << endl;
                 continue;
             }
-            else if (Distance2D(base_to_rush, unit->pos) > 5) {
+            else if (DistanceSquared2D(base_to_rush, unit->pos) > 5) {
                 Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, base_to_rush);
             }
         }
@@ -646,7 +646,7 @@ void Hal9001::ManageArmy() {
             if (stagingArea != Point2D(0,0) && unit->orders.empty()) {
 
                 //if we can't rush chill in staging area
-                if (Distance2D(unit->pos, stagingArea) > 4) {
+                if (DistanceSquared2D(unit->pos, stagingArea) > 16) {
                     // #ifdef DEBUG
                     // cout << "Unit pos, Staging area pos" << endl;
                     // cout << unit->pos.x << "," << unit->pos.y << " " << stagingArea.x << "," << stagingArea.y << endl;
@@ -655,7 +655,7 @@ void Hal9001::ManageArmy() {
                 }
 
                 // bury widow mine at staging area
-                if (unit->unit_type == UNIT_TYPEID::TERRAN_WIDOWMINE && Distance2D(unit->pos, stagingArea) < 3){
+                if (unit->unit_type == UNIT_TYPEID::TERRAN_WIDOWMINE && DistanceSquared2D(unit->pos, stagingArea) < 9){
                     Actions()->UnitCommand(unit, ABILITY_ID::BURROWDOWN_WIDOWMINE);
                 }
             }
@@ -673,7 +673,7 @@ void Hal9001::ManageArmy() {
                         if (unit->orders.front().ability_id == ABILITY_ID::ATTACK) {
                             distance = std::numeric_limits<float>::max();
                             for (const auto& enemy : enemies) {
-                                float d = Distance2D(enemy->pos, unit->pos);
+                                float d = DistanceSquared2D(enemy->pos, unit->pos);
                                 if (d < distance) {
                                     closestEnemy = enemy;
                                     distance = d;
@@ -706,7 +706,7 @@ void Hal9001::ManageArmy() {
                     if (unit->orders.front().ability_id == ABILITY_ID::ATTACK) {
                         distance = numeric_limits<float>::max();
                         for (const auto& enemy : enemies) {
-                            float d = Distance2D(enemy->pos, unit->pos);
+                            float d = DistanceSquared2D(enemy->pos, unit->pos);
                             if (d < distance) {
                                 distance = d;
                             }
@@ -730,7 +730,7 @@ void Hal9001::ManageArmy() {
             case UNIT_TYPEID::TERRAN_WIDOWMINE: {
                 float distance = numeric_limits<float>::max();
                 for (const auto& enemy : enemies) {
-                    float d = Distance2D(enemy->pos, unit->pos);
+                    float d = DistanceSquared2D(enemy->pos, unit->pos);
                     if (d < distance) {
                         distance = d;
                     }
@@ -749,7 +749,7 @@ void Hal9001::ManageArmy() {
                     if (enemy->is_flying) {
                         continue;
                     }
-                    float d = Distance2D(enemy->pos, unit->pos);
+                    float d = DistanceSquared2D(enemy->pos, unit->pos);
                     if (d < distance) {
                         distance = d;
                     }
@@ -763,7 +763,7 @@ void Hal9001::ManageArmy() {
             case UNIT_TYPEID::TERRAN_SIEGETANKSIEGED: {
                 distance = numeric_limits<float>::max();
                 for (const auto& enemy : enemies) {
-                    float d = Distance2D(enemy->pos, unit->pos);
+                    float d = DistanceSquared2D(enemy->pos, unit->pos);
                     if (d < distance) {
                         distance = d;
                     }
