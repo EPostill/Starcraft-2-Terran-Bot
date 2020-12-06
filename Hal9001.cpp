@@ -253,11 +253,15 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
      *=========================================================================================*/
     if (supplies >= 23 && minerals >= 100 && factories.size() == 1 && bunkers.size() == 0 && bases.size() == 1) {
-            // cout << "build 10" << endl;
-            // get command center
+           
+        // if map is proxima, bunker should be placed in reference to 
+        if(map_name == PROXIMA){
+            const Unit* cc = orbcoms.back();
+            buildNextTo(ABILITY_ID::BUILD_BUNKER, cc, FRONTLEFT, 8);
+        } else{
             const Unit* cc = bases.back();
-            // build bunker towards the center from command center 2
             buildNextTo(ABILITY_ID::BUILD_BUNKER, cc, FRONTRIGHT, 4);
+        }
     }
 
     /***=========================================================================================
@@ -1122,6 +1126,7 @@ const Point3D Hal9001::FindNearestExpansion(){
     bool occupied;
     float distance = std::numeric_limits<float>::max();
     Point3D closest;    // very unlikely that closest will remain uninitialized
+    cout << expansions.size() << endl;
     for (const auto &exp : expansions){
         occupied = false;
         float d = DistanceSquared3D(exp, startLocation);
