@@ -61,8 +61,6 @@ public:
 	//checks if we have a strong enough army to attack
 	void CanAttack(const ObservationInterface *observation);
 	void setStagingArea(const ObservationInterface *observation);
-	// checks if we need to expand and if so, expands
-	void checkExpand(const ObservationInterface *observation);
 	
 	// policy for training scvs
 	void ManageSCVTraining();

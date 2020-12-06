@@ -426,7 +426,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
             float rx = GetRandomScalar();
             float ry = GetRandomScalar();
             Point2D loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
-            BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y);
+            BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y, mainSCV);
         }
     }
 
@@ -1099,28 +1099,11 @@ void Hal9001::OnStep() {
     if (attacking && steps % 2 == 0) {
         ShouldRetreat(observation);
     }
-    if (buildOrderComplete && steps % 5){
-        checkExpand(observation);
-    }
 
 }
 
 void Hal9001::OnUnitIdle(const Unit *unit) {
 
-}
-
-void Hal9001::checkExpand(const ObservationInterface *observation){
-    Units workers = GetUnitsOfType(UNIT_TYPEID::TERRAN_SCV);
-    int idleCount = 0;
-    for (const auto &u : workers){
-        if (u->orders.empty()){
-            ++idleCount;
-        }
-    }
-    // expand if we have more than 10 idle workers at a given time
-    if (idleCount >= 3){
-        Expand();
-    }
 }
 
 void Hal9001::Expand(){
