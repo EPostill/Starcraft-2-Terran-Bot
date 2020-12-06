@@ -124,7 +124,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
 
      //NOT PART OF BUILD ORDER - EXTRA FUNCTION FROM EMMETT
-    if (supplies >= observation->GetFoodCap() - 2 && depots.size() >= 4) {
+    if (supplies >= observation->GetFoodCap() - 2 && depots.size() >= 5) {
         Point3D basePos = commcenters.front()->pos;
         float rx = GetRandomScalar();
         float ry = GetRandomScalar();
@@ -300,7 +300,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: once factory from (9) finishes
      * Status: DONE
      *=========================================================================================*/
-    if (factories.size() == 1 && minerals >= 150 && vespene > 100 && starports.empty()) {
+    if (factories.size() == 1 && minerals >= 150 && vespene > 100 && factory_techlabs.empty()) {
         // get factory
         const Unit* factory = factories.front();
         if (doneConstruction(factory)){
@@ -311,6 +311,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
             #ifdef DEBUG
             cout << "trying to build tech lab on factory" << endl;
             #endif
+            //if the factory has orders, get rid of them to prioritize techlab
             Actions()->UnitCommand(factory, ABILITY_ID::BUILD_TECHLAB_FACTORY);
         }
     }
@@ -573,7 +574,7 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
 
     if (!barracks.empty()) {
         for (auto const &barrack : barracks){
-            if (barrack->orders.empty() && numMarines < unit_ratios[game_stage][MARINE] * 2){
+            if (barrack->orders.size() < 2 && numMarines < unit_ratios[game_stage][MARINE] * 2){
                 Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
             }
         }
@@ -587,8 +588,7 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     if (!starports.empty()) {
         //Medivacs
         for (auto const &starport : starports) {
-            //additionally check we aren't overbuilding medivacs instead of vikings
-            if (starport->orders.size() < 2 && numMedivacs < unit_ratios[game_stage][MEDIVAC] * 2 && numMedivacs < 2 * numVikings) {
+            if (starport->orders.empty() && numMedivacs < unit_ratios[game_stage][MEDIVAC] * 2) {
                 Actions()->UnitCommand(starport, ABILITY_ID::TRAIN_MEDIVAC);
             }
         }
@@ -603,7 +603,7 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     if (!factories.empty()) {
         // widow mines
         for (auto const &factory : factories) {
-            if (factory->orders.size() < 2 && numWidowMines < 3) {
+            if (factory->orders.empty() && numWidowMines < 1) {
                 Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_WIDOWMINE);
             }
         }        
@@ -619,17 +619,23 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
 void Hal9001::ManageArmy() {
     const ObservationInterface *observation = Observation();
 
-    Units enemies = observation->GetUnits(Unit::Alliance::Enemy);
+    Units enemies = observation->GetUnits(Unit::Alliance::Enemy, IsArmy(observation));
     Units bases = observation->GetUnits(Unit::Alliance::Self, IsTownHall());
     Units enemybases = observation->GetUnits(Unit::Alliance::Enemy, IsTownHall());
     Units allies = observation->GetUnits(Unit::Alliance::Self, IsArmy(observation));
+    Units marines = GetUnitsOfType(UNIT_TYPEID::TERRAN_MARINE);
     Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
 
     const Unit *closestEnemy;
 
     const Unit *homebase = bases.front();
+    const Unit *squadleader;
     Point2D base_to_rush = Point2D(0,0);
     float distance = std::numeric_limits<float>::max();
+
+    if (!marines.empty()) {
+        squadleader = marines.front();
+    }
 
 
     if (attacking) {
@@ -663,7 +669,11 @@ void Hal9001::ManageArmy() {
                 cout << "base_to_rush is null" << endl;
                 continue;
             }
-            else if (DistanceSquared2D(base_to_rush, unit->pos) > 5) {
+            //squared distance > 25 = distance > 5
+            else if (unit->is_flying && DistanceSquared2D(unit->pos, squadleader->pos) > 25) {
+                Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, squadleader->pos);
+            }
+            else if (DistanceSquared2D(base_to_rush, unit->pos) > 25) {
                 Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, base_to_rush);
             }
         }
@@ -715,12 +725,12 @@ void Hal9001::ManageArmy() {
                                 }
                             }
                             //if we are within combat range and are not stimmed, use it
-                            if (distance < 6 && !has_stimmed) {
+                            if (distance < 36 && !has_stimmed) {
                                 Actions()->UnitCommand(unit, ABILITY_ID::EFFECT_STIM);
                                 break;
                             }
                             //EXPERIMENTAL KITING
-                            if (distance < 5) {
+                            if (distance < 25) {
                                 float enemy_facing = closestEnemy->facing;
                                 Actions()->UnitCommand(unit, ABILITY_ID::MOVE_MOVE, Point2D(unit->pos.x + sin(enemy_facing), unit->pos.y + cos(enemy_facing)));
                             }
@@ -747,7 +757,7 @@ void Hal9001::ManageArmy() {
                             }
                         }
                         //same condition as marines
-                        if (distance < 7 && !has_stimmed) {
+                        if (distance < 49 && !has_stimmed) {
                             Actions()->UnitCommand(unit, ABILITY_ID::EFFECT_STIM);
                             break;
                         }
@@ -784,7 +794,7 @@ void Hal9001::ManageArmy() {
                     }
                 }
                 //seige if within range
-                if (distance < 10) {
+                if (distance < 100) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SIEGEMODE);
                 }
                 break;
@@ -798,7 +808,7 @@ void Hal9001::ManageArmy() {
                     }
                 }
                 //if there are no enemies nearby 
-                if (distance > 13 || enemies.empty()) {
+                if (distance > 169 || enemies.empty()) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_UNSIEGE);
                 }
                 break;
@@ -828,10 +838,10 @@ void Hal9001::ManageArmy() {
                 Units flying_units = observation->GetUnits(Unit::Enemy, IsFlying());
 
                 //no flying units, should go into ground mode
-                if (flying_units.empty()) {
+                if (flying_units.empty() && !enemies.empty()) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_VIKINGASSAULTMODE);
                 }
-                else {
+                else if (!flying_units.empty()){
                     Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, flying_units.front());
                 }
                 break;
@@ -841,7 +851,7 @@ void Hal9001::ManageArmy() {
                 Units flying_units = observation->GetUnits(Unit::Enemy, IsFlying());
                 
                 //enemy has flying units, go into air mode
-                if (!flying_units.empty()) {
+                if (!flying_units.empty() || enemies.empty()) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_VIKINGFIGHTERMODE);
                 }
                 break;
@@ -1065,21 +1075,16 @@ void Hal9001::OnStep() {
     if (!attacking && steps % 2 == 0) {
         CanAttack(observation);
     }
-<<<<<<< HEAD
-    // BuildOrder(observation);
-    ReconBase(observation);
-    setStagingArea(observation);
-=======
+    if (enemyBase == Point2D(0,0)) {
+        ReconBase(observation);
+    }
     if (steps % 3 == 0) {
         BuildOrder(observation);
-        ReconBase(observation);
         ManageUpgrades(observation);
     }
     if (stagingArea == Point2D(0,0)) {
         setStagingArea(observation);
     }
-
->>>>>>> f84cb1a072704d28177859caff9c1871d62a0c0c
     ManageArmyProduction(observation);
 
     if (!endgame) {
