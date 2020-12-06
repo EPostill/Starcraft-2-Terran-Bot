@@ -46,6 +46,8 @@ public:
 	void ShouldRetreat(const ObservationInterface* observation);
 	// Manage our army
 	void ManageArmy();
+	//finish the game out once we have definitively won
+	void FinalSweep(const ObservationInterface* observation);
 	// Manage production of attacking units
 	void ManageArmyProduction(const ObservationInterface* observation);
 	// Manage upgrades
@@ -186,6 +188,8 @@ private:
 	bool attacking;
 	//check if we have stim
 	bool hasStimpack;
+	//flag for when we have destroyed the main enemy base and need to sweep the rest of the map
+	bool endgame = false;
 
 	
 	// Check which possible location we're currently checking
@@ -203,6 +207,7 @@ private:
 	int supplies;			// supply count
 	int minerals;			// mineral count
 	int vespene;			// gas count
+	int steps;              // number of steps that we have progressed
 
 	//Units that can be healed by medivacs
 	std::vector<UNIT_TYPEID> bio_types = { UNIT_TYPEID::TERRAN_MARINE, UNIT_TYPEID::TERRAN_MARAUDER, UNIT_TYPEID::TERRAN_GHOST, UNIT_TYPEID::TERRAN_REAPER /*reaper*/ };
