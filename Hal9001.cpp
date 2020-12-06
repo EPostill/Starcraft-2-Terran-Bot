@@ -528,8 +528,6 @@ void Hal9001::ShouldRetreat(const ObservationInterface* observation) {
             ++aliveCount;
         }
     }
-    cout << "enemy count " << enemyCount << endl;
-    cout << "our alive count" << aliveCount << endl;
     // retreat if we lost more than half of our units and
     // the enemy still has more units than us
     if (aliveCount < threshold && enemyCount > aliveCount) {
