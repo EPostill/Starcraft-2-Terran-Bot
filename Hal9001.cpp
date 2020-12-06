@@ -669,12 +669,13 @@ void Hal9001::ManageArmy() {
                 cout << "base_to_rush is null" << endl;
                 continue;
             }
-            //squared distance > 25 = distance > 5
-            else if (unit->is_flying && DistanceSquared2D(unit->pos, squadleader->pos) > 25) {
-                Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, squadleader->pos);
-            }
             else if (DistanceSquared2D(base_to_rush, unit->pos) > 25) {
-                Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, base_to_rush);
+                if (unit->is_flying && DistanceSquared2D(unit->pos, squadleader->pos) > 50) {
+                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, squadleader->pos);
+                }
+                else {
+                    Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, base_to_rush);
+                }
             }
         }
     }
@@ -794,7 +795,7 @@ void Hal9001::ManageArmy() {
                     }
                 }
                 //seige if within range
-                if (distance < 100) {
+                if (distance < 111) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SIEGEMODE);
                 }
                 break;
