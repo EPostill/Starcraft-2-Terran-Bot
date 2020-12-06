@@ -1077,12 +1077,9 @@ void Hal9001::OnStep() {
     if (!attacking && steps % 2 == 0) {
         CanAttack(observation);
     }
-<<<<<<< HEAD
-=======
     if (enemyBase == Point2D(0,0)) {
         ReconBase(observation);
     }
->>>>>>> 69a33efc2262e1f1e4202d2342108a93b98a93fe
     if (steps % 3 == 0) {
         BuildOrder(observation);
         ManageUpgrades(observation);
@@ -1090,10 +1087,6 @@ void Hal9001::OnStep() {
     if (stagingArea == Point2D(0,0)) {
         setStagingArea(observation);
     }
-<<<<<<< HEAD
-
-=======
->>>>>>> 69a33efc2262e1f1e4202d2342108a93b98a93fe
     ManageArmyProduction(observation);
 
     if (!endgame) {
