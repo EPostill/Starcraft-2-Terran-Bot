@@ -674,7 +674,9 @@ void Hal9001::ShouldRetreat(const ObservationInterface* observation) {
     // retreat if we lost more than half of our units and
     // the enemy still has more units than us
     if (aliveCount < threshold && enemyCount > aliveCount) {
-        game_stage++;
+        if (game_stage < 2){
+            game_stage++;
+        }
         attacking = false;
         attacking_army.clear();
     }
