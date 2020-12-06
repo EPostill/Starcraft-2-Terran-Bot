@@ -612,6 +612,12 @@ void Hal9001::ManageArmy() {
 
 
     if (attacking) {
+
+        if (!endgame) {
+            if (Distance2D(allies.front()->pos, enemyBase) < 5 && enemybases.empty()) {
+                endgame = true;
+            }
+        }
         if (enemybases.empty()){
             //we may have never seen the enemy base, try moving to the supposed location
             //if the enemy really doesn't have any bases, this won't matter anyway
@@ -826,6 +832,11 @@ void Hal9001::ManageArmy() {
     }
 }
 
+//look through all possible enemy locations and finish them off
+void Hal9001::FinalSweep(const ObservationInterface* observation) {
+
+}
+
 
 
 void Hal9001::initializeMainSCV(Units &bases){
@@ -1038,7 +1049,13 @@ void Hal9001::OnStep() {
     }
 
     ManageArmyProduction(observation);
-    ManageArmy();
+    
+    if (!endgame) {
+        ManageArmy();
+    }
+    else {
+        FinalSweep(observation);
+    }
 
     if (attacking && steps % 2 == 0) {
         ShouldRetreat(observation);
