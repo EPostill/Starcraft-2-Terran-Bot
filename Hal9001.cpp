@@ -1084,9 +1084,9 @@ void Hal9001::OnStep() {
     if (!canRush && steps % 2 == 0) {
         setCanRush(observation);
     }
-    // if (!attacking && steps % 2 == 0) {
-    //     CanAttack(observation);
-    // }
+    if (!attacking && steps % 2 == 0) {
+        CanAttack(observation);
+    }
     if (enemyBase == Point2D(0,0)) {
         ReconBase(observation);
     }
