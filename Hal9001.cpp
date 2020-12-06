@@ -295,21 +295,10 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
             Actions()->UnitCommand(factory, ABILITY_ID::BUILD_TECHLAB_FACTORY);
         }
     }
-
-    /***=========================================================================================
-     * Build Order # 15: train a widow mine for air unit defence
-     * Condition : we have a factory and factory tech lab 
-     * Status: DONE
-    *========================================================================================= */
-    // if (factory_techlabs.size() == 1 && factories.size() == 1 && widowmines.empty() && minerals >= 75) {
-    //     //build widow mine for defence
-    //     const Unit *factory = factories.front();
-    //     const Unit *techlab = factory_techlabs.front();
-    //     if (doneConstruction(techlab) && factory->orders.empty()){
-    //         // cout << "build 15" << endl;
-    //         Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_WIDOWMINE);
-    //     }
-    // }
+    // build another starport (modification of build order)
+    if (minerals >= 150 && starports.size() == 1){
+        buildNextTo(ABILITY_ID::BUILD_STARPORT, starports.front(), BEHINDRIGHT, 3);
+    }
 
     /***=========================================================================================
      * Build Order # 16: build a 3rd supply depot in front of 2nd comm center
@@ -321,31 +310,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, bunkers.front(), LEFT, 1, mainSCV);
     }
 
-    // /***=========================================================================================
-    //  * Build Order # 17: train viking for defence
-    //  * Condition : we have a starport and no vikings
-    //  * Status: DONE
-    // *========================================================================================= */
-    // if (starports.size() == 1 && vikings.empty()) {
-    //     const Unit *sp = starports.front();
-    //     if (doneConstruction(sp) && sp->orders.empty()){
-    //         // cout << "build 17" << endl;
-    //         Actions()->UnitCommand(sp, ABILITY_ID::TRAIN_VIKINGFIGHTER);
-    //     }
-    // }
-
-    // /***=========================================================================================
-    //  * Build Order # 18: train tank
-    //  * Condition : we have a factory, a widowmine and no tanks
-    //  * Status: DONE
-    // *========================================================================================= */
-    // if (tanks.empty() && factories.size() == 1 && widowmines.size() == 1) {
-    //     const Unit *factory = factories.front();
-    //     if (doneConstruction(factory) && factory->orders.empty()){
-    //         // cout << "build 18" << endl;
-    //         Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_SIEGETANK);
-    //     }        
-    // }
     /***=========================================================================================
      * Build Order # 19: build 3 more depots in succession behind minerals at 2nd comm center
      * Condition : we already have 3 depots and have less than 6 depots
@@ -366,7 +330,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition : we have a starport, factory techlab and only one barracks so far
      * Status: DONE
     *========================================================================================= */
-    if (supplies >= 46 && minerals >= 300 && barracks.size() >= 1 && barracks.size() < 3 && factories.size() == 1 && starports.size() == 1) {
+    if (supplies >= 46 && minerals >= 300 && barracks.size() >= 1 && barracks.size() < 3 && factories.size() == 1 && starports.size() >= 1) {
         const Unit* fa = factories.back();
         const Unit* sp = starports.back();
         // get two builders (so buildNextTo doesn't assign the same builder for both barracks)
@@ -394,40 +358,16 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     }
 
     /***=========================================================================================
-     * Build Order # 21: build reactor on starport (modification of build order)
-     * Condition : once viking is finished
+     * Build Order # 21: build reactor on both starports (modification of build order)
+     * Condition : we have 2 starports
      * Status: DONE
     *========================================================================================= */
-    if (supplies >= 46 && minerals >= 300 && starports.size() == 1 && starport_reactors.size() == 0) {
+    if (supplies >= 46 && minerals >= 300 && !starports.empty() && starport_reactors.size() < 2) {
         // cout << "build 21" << endl;
-        // get star port
-        const Unit* sp = starports.back();
-        // build reactor on startport
-        Actions()->UnitCommand(sp, ABILITY_ID::BUILD_REACTOR_STARPORT);
+        // build reactor on starport
+        Actions()->UnitCommand(starports, ABILITY_ID::BUILD_REACTOR_STARPORT, true);
     }
 
-    /***=========================================================================================
-     * Build Order # 22: move factory and starport, add a techlab to the factory and a reactor to the starport
-     * Condition : once tank is finished
-     * Status: NOT DONE
-    *========================================================================================= */
-    // if (CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) == 1 && factories.size() == 1 && starports.size() == 1) {
-    //     // move factory and build another tech lab on it
-    //     const Unit* fa = factories.front();
-
-    //     // lift a factory
-    //     Actions() -> UnitCommand(fa, ABILITY_ID::LIFT_FACTORY);
-
-    //     // move tech lab and create a reactor
-    // }
-
-    // if (fly_factories.size() == 1) {
-    //     // get relative back location of flying factory
-    //     const Unit* fa = fly_factories.front();
-        
-    //     // land factory
-    //     landFlyer(fa, LEFT, ABILITY_ID::LAND_FACTORY);
-    // }
     /***=========================================================================================
      * Build Order # 23: build eng bay and gas near 2nd comm center
      * Condition : we have 4 barracks
@@ -443,16 +383,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         }
     }
 
-    // if (!factory_techlabs.empty()) {
-    //     TryBuildUnit(ABILITY_ID::RESEARCH_STIMPACK, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
-    //     TryBuildUnit(ABILITY_ID::RESEARCH_COMBATSHIELD, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
-    //     TryBuildUnit(ABILITY_ID::RESEARCH_CONCUSSIVESHELLS, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
-    // }
-
-    // if (!fusioncores.empty()) {
-    //     TryBuildUnit(ABILITY_ID::RESEARCH_RAPIDREIGNITIONSYSTEM, UNIT_TYPEID::TERRAN_FUSIONCORE);
-    // }
-
     /***=========================================================================================
      * Build Order # 26: make another refinery near 2nd comm center
      * Condition : 2nd command center's mineral line is full
@@ -463,21 +393,11 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         if (cc->assigned_harvesters >= cc->ideal_harvesters){
             // cout << "build 26" << endl;
             BuildRefinery(cc);
+            buildOrderComplete = true;
+            cout << "Build order complete" << endl;
         }
-    }
+    }   
 
-   /***=========================================================================================
-     * Build Order # 28: build another command center
-     * Condition : when we have 4 refineries
-     * Status: DONE
-    *========================================================================================= */    
-
-    if (minerals >= 400 && refineries.size() == 4 && !starports.empty() && bases.size() == 1 && !buildOrderComplete){
-        // cout << "build 28" << endl;
-        buildNextTo(ABILITY_ID::BUILD_COMMANDCENTER, starports.front(), BEHINDRIGHT, 1);
-        cout << "Done build order\n";
-        buildOrderComplete = true;
-    }
 
     // lower supply depots
     for (const auto &depot: depots){
@@ -485,67 +405,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
             Actions()->UnitCommand(depot, ABILITY_ID::MORPH_SUPPLYDEPOT_LOWER);
         }
     }
-
-    //once we can research in the engbay, figure out the upgrades we need
-    // if (!engbays.empty()){
-    //     for (const auto &upgrade : upgrades) {
-    //         if (!armories.empty()) {
-    //             //infantry upgrades
-    //             if (upgrade == UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1) {
-    //                 TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYWEAPONS, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
-    //             }
-    //             else if (upgrade == UPGRADE_ID::TERRANINFANTRYARMORSLEVEL1) {
-    //                 TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYARMOR, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
-    //             }
-    //             if (upgrade == UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL2 && supplies >= 150) {
-    //                 TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYWEAPONS, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
-    //             }
-    //             else if (upgrade == UPGRADE_ID::TERRANINFANTRYARMORSLEVEL2 && supplies >= 160) {
-    //                 TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYARMOR, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
-    //             }
-    //             if (upgrade == UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL3 && supplies >= 180) {
-    //                 TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYWEAPONS, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
-    //             }
-    //             else if (upgrade == UPGRADE_ID::TERRANINFANTRYARMORSLEVEL3 && supplies >= 190) {
-    //                 TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYARMOR, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
-    //             }
-
-    //             //vehicle and ship upgrades
-    //             if (upgrade == UPGRADE_ID::TERRANSHIPWEAPONSLEVEL1 && bases.size() > 2) {
-    //                 TryBuildUnit(ABILITY_ID::RESEARCH_TERRANSHIPWEAPONS, UNIT_TYPEID::TERRAN_ARMORY);
-    //             }
-    //             else if (upgrade == UPGRADE_ID::TERRANVEHICLEWEAPONSLEVEL1 && supplies >= 170) {
-    //                 TryBuildUnit(ABILITY_ID::RESEARCH_TERRANVEHICLEWEAPONS, UNIT_TYPEID::TERRAN_ARMORY);
-    //             }
-    //             else if (upgrade == UPGRADE_ID::TERRANVEHICLEANDSHIPARMORSLEVEL1 && bases.size() > 2) {
-    //                 TryBuildUnit(ABILITY_ID::RESEARCH_TERRANVEHICLEANDSHIPPLATING, UNIT_TYPEID::TERRAN_ARMORY);
-    //             }
-    //             if (upgrade == UPGRADE_ID::TERRANVEHICLEWEAPONSLEVEL2 && supplies >= 190) {
-    //                 TryBuildUnit(ABILITY_ID::RESEARCH_TERRANVEHICLEWEAPONS, UNIT_TYPEID::TERRAN_ARMORY);
-    //             }
-    //             else if (upgrade == UPGRADE_ID::TERRANVEHICLEANDSHIPARMORSLEVEL2 && supplies >= 190) {
-    //                 TryBuildUnit(ABILITY_ID::RESEARCH_TERRANVEHICLEANDSHIPPLATING, UNIT_TYPEID::ZERG_SPIRE);
-    //             }
-    //             else if (upgrade == UPGRADE_ID::TERRANSHIPWEAPONSLEVEL2 && supplies >= 190) {
-    //                 TryBuildUnit(ABILITY_ID::RESEARCH_TERRANSHIPWEAPONS, UNIT_TYPEID::ZERG_SPIRE);
-    //             }
-    //         }
-    //         TryBuildUnit(ABILITY_ID::RESEARCH_HISECAUTOTRACKING, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
-    //         TryBuildUnit(ABILITY_ID::RESEARCH_NEOSTEELFRAME, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
-    //     }
-    // }
-
-    //At this point we have a few goals before we attack
-    // we want to:
-    //research combat shields
-    //build another command center
-    //research some amount of techs
-
-    //more notes:
-    //we should only build medivacs once combat shields has been researched
-    //Star ports -> medivacs
-    //Factories -> tanks
-    //barracks -> marines (later on maurauders, although I doubt the game will go that far)
 
     // spam depots at a random location
     if (depots.size() >= 3 || buildOrderComplete){
