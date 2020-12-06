@@ -91,6 +91,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
     // lists to keep track of all of our buildings (so we don't need to recount at every if statement
     Units bases = GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER);
+    Units commcenters = getCommCenters();
     Units barracks = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
     Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
     Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
@@ -116,6 +117,16 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Units vikings = GetUnitsOfType(UNIT_TYPEID::TERRAN_VIKINGFIGHTER);
     //list of upgrades
     auto upgrades = observation->GetUpgrades();
+
+
+     //NOT PART OF BUILD ORDER - EXTRA FUNCTION FROM EMMETT
+    if (supplies >= observation->GetFoodCap() - 2 && depots.size() >= 4) {
+        Point3D basePos = commcenters.front()->pos;
+        float rx = GetRandomScalar();
+        float ry = GetRandomScalar();
+        Point2D loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
+        BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y, mainSCV);
+    }
 
     // handle mainSCV behaviour for build orders < #2
     initializeMainSCV(bases);
@@ -238,7 +249,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // cout << "build 9" << endl;
         // get 1st cc => orbital now
         const Unit* cc1 = orbcoms.front();
-        buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 3); 
+        buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 2); 
 
     }
 
@@ -293,6 +304,9 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
             // build a star port next to the factory
             buildNextTo(ABILITY_ID::BUILD_STARPORT, factory, RIGHT, 2);
             // build tech lab on factory
+            #ifdef DEBUG
+            cout << "trying to build tech lab on factory" << endl;
+            #endif
             Actions()->UnitCommand(factory, ABILITY_ID::BUILD_TECHLAB_FACTORY);
         }
     }
@@ -339,9 +353,9 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         if (builders.size() == 2){
             // cout << "build 20" << endl;
             // build barrack next to factory
-            buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, FRONT, 0, builders.front());
+            buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, FRONT, 1, builders.front());
             // build another barrack next to starport
-            buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, FRONT, 0, builders.back());
+            buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, FRONT, 1, builders.back());
         }
     }
     // build tech labs on the 2 barracks (modification of build order)
@@ -410,7 +424,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     // spam depots at a random location
     if (depots.size() >= 3 || buildOrderComplete){
         if (supplies >= observation->GetFoodCap() - 2){
-            Units commcenters = getCommCenters();
             if (commcenters.empty()){
                 return;
             }
@@ -550,6 +563,10 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     int numTanks = CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANK) + CountUnitType(UNIT_TYPEID::TERRAN_SIEGETANKSIEGED);
     int numWidowMines = CountUnitType(UNIT_TYPEID::TERRAN_WIDOWMINE) + CountUnitType(UNIT_TYPEID::TERRAN_WIDOWMINEBURROWED);
 
+    if (observation->GetMinerals() < 300) {
+        return;
+    }
+
     if (!barracks.empty()) {
         for (auto const &barrack : barracks){
             if (barrack->orders.empty() && numMarines < unit_ratios[game_stage][MARINE] * 2){
@@ -567,13 +584,13 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
         //Medivacs
         for (auto const &starport : starports) {
             //additionally check we aren't overbuilding medivacs instead of vikings
-            if (starport->orders.empty() && numMedivacs < unit_ratios[game_stage][MEDIVAC] * 2 && numMedivacs < 2 * numVikings) {
+            if (starport->orders.size() < 2 && numMedivacs < unit_ratios[game_stage][MEDIVAC] * 2 && numMedivacs < 2 * numVikings) {
                 Actions()->UnitCommand(starport, ABILITY_ID::TRAIN_MEDIVAC);
             }
         }
         //Vikings
         for (auto const &starport : starports) {
-            if (starport->orders.empty() && numVikings < unit_ratios[game_stage][VIKING]) {
+            if (starport->orders.size() < 2 && numVikings < unit_ratios[game_stage][VIKING]) {
                 Actions()->UnitCommand(starport, ABILITY_ID::TRAIN_VIKINGFIGHTER);
             }
         }
@@ -582,13 +599,13 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     if (!factories.empty()) {
         // widow mines
         for (auto const &factory : factories) {
-            if (factory->orders.empty() && numWidowMines < 3) {
+            if (factory->orders.size() < 2 && numWidowMines < 3) {
                 Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_WIDOWMINE);
             }
         }        
         //tanks
         for (auto const &factory : factories) {
-            if (factory->orders.empty() && numTanks < unit_ratios[game_stage][TANK] * 2) {
+            if (factory->orders.size() < 2 && numTanks < unit_ratios[game_stage][TANK] * 2) {
                 Actions()->UnitCommand(factory, ABILITY_ID::TRAIN_SIEGETANK);
             }
         }
@@ -607,17 +624,18 @@ void Hal9001::ManageArmy() {
     const Unit *closestEnemy;
 
     const Unit *homebase = bases.front();
-    Point2D base_to_rush = Point2D(-1,-1);
+    Point2D base_to_rush = Point2D(0,0);
     float distance = std::numeric_limits<float>::max();
 
 
     if (attacking) {
 
         if (!endgame) {
-            if (Distance2D(allies.front()->pos, enemyBase) < 5 && enemybases.empty()) {
+            if (Distance2D(allies.front()->pos, enemyBase) < 6 && enemybases.empty()) {
                 endgame = true;
             }
         }
+
         if (enemybases.empty()){
             //we may have never seen the enemy base, try moving to the supposed location
             //if the enemy really doesn't have any bases, this won't matter anyway
@@ -634,7 +652,10 @@ void Hal9001::ManageArmy() {
             }
         }
         for (const auto &unit : allies) {
-            if (base_to_rush == Point2D(-1,-1)){
+            #ifdef DEBUG
+            cout << "Enemy location is" << base_to_rush.x << "," << base_to_rush.y << endl;
+            #endif
+            if (base_to_rush == Point2D(0,0)){
                 cout << "base_to_rush is null" << endl;
                 continue;
             }
@@ -758,7 +779,7 @@ void Hal9001::ManageArmy() {
                         distance = d;
                     }
                 }
-                //seige if within range (modified from 11 to 10 to give tanks a little extra headroom)
+                //seige if within range
                 if (distance < 10) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SIEGEMODE);
                 }
@@ -1010,6 +1031,7 @@ void Hal9001::ReconBase(const ObservationInterface* observation) {
                     cout << "going to L2\n";
                 }
                 if (scout->pos.x == L2.x && scout->pos.y == L2.y) {
+                    cout << "setting base by process of elimination" << endl;
                     enemyBase = L3;
                     enemyBaseFound = true;
                     moveUnit(scout, mainSCV->pos);
@@ -1049,7 +1071,7 @@ void Hal9001::OnStep() {
     }
 
     ManageArmyProduction(observation);
-    
+
     if (!endgame) {
         ManageArmy();
     }
