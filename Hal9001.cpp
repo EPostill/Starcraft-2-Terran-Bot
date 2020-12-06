@@ -1065,11 +1065,6 @@ void Hal9001::OnStep() {
     if (!attacking && steps % 2 == 0) {
         CanAttack(observation);
     }
-<<<<<<< HEAD
-    // BuildOrder(observation);
-    ReconBase(observation);
-    setStagingArea(observation);
-=======
     if (steps % 3 == 0) {
         BuildOrder(observation);
         ReconBase(observation);
@@ -1079,7 +1074,6 @@ void Hal9001::OnStep() {
         setStagingArea(observation);
     }
 
->>>>>>> f84cb1a072704d28177859caff9c1871d62a0c0c
     ManageArmyProduction(observation);
 
     if (!endgame) {
@@ -1151,6 +1145,7 @@ const Unit* Hal9001::FindNearestMineralPatch(const Point2D &start) {
 
 // returns nearest vespene geyser or nullptr if none found
 const Unit* Hal9001::FindNearestGeyser(const Point2D &start) {
+
     // gets all neutral units
     Units units = Observation()->GetUnits(Unit::Alliance::Neutral);
     float distance = std::numeric_limits<float>::max();
@@ -1158,7 +1153,7 @@ const Unit* Hal9001::FindNearestGeyser(const Point2D &start) {
     Units refineries = GetUnitsOfType(UNIT_TYPEID::TERRAN_REFINERY);
     bool valid = true;
     for (const auto &u : units) {
-        if (u->unit_type == UNIT_TYPEID::NEUTRAL_VESPENEGEYSER){
+        if (u->unit_type == (map_name == PROXIMA ? UNIT_TYPEID::NEUTRAL_SPACEPLATFORMGEYSER : UNIT_TYPEID::NEUTRAL_VESPENEGEYSER)){
             valid = true;
             // check if geyser already has a refinery on it
             for (const auto &r : refineries){
