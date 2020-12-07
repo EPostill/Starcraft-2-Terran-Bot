@@ -1536,11 +1536,17 @@ float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
 
     switch (abilityId){
         case ABILITY_ID::BUILD_STARPORT:
-            abilityId = ABILITY_ID::BUILD_TECHLAB_STARPORT;
+            abilityId = ABILITY_ID::BUILD_REACTOR_STARPORT;
             break;
+        case ABILITY_ID::BUILD_BARRACKS:
+            abilityId = ABILITY_ID::BUILD_TECHLAB_BARRACKS;
+            break;
+        case ABILITY_ID::BUILD_FACTORY:
+            abilityId = ABILITY_ID::BUILD_TECHLAB_FACTORY;
         default:
             break;
     }
+
 
     // loop through vector to search for ability
     for(int i = 0; i < abilities.size(); ++i){
