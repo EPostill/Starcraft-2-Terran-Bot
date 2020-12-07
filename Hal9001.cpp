@@ -4,7 +4,7 @@
 #include "cpp-sc2/src/sc2api/sc2_client.cc"
 using namespace std;
 
-#define DEBUG false
+// #define DEBUG false
 
 struct IsArmy {
     IsArmy(const ObservationInterface* obs) : observation_(obs) {}
@@ -224,14 +224,16 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: Marine == 1, we have an orbital and a normal command center and one depot
      * Status: DONE
     *========================================================================================= */
-    if (barracks_reactors.empty() && bases.size() == 1 && orbcoms.size() == 1 && depots.size() == 1) {
-        // cout << "build 8" << endl;
+    if (depots.size() == 1 && !barracks.empty() && bases.size() == 1 && orbcoms.size() == 1) {
+        const Unit* barrack = barracks.front();
+        // build a depot next to the reactor
+        buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, barrack, LEFT, 0);
+    }
+    if (barracks_reactors.empty() && !barracks.empty()){
         // get barrack
         const Unit* barrack = barracks.front();
         // build reactor on barracks
         Actions()->UnitCommand(barrack, ABILITY_ID::BUILD_REACTOR_BARRACKS);
-        // build a depot next to the reactor
-        buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, barrack, LEFT, 0);
     }
 
     /***=========================================================================================
@@ -358,7 +360,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         }
     }
     // build tech labs on the 2 barracks (modification of build order)
-    if (minerals >= 100 && vespene >= 50 && barracks.size() == 3 && barrack_techlabs.size() < 3){
+    if (minerals >= 100 && vespene >= 50 && barracks.size() == 3 && barrack_techlabs.size() < 2){
         for (const auto &b : barracks){
             if (!doneConstruction(b)){
                 continue;
@@ -421,7 +423,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     }
 
     // spam depots at a random location
-    if (depots.size() >= 3 || buildOrderComplete){
+    if (buildOrderComplete || (starport_reactors.size() >= 2 && barrack_techlabs.size() >= 2)){
         if (supplies >= observation->GetFoodCap() - 2){
             if (commcenters.empty()){
                 return;
@@ -564,12 +566,13 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
 
     int numFactTechlabs = CountUnitType(UNIT_TYPEID::TERRAN_FACTORYTECHLAB);
     int numStarReactors = CountUnitType(UNIT_TYPEID::TERRAN_STARPORTREACTOR);
+    int numBarrReactors = CountUnitType(UNIT_TYPEID::TERRAN_BARRACKSREACTOR);
 
     if (observation->GetMinerals() < 300) {
         return;
     }
 
-    if (!barracks.empty()) {
+    if (!barracks.empty() && numBarrReactors >= 1) {
         for (auto const &barrack : barracks){
             if (barrack->orders.size() < 2 && numMarines < unit_ratios[game_stage][MARINE] * 2){
                 Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
