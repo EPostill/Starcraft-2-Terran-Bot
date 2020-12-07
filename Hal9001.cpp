@@ -623,18 +623,16 @@ void Hal9001::ManageArmy() {
     Units marines = GetUnitsOfType(UNIT_TYPEID::TERRAN_MARINE);
     Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
 
-    if (bases.empty() || allies.empty()){
-        return;
-    }
-
     const Unit *closestEnemy;
-    const Unit *homebase = bases.front();
     const Unit *squadleader;
     Point2D base_to_rush = Point2D(0,0);
     float distance = std::numeric_limits<float>::max();
 
     if (!marines.empty()) {
         squadleader = marines.front();
+    }
+    if (!bases.empty()){
+        const Unit *homebase = bases.front();
     }
 
 
