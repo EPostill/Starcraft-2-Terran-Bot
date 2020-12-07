@@ -607,12 +607,6 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
             }
         }
     }
-    // train marauders at the barracks with a techlab
-    if (!barracks_techlabs.empty()){
-        for (auto const &barrack : barracks_techlabs){
-
-        }
-    }
     
     if (!starports.empty() && numStarReactors >= 2) {
         //Medivacs
@@ -930,9 +924,9 @@ void Hal9001::FinalSweep(const ObservationInterface* observation) {
     if (!orbcoms.empty()){
         const Unit *orbcom = orbcoms.front();
         if (orbcom->orders.empty() && orbcom->energy >= 50){
-            Units marines = GetRandomUnits(UNIT_TYPEID::TERRAN_MARINE, enemyBase);
-            if (!marines.empty()){
-                Actions()->UnitCommand(orbcom, ABILITY_ID::EFFECT_SCAN, marines.front()->pos);
+            Units enemiesAll = observation->GetUnits(Unit::Alliance::Enemy);
+            if (!enemiesAll.empty()){
+                Actions()->UnitCommand(orbcom, ABILITY_ID::EFFECT_SCAN, enemiesAll.front()->pos);
             }
         }
     }
