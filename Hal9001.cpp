@@ -1484,7 +1484,8 @@ void Hal9001::buildNextTo(ABILITY_ID ability_id, const Unit* ref, RelDir relDir,
     float radiusRE = ref -> radius;
 
     // get radius of to be built
-    float radiusTB = radiusOfToBeBuilt(ability_id); 
+    float radiusTB = radiusOfToBeBuilt(ability_id);
+
     vector<QueryInterface::PlacementQuery> queries;
     // check placement in all directions
     for (int i = 0; i <= RelDir::BEHIND; ++i){
@@ -1532,6 +1533,14 @@ float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
 
     // This will be the index of the searched ability
     int index;
+
+    switch (abilityId){
+        case ABILITY_ID::BUILD_STARPORT:
+            abilityId = ABILITY_ID::BUILD_TECHLAB_STARPORT;
+            break;
+        default:
+            break;
+    }
 
     // loop through vector to search for ability
     for(int i = 0; i < abilities.size(); ++i){
