@@ -246,7 +246,11 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // cout << "build 9" << endl;
         // get 1st cc => orbital now
         const Unit* cc1 = orbcoms.front();
-        buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 1); 
+        if (map_name == MapName::PROXIMA){
+            buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 2); 
+        } else {
+            buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 1); 
+        }
 
     }
 
