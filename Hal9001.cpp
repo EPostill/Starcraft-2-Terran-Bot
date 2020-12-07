@@ -642,6 +642,7 @@ void Hal9001::ManageArmy() {
     Units allies = observation->GetUnits(Unit::Alliance::Self, IsArmy(observation));
     Units marines = GetUnitsOfType(UNIT_TYPEID::TERRAN_MARINE);
     Units bunkers = GetUnitsOfType(UNIT_TYPEID::TERRAN_BUNKER);
+    Units enemiesAll = observation->GetUnits(Unit::Alliance::Enemy);
 
     const Unit *closestEnemy;
     const Unit *squadleader;
@@ -662,22 +663,38 @@ void Hal9001::ManageArmy() {
             if (Distance2D(allies.front()->pos, enemyBase) < 6 && enemybases.empty()) {
                 endgame = true;
             }
-        }
-
-        if (enemybases.empty()){
-            //we may have never seen the enemy base, try moving to the supposed location
-            //if the enemy really doesn't have any bases, this won't matter anyway
-            base_to_rush = enemyBase;
-        }
-        else {
-            //if they have multiple, find which base is the closest
-            for (const auto &base : enemybases) {
-                float d = DistanceSquared3D(base->pos, startLocation);
-                if (d < distance) {
-                    distance = d;
-                    base_to_rush = base->pos;
+            if (enemybases.empty()){
+                //we may have never seen the enemy base, try moving to the supposed location
+                //if the enemy really doesn't have any bases, this won't matter anyway
+                base_to_rush = enemyBase;
+            }
+            else {
+                //if they have multiple, find which base is the closest
+                for (const auto &base : enemybases) {
+                    float d = DistanceSquared3D(base->pos, startLocation);
+                    if (d < distance) {
+                        distance = d;
+                        base_to_rush = base->pos;
+                    }
                 }
             }
+        } else{
+            if (!enemiesAll.empty()){
+                // attack closest remaining enemy
+                for (const auto &enemy : enemiesAll) {
+                    float d = DistanceSquared2D(enemy->pos, enemyBase);
+                    cout << "enemy has distance " << d << endl;
+                    if (d < distance) {
+                        if (enemy->health == 0){
+                            continue;
+                        }
+                        distance = d;
+                        base_to_rush = enemy->pos;
+                    }
+                }      
+                cout << "base to rush is " << base_to_rush.x << ", " << base_to_rush.y << endl;
+            }
+
         }
         for (const auto &unit : allies) {
             if (!unit->is_flying && !unit->orders.empty() && unit->orders.front().target_pos == base_to_rush) {
@@ -690,7 +707,7 @@ void Hal9001::ManageArmy() {
                 cout << "base_to_rush is null" << endl;
                 continue;
             }
-            else if (DistanceSquared2D(base_to_rush, unit->pos) > 25) {
+            else if (true/*DistanceSquared2D(base_to_rush, unit->pos) > 25*/) {
                 if (unit->is_flying && DistanceSquared2D(unit->pos, squadleader->pos) > 40) {
                     Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, squadleader->pos);
                 }
@@ -889,6 +906,14 @@ void Hal9001::ManageArmy() {
 
 //look through all possible enemy locations and finish them off
 void Hal9001::FinalSweep(const ObservationInterface* observation) {
+    Units orbcoms = GetUnitsOfType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND);
+    if (!orbcoms.empty()){
+        const Unit *orbcom = orbcoms.front();
+        if (orbcom->orders.empty()){
+            Actions()->UnitCommand(orbcom, ABILITY_ID::EFFECT_SCAN);
+            cout << "Using scanner sweep" << endl;
+        }
+    }
 
 }
 
@@ -1115,10 +1140,8 @@ void Hal9001::OnStep() {
     }
     ManageArmyProduction(observation);
 
-    if (!endgame) {
-        ManageArmy();
-    }
-    else {
+    ManageArmy();
+    if (endgame) {
         FinalSweep(observation);
     }
 
