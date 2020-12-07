@@ -179,6 +179,13 @@ public:
 	**/
 	void enemies_within_range(const Unit &u, Units &targets, float range) const;
 
+	/**
+	@desc This function will return true if expansion has a commcenter
+	@param exp - the Point3D expansion position  
+	@return bool
+	**/
+	bool hasCommCenter(Point3D exp);
+
 private:
 	// counts the number of units of a given type (does not include those in training)
 	size_t CountUnitType(UNIT_TYPEID unit_type);

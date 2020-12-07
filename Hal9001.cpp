@@ -359,6 +359,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         if (builders.size() == 2){
             // cout << "build 20" << endl;
             // build barrack next to factory
+            // int dist = map_name == BELSHIR
             buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, BEHINDLEFT, 0, builders.front());
             // build another barrack next to starport
             buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, BEHINDLEFT, 0, builders.back());
@@ -416,7 +417,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
             BuildRefinery(cc);
             buildOrderComplete = true;
             cout << "Build order complete" << endl;
-            Expand();
         }
     }   
 
@@ -1184,28 +1184,37 @@ void Hal9001::Expand(){
     BuildStructure(ABILITY_ID::BUILD_COMMANDCENTER, exp.x, exp.y, mainSCV);
 }
 
-const Point3D Hal9001::FindNearestExpansion(){
-    bool occupied;
-    float distance = std::numeric_limits<float>::max();
-    Point3D closest;    // very unlikely that closest will remain uninitialized
-    for (const auto &exp : expansions){
-        occupied = false;
-        float d = DistanceSquared3D(exp, startLocation);
-        if (d < distance){
-            // check if there's a command centre already on it
-            Units commcenters = getCommCenters();
-            for (const auto &cc : commcenters){
-                if (cc->pos == exp){
-                    occupied = true;
-                    break;
-                }
-            }
-            if (!occupied){
-                distance = d;
-                closest = exp;
-            }
+
+/**
+@desc This function will return true if expansion has a commcenter
+@param exp - the Point3D expansion position  
+@return bool
+**/
+bool Hal9001::hasCommCenter(Point3D exp){
+    Units commcenters = getCommCenters();
+
+    for (const auto &cc : commcenters){
+        cout << cc->pos.x << " " << cc->pos.y << " " << commcenters.size() << endl;
+        if (abs(cc->pos.x - exp.x) < 1 && abs(cc->pos.y - exp.y) < 1){
+            cout << "has cc"<< endl;
+            return true;
         }
     }
+    return false;
+}
+
+const Point3D Hal9001::FindNearestExpansion(){
+    float distance = DistanceSquared3D(expansions[0], startLocation);
+    Point3D closest = expansions[0];    // very unlikely that closest will remain uninitialized
+    for (int  i = 0; i < expansions.size(); ++i){
+        float d = DistanceSquared3D(expansions[i], startLocation);
+        if (d < distance && !hasCommCenter(expansions[i])){
+            distance = d;
+            closest = expansions[i];
+        }
+    }
+
+    cout << closest.x << " " << closest.y << endl;
     return closest;
 }
 
