@@ -301,7 +301,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: once factory from (9) finishes
      * Status: DONE
      *=========================================================================================*/
-    if (factories.size() == 1 && minerals >= 150 && vespene > 100 && factory_techlabs.empty()) {
+    if (factories.size() == 1 && minerals >= 150 && vespene > 100 && factory_techlabs.empty() && !starports.size()) {
         // get factory
         const Unit* factory = factories.front();
         if (doneConstruction(factory)){
@@ -1178,6 +1178,7 @@ void Hal9001::OnUnitIdle(const Unit *unit) {
 }
 
 void Hal9001::Expand(){
+    cout << "we are expanding" << endl;
     Point3D exp = FindNearestExpansion();
     // build command centre
     BuildStructure(ABILITY_ID::BUILD_COMMANDCENTER, exp.x, exp.y, mainSCV);
@@ -1564,7 +1565,7 @@ float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
             abilityId = ABILITY_ID::BUILD_TECHLAB_STARPORT;
             break;
         case ABILITY_ID::BUILD_BARRACKS:
-            abilityId = ABILITY_ID::BUILD_TECHLAB_BARRACKS;
+            abilityId = ABILITY_ID::BUILD_REACTOR_BARRACKS;
             break;
         case ABILITY_ID::BUILD_FACTORY:
             abilityId = ABILITY_ID::BUILD_TECHLAB_FACTORY;
