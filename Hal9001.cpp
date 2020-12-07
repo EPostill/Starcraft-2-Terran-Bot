@@ -897,13 +897,16 @@ void Hal9001::ManageArmy() {
     }
 }
 
-//look through all possible enemy locations and finish them off
+// call scanner sweep to reveal enemy location
 void Hal9001::FinalSweep(const ObservationInterface* observation) {
     Units orbcoms = GetUnitsOfType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND);
     if (!orbcoms.empty()){
         const Unit *orbcom = orbcoms.front();
-        if (orbcom->orders.empty()){
-            Actions()->UnitCommand(orbcom, ABILITY_ID::EFFECT_SCAN, enemyBase);
+        if (orbcom->orders.empty() && orbcom->energy >= 50){
+            Units marines = GetRandomUnits(UNIT_TYPEID::TERRAN_MARINE, enemyBase);
+            if (!marines.empty()){
+                Actions()->UnitCommand(orbcom, ABILITY_ID::EFFECT_SCAN, marines.front()->pos);
+            }
         }
     }
 
@@ -1390,7 +1393,7 @@ Units Hal9001::GetUnitsOfType(UNIT_TYPEID unit_type){
     
 }
 
-Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
+Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point2D location, int num){
     // !!! maybe worry about if count < num after going thru all units list
     int count = 0;
     Units units = GetUnitsOfType(unit_type);
@@ -1413,7 +1416,7 @@ Units Hal9001::GetRandomUnits(UNIT_TYPEID unit_type, Point3D location, int num){
             // only choose from scvs that are mining minerals or idle
             for (const auto &base : bases){
                 if (u->orders.empty() || u->orders.front().target_unit_tag == base->tag){
-                    if (location != Point3D(0,0,0) && DistanceSquared2D(u->pos, location) > 900){
+                    if (location != Point2D(0,0) && DistanceSquared2D(u->pos, location) > 900){
                         in_range = false;
                     }
                     if (in_range){
