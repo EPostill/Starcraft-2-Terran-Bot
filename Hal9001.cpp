@@ -682,6 +682,9 @@ void Hal9001::ManageArmy() {
             if (!enemiesAll.empty()){
                 // attack remaining enemy units
                 base_to_rush = enemiesAll.front()->pos;    
+                if (enemiesAll.front()->build_progress != 1){
+                    base_to_rush = enemiesAll.back()->pos;
+                }
                 cout << "base to rush is " << base_to_rush.x << ", " << base_to_rush.y << endl;
             }
 
@@ -900,8 +903,7 @@ void Hal9001::FinalSweep(const ObservationInterface* observation) {
     if (!orbcoms.empty()){
         const Unit *orbcom = orbcoms.front();
         if (orbcom->orders.empty()){
-            Actions()->UnitCommand(orbcom, ABILITY_ID::EFFECT_SCAN);
-            cout << "Using scanner sweep" << endl;
+            Actions()->UnitCommand(orbcom, ABILITY_ID::EFFECT_SCAN, enemyBase);
         }
     }
 
