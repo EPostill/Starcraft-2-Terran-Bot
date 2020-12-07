@@ -657,13 +657,8 @@ void Hal9001::ManageArmy() {
     Units enemiesAll = observation->GetUnits(Unit::Alliance::Enemy);
 
     const Unit *closestEnemy;
-    const Unit *squadleader;
     Point2D base_to_rush = Point2D(0,0);
     float distance = std::numeric_limits<float>::max();
-
-    if (!marines.empty()) {
-        squadleader = marines.front();
-    }
     if (!bases.empty()){
         const Unit *homebase = bases.front();
     }
@@ -709,6 +704,18 @@ void Hal9001::ManageArmy() {
             }
 
         }
+
+        if (squadleader == nullptr || steps % 5 == 0) {
+            float distance = std::numeric_limits<float>::max();
+            for (const auto &marine : marines) {
+                float d = DistanceSquared2D(marine->pos, base_to_rush);
+                if (d < distance) {
+                    distance = d;
+                    squadleader = marine;
+                }
+            }
+        }
+
         for (const auto &unit : allies) {
             if (!unit->is_flying && !unit->orders.empty() && unit->orders.front().target_pos == base_to_rush) {
                 continue;
@@ -721,7 +728,7 @@ void Hal9001::ManageArmy() {
                 Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, stagingArea);
             }
             else if (true/*DistanceSquared2D(base_to_rush, unit->pos) > 25*/) {
-                if (unit->is_flying && DistanceSquared2D(unit->pos, squadleader->pos) > 40) {
+                if (unit->is_flying && !unit->orders.empty() && DistanceSquared2D(unit->orders.front().target_pos, squadleader->pos) > 36) {
                     Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, squadleader->pos);
                 }
                 else {
