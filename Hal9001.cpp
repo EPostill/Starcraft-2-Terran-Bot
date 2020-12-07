@@ -1170,7 +1170,6 @@ const Point3D Hal9001::FindNearestExpansion(){
     bool occupied;
     float distance = std::numeric_limits<float>::max();
     Point3D closest;    // very unlikely that closest will remain uninitialized
-    cout << expansions.size() << endl;
     for (const auto &exp : expansions){
         occupied = false;
         float d = DistanceSquared3D(exp, startLocation);
