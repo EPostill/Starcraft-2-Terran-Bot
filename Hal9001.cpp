@@ -680,18 +680,8 @@ void Hal9001::ManageArmy() {
             }
         } else{
             if (!enemiesAll.empty()){
-                // attack closest remaining enemy
-                for (const auto &enemy : enemiesAll) {
-                    float d = DistanceSquared2D(enemy->pos, enemyBase);
-                    cout << "enemy has distance " << d << endl;
-                    if (d < distance) {
-                        if (enemy->health == 0){
-                            continue;
-                        }
-                        distance = d;
-                        base_to_rush = enemy->pos;
-                    }
-                }      
+                // attack remaining enemy units
+                base_to_rush = enemiesAll.front()->pos;    
                 cout << "base to rush is " << base_to_rush.x << ", " << base_to_rush.y << endl;
             }
 
@@ -997,7 +987,7 @@ const Point2D Hal9001::getFirstDepotLocation(const Unit *commcenter){
 
     // distance from CC
     // TODO: is this still too hard coded? maybe look into playable_max of game_info
-    int distance = 10;
+    int distance = 9;
 
     // get relative direction
     // I want to place supply depot in relative front left of Command Center
