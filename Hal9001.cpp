@@ -415,7 +415,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         }
     }   
 
-
     // lower supply depots
     for (const auto &depot: depots){
         if (depot->unit_type != UNIT_TYPEID::TERRAN_SUPPLYDEPOTLOWERED && depot->orders.empty()){
@@ -1151,6 +1150,10 @@ void Hal9001::OnStep() {
         ShouldRetreat(observation);
     }
 
+    if (buildOrderComplete) {
+        AttemptExpansion(observation);
+    }
+
 }
 
 void Hal9001::OnUnitIdle(const Unit *unit) {
@@ -1187,6 +1190,16 @@ const Point3D Hal9001::FindNearestExpansion(){
         }
     }
     return closest;
+}
+
+void Hal9001::AttemptExpansion(const ObservationInterface* observation) {
+    Units bases = observation->GetUnits(Unit::Alliance::Self, IsTownHall());
+    for (const auto &base : bases) {
+        if (base->assigned_harvesters >= base->ideal_harvesters) {
+            return;
+        }
+    }
+    Expand();
 }
 
 // returns nearest mineral patch or nullptr if none found
