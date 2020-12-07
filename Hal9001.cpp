@@ -359,10 +359,10 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         if (builders.size() == 2){
             // cout << "build 20" << endl;
             // build barrack next to factory
-            // int dist = map_name == BELSHIR
-            buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, BEHINDLEFT, 0, builders.front());
+            int dist = map_name == BELSHIR ? 3 : 0;
+            buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, BEHINDLEFT, dist, builders.front());
             // build another barrack next to starport
-            buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, BEHINDLEFT, 0, builders.back());
+            buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, BEHINDLEFT, dist, builders.back());
         }
     }
     // build tech labs on the 2 barracks (modification of build order)
@@ -1194,7 +1194,9 @@ bool Hal9001::hasCommCenter(Point3D exp){
     Units commcenters = getCommCenters();
 
     for (const auto &cc : commcenters){
+        #ifdef DEBUG
         cout << cc->pos.x << " " << cc->pos.y << " " << commcenters.size() << endl;
+        #endif
         if (abs(cc->pos.x - exp.x) < 1 && abs(cc->pos.y - exp.y) < 1){
             cout << "has cc"<< endl;
             return true;
@@ -1213,8 +1215,9 @@ const Point3D Hal9001::FindNearestExpansion(){
             closest = expansions[i];
         }
     }
-
+    #ifdef DEBUG
     cout << closest.x << " " << closest.y << endl;
+    #endif
     return closest;
 }
 
