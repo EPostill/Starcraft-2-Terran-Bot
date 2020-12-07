@@ -145,7 +145,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // cout << "build 3" << endl;
         if (!depots.empty()){
             const Unit *depot = depots.front();
-            buildNextTo(ABILITY_ID::BUILD_BARRACKS, depot, LEFT, 0, mainSCV);
+            buildNextTo(ABILITY_ID::BUILD_BARRACKS, depot, LEFT, 0);
         }
     }
 
@@ -360,7 +360,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         }
     }
     // build tech labs on the 2 barracks (modification of build order)
-    if (minerals >= 100 && vespene >= 50 && barracks.size() == 3 && barrack_techlabs.size() < 2){
+    if (minerals >= 100 && vespene >= 50 && barracks.size() >= 3 && barrack_techlabs.size() < 2){
         for (const auto &b : barracks){
             if (!doneConstruction(b)){
                 continue;
@@ -556,6 +556,8 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     Units barracks = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
     Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
     Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
+    Units barracks_reactors = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKSREACTOR);
+    Units barracks_techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
 
     int numMarines = CountUnitType(UNIT_TYPEID::TERRAN_MARINE);
     int numMarauders = CountUnitType(UNIT_TYPEID::TERRAN_MARAUDER);
@@ -566,22 +568,36 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
 
     int numFactTechlabs = CountUnitType(UNIT_TYPEID::TERRAN_FACTORYTECHLAB);
     int numStarReactors = CountUnitType(UNIT_TYPEID::TERRAN_STARPORTREACTOR);
-    int numBarrReactors = CountUnitType(UNIT_TYPEID::TERRAN_BARRACKSREACTOR);
 
     if (observation->GetMinerals() < 300) {
         return;
     }
 
-    if (!barracks.empty() && numBarrReactors >= 1) {
+    
+    if (!barracks.empty()) {
         for (auto const &barrack : barracks){
+            // train marines at the barracks with a reactor
             if (barrack->orders.size() < 2 && numMarines < unit_ratios[game_stage][MARINE] * 2){
-                Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
+                for (auto const &reactor : barracks_reactors){
+                    if (barrack->add_on_tag == reactor->tag){
+                        Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
+                    }
+                }
+            }
+            // train marauders at the barracks with a techlab
+            if (barrack->orders.empty() && numMarauders < unit_ratios[game_stage][MARAUDER] * 2){
+                for (auto const &techlab : barracks_techlabs){
+                    if (barrack->add_on_tag == techlab->tag){
+                        Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARAUDER);
+                    }
+                }
             }
         }
-        for (auto const &barrack : barracks){
-            if (barrack->orders.empty() && numMarauders < unit_ratios[game_stage][MARAUDER] * 2){
-                Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARAUDER);
-            }
+    }
+    // train marauders at the barracks with a techlab
+    if (!barracks_techlabs.empty()){
+        for (auto const &barrack : barracks_techlabs){
+
         }
     }
     
