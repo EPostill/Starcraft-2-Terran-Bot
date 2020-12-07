@@ -303,7 +303,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         if (doneConstruction(factory)){
             // cout << "build 13" << endl;
             // build a star port next to the factory
-            buildNextTo(ABILITY_ID::BUILD_STARPORT, factory, RIGHT, 2);
+            buildNextTo(ABILITY_ID::BUILD_STARPORT, factory, RIGHT, 1);
             // build tech lab on factory
             #ifdef DEBUG
             cout << "trying to build tech lab on factory" << endl;
@@ -1539,7 +1539,7 @@ float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
 
     switch (abilityId){
         case ABILITY_ID::BUILD_STARPORT:
-            abilityId = ABILITY_ID::BUILD_REACTOR_STARPORT;
+            abilityId = ABILITY_ID::BUILD_TECHLAB_STARPORT;
             break;
         case ABILITY_ID::BUILD_BARRACKS:
             abilityId = ABILITY_ID::BUILD_TECHLAB_BARRACKS;
