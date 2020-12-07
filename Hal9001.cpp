@@ -1481,8 +1481,23 @@ void Hal9001::buildNextTo(ABILITY_ID ability_id, const Unit* ref, RelDir relDir,
     // get radius of ref
     float radiusRE = ref -> radius;
 
+    float radiusTB;
+
     // get radius of to be built
-    float radiusTB = radiusOfToBeBuilt(ability_id); 
+    // if in proxima special startport location
+    if(map_name == PROXIMA){
+        switch (ability_id){
+            case ABILITY_ID::BUILD_STARPORT:
+                radiusTB = radiusOfToBeBuilt(ABILITY_ID::BUILD_TECHLAB_STARPORT);
+                break;
+            default:
+                radiusTB = radiusOfToBeBuilt(ability_id);
+                break;
+        }
+    } else{
+        radiusTB = radiusOfToBeBuilt(ability_id);
+    }
+
     vector<QueryInterface::PlacementQuery> queries;
     // check placement in all directions
     for (int i = 0; i <= RelDir::BEHIND; ++i){
