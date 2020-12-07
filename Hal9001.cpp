@@ -4,7 +4,7 @@
 #include "cpp-sc2/src/sc2api/sc2_client.cc"
 using namespace std;
 
-#define DEBUG false
+// #define DEBUG false
 
 struct IsArmy {
     IsArmy(const ObservationInterface* obs) : observation_(obs) {}
@@ -143,9 +143,10 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     ========================================================================================= **/
     if (supplies >= 16 && minerals >= 150 && barracks.empty()) {
         // cout << "build 3" << endl;
+        const Unit *builder = FindNearestSCV(mainSCV->pos);
         if (!depots.empty()){
             const Unit *depot = depots.front();
-            buildNextTo(ABILITY_ID::BUILD_BARRACKS, depot, LEFT, 0, mainSCV);
+            buildNextTo(ABILITY_ID::BUILD_BARRACKS, depot, LEFT, 0, builder);
         }
     }
 
@@ -224,14 +225,16 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition: Marine == 1, we have an orbital and a normal command center and one depot
      * Status: DONE
     *========================================================================================= */
-    if (barracks_reactors.empty() && bases.size() == 1 && orbcoms.size() == 1 && depots.size() == 1) {
-        // cout << "build 8" << endl;
+    if (depots.size() == 1 && !barracks.empty() && bases.size() == 1 && orbcoms.size() == 1) {
+        const Unit* barrack = barracks.front();
+        // build a depot next to the reactor
+        buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, barrack, LEFT, 0);
+    }
+    if (barracks_reactors.empty() && !barracks.empty()){
         // get barrack
         const Unit* barrack = barracks.front();
         // build reactor on barracks
         Actions()->UnitCommand(barrack, ABILITY_ID::BUILD_REACTOR_BARRACKS);
-        // build a depot next to the reactor
-        buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, barrack, LEFT, 0);
     }
 
     /***=========================================================================================
@@ -358,7 +361,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         }
     }
     // build tech labs on the 2 barracks (modification of build order)
-    if (minerals >= 100 && vespene >= 50 && barracks.size() == 3 && barrack_techlabs.size() < 3){
+    if (minerals >= 100 && vespene >= 50 && barracks.size() >= 3 && barrack_techlabs.size() < 2){
         for (const auto &b : barracks){
             if (!doneConstruction(b)){
                 continue;
@@ -421,7 +424,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     }
 
     // spam depots at a random location
-    if (depots.size() >= 3 || buildOrderComplete){
+    if (buildOrderComplete || (starport_reactors.size() >= 2 && barrack_techlabs.size() >= 2)){
         if (supplies >= observation->GetFoodCap() - 2){
             if (commcenters.empty()){
                 return;
@@ -430,7 +433,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
             float rx = GetRandomScalar();
             float ry = GetRandomScalar();
             Point2D loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
-            BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y, mainSCV);
+            BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y);
         }
     }
 
@@ -554,6 +557,8 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
     Units barracks = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
     Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
     Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
+    Units barracks_reactors = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKSREACTOR);
+    Units barracks_techlabs = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
 
     int numMarines = CountUnitType(UNIT_TYPEID::TERRAN_MARINE);
     int numMarauders = CountUnitType(UNIT_TYPEID::TERRAN_MARAUDER);
@@ -569,16 +574,31 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
         return;
     }
 
+    
     if (!barracks.empty()) {
         for (auto const &barrack : barracks){
+            // train marines at the barracks with a reactor
             if (barrack->orders.size() < 2 && numMarines < unit_ratios[game_stage][MARINE] * 2){
-                Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
+                for (auto const &reactor : barracks_reactors){
+                    if (barrack->add_on_tag == reactor->tag){
+                        Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
+                    }
+                }
+            }
+            // train marauders at the barracks with a techlab
+            if (barrack->orders.empty() && numMarauders < unit_ratios[game_stage][MARAUDER] * 2){
+                for (auto const &techlab : barracks_techlabs){
+                    if (barrack->add_on_tag == techlab->tag){
+                        Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARAUDER);
+                    }
+                }
             }
         }
-        for (auto const &barrack : barracks){
-            if (barrack->orders.empty() && numMarauders < unit_ratios[game_stage][MARAUDER] * 2){
-                Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARAUDER);
-            }
+    }
+    // train marauders at the barracks with a techlab
+    if (!barracks_techlabs.empty()){
+        for (auto const &barrack : barracks_techlabs){
+
         }
     }
     
