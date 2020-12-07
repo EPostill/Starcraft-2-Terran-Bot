@@ -703,8 +703,6 @@ void Hal9001::ManageArmy() {
         }
     }
 
-
-
     for (const auto &unit : allies) {
         //INDIVIDUAL UNIT BEHAVIOUR
         switch (unit->unit_type.ToType()) {
@@ -1493,8 +1491,6 @@ float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
         }
     }
 
-    // cout << abilities[index].button_name << " " << abilities[index].is_building << endl;
-
     // return the footprint radius of ability
     return abilities[index].footprint_radius;
 }
@@ -1766,4 +1762,61 @@ void Hal9001::landFlyer(const Unit* flyer, RelDir relDir, ABILITY_ID aid_to_land
             break;
         }
     }
+}
+
+
+/**
+@desc This function will populate a vector of enemies in range of a specific unit
+@param unit - the unit to attack
+@param targets - a vector to populate
+@param range - how far from u (prevent returning units that are too far)
+@return void
+**/
+void Hal9001::enemies_within_range(const Unit &u, Units &targets, float range) const{
+    targets.clear();
+
+    // get all enemies from observation
+    const ObservationInterface *observation = Observation();
+    Units enemies = observation -> GetUnits(Unit::Alliance::Enemy, IsArmy(observation));
+
+    // for all enemies
+    for (const auto& enemy : enemies) {
+        float dist = DistanceSquared2D(enemy->pos, u.pos);
+        
+        // if distance between unit are within range then push to targets
+        if(dist <= range){
+            targets.push_back(enemy);
+        }
+    }
+}
+
+
+/**
+@desc This function will return random closest enemy unit
+@param u - reference unit (return random closest enemy to this unit)
+@param range - how far from u (prevent returning units that are too far)
+@return void
+*/
+const Unit* Hal9001::random_closest_enemy(Unit &u, float range) const{
+    // populate this vector 
+    Units targets;
+
+    // get enemies within range
+    enemies_within_range(u, targets, range);
+
+    // if no targets in range
+    if(!targets.size()) return 0;
+
+    // This will be the index of the closest enemy target
+    int minIndex = 0;
+
+    // loop through targets
+    for(int i = 0; i < targets.size(); ++i){
+        float minDist = DistanceSquared2D(targets[minIndex] -> pos, u.pos);
+        float currDist = DistanceSquared2D(targets[i] -> pos, u.pos);
+
+        if(currDist < minDist) minIndex = i;
+    }
+
+    return targets[minIndex];
 }
