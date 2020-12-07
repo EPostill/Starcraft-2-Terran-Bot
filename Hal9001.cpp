@@ -260,7 +260,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // if map is proxima, bunker should be placed in reference to 
         if(map_name == PROXIMA){
             const Unit* cc = orbcoms.back();
-            buildNextTo(ABILITY_ID::BUILD_BUNKER, cc, FRONTLEFT, 8);
+            buildNextTo(ABILITY_ID::BUILD_BUNKER, cc, FRONTLEFT, 10);
         } else{
             const Unit* cc = bases.back();
             buildNextTo(ABILITY_ID::BUILD_BUNKER, cc, FRONTRIGHT, 4);
@@ -412,6 +412,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
             BuildRefinery(cc);
             buildOrderComplete = true;
             cout << "Build order complete" << endl;
+            Expand();
         }
     }   
 
