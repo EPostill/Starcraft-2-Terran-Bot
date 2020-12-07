@@ -699,7 +699,9 @@ void Hal9001::ManageArmy() {
                         base_to_rush = enemy->pos;
                     }           
                 }
+                #ifdef DEBUG
                 cout << "base to rush is " << base_to_rush.x << ", " << base_to_rush.y << endl;
+                #endif
             }
 
         }
