@@ -40,6 +40,8 @@ public:
 	const Unit* FindNearestSCV(const Point2D &start);
 	// returns free expansion location nearest to main base
 	const Point3D FindNearestExpansion();
+	//try to build a new base
+	void AttemptExpansion(const ObservationInterface* observation);
 	void BuildStructure(ABILITY_ID ability_type_for_structure, float x, float y, const Unit *builder = nullptr);
 	void BuildOrder(const ObservationInterface *observation);
 	//Determine retreat condition

@@ -416,7 +416,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         }
     }   
 
-
     // lower supply depots
     for (const auto &depot: depots){
         if (depot->unit_type != UNIT_TYPEID::TERRAN_SUPPLYDEPOTLOWERED && depot->orders.empty()){
@@ -681,18 +680,8 @@ void Hal9001::ManageArmy() {
             }
         } else{
             if (!enemiesAll.empty()){
-                // attack closest remaining enemy
-                for (const auto &enemy : enemiesAll) {
-                    float d = DistanceSquared2D(enemy->pos, enemyBase);
-                    cout << "enemy has distance " << d << endl;
-                    if (d < distance) {
-                        if (enemy->health == 0){
-                            continue;
-                        }
-                        distance = d;
-                        base_to_rush = enemy->pos;
-                    }
-                }      
+                // attack remaining enemy units
+                base_to_rush = enemiesAll.front()->pos;    
                 cout << "base to rush is " << base_to_rush.x << ", " << base_to_rush.y << endl;
             }
 
@@ -996,7 +985,7 @@ const Point2D Hal9001::getFirstDepotLocation(const Unit *commcenter){
 
     // distance from CC
     // TODO: is this still too hard coded? maybe look into playable_max of game_info
-    int distance = 10;
+    int distance = 9;
 
     // get relative direction
     // I want to place supply depot in relative front left of Command Center
@@ -1150,6 +1139,10 @@ void Hal9001::OnStep() {
         ShouldRetreat(observation);
     }
 
+    if (buildOrderComplete) {
+        AttemptExpansion(observation);
+    }
+
 }
 
 void Hal9001::OnUnitIdle(const Unit *unit) {
@@ -1186,6 +1179,16 @@ const Point3D Hal9001::FindNearestExpansion(){
         }
     }
     return closest;
+}
+
+void Hal9001::AttemptExpansion(const ObservationInterface* observation) {
+    Units bases = observation->GetUnits(Unit::Alliance::Self, IsTownHall());
+    for (const auto &base : bases) {
+        if (base->assigned_harvesters >= base->ideal_harvesters) {
+            return;
+        }
+    }
+    Expand();
 }
 
 // returns nearest mineral patch or nullptr if none found
