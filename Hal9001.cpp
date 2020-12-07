@@ -143,9 +143,10 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     ========================================================================================= **/
     if (supplies >= 16 && minerals >= 150 && barracks.empty()) {
         // cout << "build 3" << endl;
+        const Unit *builder = FindNearestSCV(mainSCV->pos);
         if (!depots.empty()){
             const Unit *depot = depots.front();
-            buildNextTo(ABILITY_ID::BUILD_BARRACKS, depot, LEFT, 0);
+            buildNextTo(ABILITY_ID::BUILD_BARRACKS, depot, LEFT, 0, builder);
         }
     }
 
@@ -432,7 +433,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
             float rx = GetRandomScalar();
             float ry = GetRandomScalar();
             Point2D loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
-            BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y, mainSCV);
+            BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y);
         }
     }
 
