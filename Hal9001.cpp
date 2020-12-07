@@ -704,7 +704,7 @@ void Hal9001::ManageArmy() {
             #endif
             if (base_to_rush == Point2D(0,0)){
                 cout << "base_to_rush is null" << endl;
-                continue;
+                Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, stagingArea);
             }
             else if (true/*DistanceSquared2D(base_to_rush, unit->pos) > 25*/) {
                 if (unit->is_flying && DistanceSquared2D(unit->pos, squadleader->pos) > 40) {
