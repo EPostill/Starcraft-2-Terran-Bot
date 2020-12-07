@@ -246,7 +246,11 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // cout << "build 9" << endl;
         // get 1st cc => orbital now
         const Unit* cc1 = orbcoms.front();
-        buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 2); 
+        if (map_name == MapName::PROXIMA){
+            buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 2); 
+        } else {
+            buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 1); 
+        }
 
     }
 
@@ -355,9 +359,9 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         if (builders.size() == 2){
             // cout << "build 20" << endl;
             // build barrack next to factory
-            buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, FRONT, 0, builders.front());
+            buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, BEHINDLEFT, 0, builders.front());
             // build another barrack next to starport
-            buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, FRONT, 0, builders.back());
+            buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, BEHINDLEFT, 0, builders.back());
         }
     }
     // build tech labs on the 2 barracks (modification of build order)
@@ -426,14 +430,22 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     // spam depots at a random location
     if (buildOrderComplete || (starport_reactors.size() >= 2 && barrack_techlabs.size() >= 2)){
         if (supplies >= observation->GetFoodCap() - 2){
-            if (commcenters.empty()){
+            if (commcenters.empty() || orbcoms.empty()){
                 return;
             }
-            Point3D basePos = commcenters.front()->pos;
-            float rx = GetRandomScalar();
-            float ry = GetRandomScalar();
-            Point2D loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
-            BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y);
+            Units builders = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, Point2D(0,0), 2);
+            if (builders.size() == 2){
+                // put one at main base
+                Point3D basePos = commcenters.front()->pos;
+                float rx = GetRandomScalar();
+                float ry = GetRandomScalar();
+                Point2D loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
+                BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y, builders.front());
+                // one at expansion
+                basePos = orbcoms.front()->pos;
+                loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
+                BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y, builders.back());
+            }
         }
     }
 
@@ -595,12 +607,6 @@ void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
             }
         }
     }
-    // train marauders at the barracks with a techlab
-    if (!barracks_techlabs.empty()){
-        for (auto const &barrack : barracks_techlabs){
-
-        }
-    }
     
     if (!starports.empty() && numStarReactors >= 2) {
         //Medivacs
@@ -645,13 +651,8 @@ void Hal9001::ManageArmy() {
     Units enemiesAll = observation->GetUnits(Unit::Alliance::Enemy);
 
     const Unit *closestEnemy;
-    const Unit *squadleader;
     Point2D base_to_rush = Point2D(0,0);
     float distance = std::numeric_limits<float>::max();
-
-    if (!marines.empty()) {
-        squadleader = marines.front();
-    }
     if (!bases.empty()){
         const Unit *homebase = bases.front();
     }
@@ -682,7 +683,7 @@ void Hal9001::ManageArmy() {
             if (!enemiesAll.empty()){
                 // attack remaining enemy units
                 for (const auto &enemy : enemiesAll){
-                    if (!enemy->is_burrowed || !enemy->is_alive){
+                    if (!enemy->is_alive){
                         continue;
                     }
                     float d = DistanceSquared3D(enemy->pos, squadleader->pos);
@@ -691,10 +692,24 @@ void Hal9001::ManageArmy() {
                         base_to_rush = enemy->pos;
                     }           
                 }
+                #ifdef DEBUG
                 cout << "base to rush is " << base_to_rush.x << ", " << base_to_rush.y << endl;
+                #endif
             }
 
         }
+
+        if (squadleader == nullptr || steps % 5 == 0) {
+            float distance = std::numeric_limits<float>::max();
+            for (const auto &marine : marines) {
+                float d = DistanceSquared2D(marine->pos, base_to_rush);
+                if (d < distance) {
+                    distance = d;
+                    squadleader = marine;
+                }
+            }
+        }
+
         for (const auto &unit : allies) {
             if (!unit->is_flying && !unit->orders.empty() && unit->orders.front().target_pos == base_to_rush) {
                 continue;
@@ -704,10 +719,10 @@ void Hal9001::ManageArmy() {
             #endif
             if (base_to_rush == Point2D(0,0)){
                 cout << "base_to_rush is null" << endl;
-                continue;
+                Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, stagingArea);
             }
             else if (true/*DistanceSquared2D(base_to_rush, unit->pos) > 25*/) {
-                if (unit->is_flying && DistanceSquared2D(unit->pos, squadleader->pos) > 40) {
+                if (unit->is_flying && !unit->orders.empty() && DistanceSquared2D(unit->orders.front().target_pos, squadleader->pos) > 36) {
                     Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, squadleader->pos);
                 }
                 else {
@@ -830,7 +845,7 @@ void Hal9001::ManageArmy() {
                     }
                 }
                 //seige if within range
-                if (distance < 111) {
+                if (distance < 49) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SIEGEMODE);
                 }
                 break;
@@ -844,7 +859,7 @@ void Hal9001::ManageArmy() {
                     }
                 }
                 //if there are no enemies nearby 
-                if (distance > 169 || enemies.empty()) {
+                if (distance > 49 || enemies.empty()) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_UNSIEGE);
                 }
                 break;
@@ -909,9 +924,9 @@ void Hal9001::FinalSweep(const ObservationInterface* observation) {
     if (!orbcoms.empty()){
         const Unit *orbcom = orbcoms.front();
         if (orbcom->orders.empty() && orbcom->energy >= 50){
-            Units marines = GetRandomUnits(UNIT_TYPEID::TERRAN_MARINE, enemyBase);
-            if (!marines.empty()){
-                Actions()->UnitCommand(orbcom, ABILITY_ID::EFFECT_SCAN, marines.front()->pos);
+            Units enemiesAll = observation->GetUnits(Unit::Alliance::Enemy);
+            if (!enemiesAll.empty()){
+                Actions()->UnitCommand(orbcom, ABILITY_ID::EFFECT_SCAN, enemiesAll.front()->pos);
             }
         }
     }

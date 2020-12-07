@@ -222,6 +222,7 @@ private:
 	Point2D stagingArea;	// location in which to stage our army
 	const Unit *mainSCV;	// main scv worker
 	const Unit* scout;		// scout unit
+	const Unit* squadleader;//leader of the army
 	int supplies;			// supply count
 	int minerals;			// mineral count
 	int vespene;			// gas count
