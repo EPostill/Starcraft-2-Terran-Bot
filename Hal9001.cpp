@@ -246,7 +246,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // cout << "build 9" << endl;
         // get 1st cc => orbital now
         const Unit* cc1 = orbcoms.front();
-        buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 2); 
+        buildNextTo(ABILITY_ID::BUILD_FACTORY, cc1, FRONT, 1); 
 
     }
 
@@ -426,14 +426,22 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     // spam depots at a random location
     if (buildOrderComplete || (starport_reactors.size() >= 2 && barrack_techlabs.size() >= 2)){
         if (supplies >= observation->GetFoodCap() - 2){
-            if (commcenters.empty()){
+            if (commcenters.empty() || orbcoms.empty()){
                 return;
             }
-            Point3D basePos = commcenters.front()->pos;
-            float rx = GetRandomScalar();
-            float ry = GetRandomScalar();
-            Point2D loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
-            BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y);
+            Units builders = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, Point2D(0,0), 2);
+            if (builders.size() == 2){
+                // put one at main base
+                Point3D basePos = commcenters.front()->pos;
+                float rx = GetRandomScalar();
+                float ry = GetRandomScalar();
+                Point2D loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
+                BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y, builders.front());
+                // one at expansion
+                basePos = orbcoms.front()->pos;
+                loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
+                BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y, builders.back());
+            }
         }
     }
 
