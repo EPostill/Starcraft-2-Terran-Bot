@@ -681,9 +681,15 @@ void Hal9001::ManageArmy() {
         } else{
             if (!enemiesAll.empty()){
                 // attack remaining enemy units
-                base_to_rush = enemiesAll.front()->pos;    
-                if (enemiesAll.front()->build_progress != 1){
-                    base_to_rush = enemiesAll.back()->pos;
+                for (const auto &enemy : enemiesAll){
+                    if (!enemy->is_burrowed || !enemy->is_alive){
+                        continue;
+                    }
+                    float d = DistanceSquared3D(enemy->pos, squadleader->pos);
+                    if (d < distance) {
+                        distance = d;
+                        base_to_rush = enemy->pos;
+                    }           
                 }
                 cout << "base to rush is " << base_to_rush.x << ", " << base_to_rush.y << endl;
             }
