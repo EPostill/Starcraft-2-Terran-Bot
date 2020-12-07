@@ -355,9 +355,9 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         if (builders.size() == 2){
             // cout << "build 20" << endl;
             // build barrack next to factory
-            buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, FRONT, 0, builders.front());
+            buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, BEHINDLEFT, 0, builders.front());
             // build another barrack next to starport
-            buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, FRONT, 0, builders.back());
+            buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, BEHINDLEFT, 0, builders.back());
         }
     }
     // build tech labs on the 2 barracks (modification of build order)
@@ -682,7 +682,7 @@ void Hal9001::ManageArmy() {
             if (!enemiesAll.empty()){
                 // attack remaining enemy units
                 for (const auto &enemy : enemiesAll){
-                    if (!enemy->is_burrowed || !enemy->is_alive){
+                    if (!enemy->is_alive){
                         continue;
                     }
                     float d = DistanceSquared3D(enemy->pos, squadleader->pos);
@@ -830,7 +830,7 @@ void Hal9001::ManageArmy() {
                     }
                 }
                 //seige if within range
-                if (distance < 111) {
+                if (distance < 49) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_SIEGEMODE);
                 }
                 break;
@@ -844,7 +844,7 @@ void Hal9001::ManageArmy() {
                     }
                 }
                 //if there are no enemies nearby 
-                if (distance > 169 || enemies.empty()) {
+                if (distance > 49 || enemies.empty()) {
                     Actions()->UnitCommand(unit, ABILITY_ID::MORPH_UNSIEGE);
                 }
                 break;
