@@ -428,24 +428,26 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     }
 
     // spam depots at a random location
-    if (buildOrderComplete || (starport_reactors.size() >= 2 && barrack_techlabs.size() >= 2)){
-        if (supplies >= observation->GetFoodCap() - 2){
-            if (commcenters.empty() || orbcoms.empty()){
+    
+    if (supplies >= observation->GetFoodCap() - 2){
+        // can build near main base
+        if (buildOrderComplete || (starport_reactors.size() >= 2 && barrack_techlabs.size() >= 2)){
+            if (orbcoms.empty()){
                 return;
             }
-            Units builders = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, Point2D(0,0), 2);
-            if (builders.size() == 2){
-                // put one at main base
-                Point3D basePos = commcenters.front()->pos;
-                float rx = GetRandomScalar();
-                float ry = GetRandomScalar();
-                Point2D loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
-                BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y, builders.front());
-                // one at expansion
-                basePos = orbcoms.front()->pos;
-                loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
-                BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y, builders.back());
-            }
+            float rx = GetRandomScalar();
+            float ry = GetRandomScalar();
+            Point3D basePos = orbcoms.front()->pos;
+            Point2D loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
+            BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y, FindNearestSCV(loc));
+        }
+        // can build near expansion
+        if (!orbcoms.empty() && !commcenters.empty()){
+            float rx = GetRandomScalar();
+            float ry = GetRandomScalar();
+            Point3D basePos = commcenters.front()->pos;
+            Point2D loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
+            BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y, FindNearestSCV(loc));
         }
     }
 
