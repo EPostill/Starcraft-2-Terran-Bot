@@ -1481,22 +1481,8 @@ void Hal9001::buildNextTo(ABILITY_ID ability_id, const Unit* ref, RelDir relDir,
     // get radius of ref
     float radiusRE = ref -> radius;
 
-    float radiusTB;
-
     // get radius of to be built
-    // if in proxima special startport location
-    if(map_name == PROXIMA){
-        switch (ability_id){
-            case ABILITY_ID::BUILD_STARPORT:
-                radiusTB = radiusOfToBeBuilt(ABILITY_ID::BUILD_TECHLAB_STARPORT);
-                break;
-            default:
-                radiusTB = radiusOfToBeBuilt(ability_id);
-                break;
-        }
-    } else{
-        radiusTB = radiusOfToBeBuilt(ability_id);
-    }
+    float radiusTB = radiusOfToBeBuilt(ability_id);
 
     vector<QueryInterface::PlacementQuery> queries;
     // check placement in all directions
@@ -1545,6 +1531,14 @@ float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
 
     // This will be the index of the searched ability
     int index;
+
+    switch (abilityId){
+        case ABILITY_ID::BUILD_STARPORT:
+            abilityId = ABILITY_ID::BUILD_TECHLAB_STARPORT;
+            break;
+        default:
+            break;
+    }
 
     // loop through vector to search for ability
     for(int i = 0; i < abilities.size(); ++i){
