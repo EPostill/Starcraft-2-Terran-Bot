@@ -359,7 +359,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         if (builders.size() == 2){
             // cout << "build 20" << endl;
             // build barrack next to factory
-            int dist = map_name == BELSHIR ? 3 : 0;
+            int dist = 3;
             buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, BEHINDLEFT, dist, builders.front());
             // build another barrack next to starport
             buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, BEHINDLEFT, dist, builders.back());
@@ -1198,7 +1198,9 @@ bool Hal9001::hasCommCenter(Point3D exp){
         cout << cc->pos.x << " " << cc->pos.y << " " << commcenters.size() << endl;
         #endif
         if (abs(cc->pos.x - exp.x) < 1 && abs(cc->pos.y - exp.y) < 1){
+            #ifdef DEBUG
             cout << "has cc"<< endl;
+            #endif
             return true;
         }
     }
@@ -1577,7 +1579,7 @@ float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
             abilityId = ABILITY_ID::BUILD_TECHLAB_STARPORT;
             break;
         case ABILITY_ID::BUILD_BARRACKS:
-            abilityId = ABILITY_ID::BUILD_REACTOR_BARRACKS;
+            abilityId = ABILITY_ID::BUILD_TECHLAB_BARRACKS;
             break;
         case ABILITY_ID::BUILD_FACTORY:
             abilityId = ABILITY_ID::BUILD_TECHLAB_FACTORY;
@@ -1592,8 +1594,7 @@ float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
             index = i;
         }
     }
-
-    // return the footprint radius of ability
+    
     return abilities[index].footprint_radius;
 }
 
