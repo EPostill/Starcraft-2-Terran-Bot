@@ -53,6 +53,7 @@ void Hal9001::OnGameStart() {
 
     // store expansions and start location
     expansions = search::CalculateExpansionLocations(observation, Query());
+    unseen_expansions = expansions;
     startLocation = observation->GetStartLocation();
 
     // get map width and height
@@ -395,7 +396,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Condition : we have 4 barracks
      * Status: DONE
     *========================================================================================= */
-    if (refineries.size() == 2 && engbays.empty() && barracks.size() == 3 && bases.size() == 1 && supplies >= 48 && minerals >= 200) {
+    if (refineries.size() >= 2 && engbays.empty() && barracks.size() >= 2 && bases.size() == 1 && supplies >= 48 && minerals >= 200) {
         const Unit *cc = bases.front();
         Units builders = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, cc->pos, 2);
         if (builders.size() == 2){
@@ -921,10 +922,11 @@ void Hal9001::FinalSweep(const ObservationInterface* observation) {
     Units orbcoms = GetUnitsOfType(UNIT_TYPEID::TERRAN_ORBITALCOMMAND);
     if (!orbcoms.empty()){
         const Unit *orbcom = orbcoms.front();
-        if (orbcom->orders.empty() && orbcom->energy >= 50){
-            Units enemiesAll = observation->GetUnits(Unit::Alliance::Enemy);
-            if (!enemiesAll.empty()){
-                Actions()->UnitCommand(orbcom, ABILITY_ID::EFFECT_SCAN, enemiesAll.front()->pos);
+        if (orbcom->orders.empty() && orbcom->energy >= 50 && !unseen_expansions.empty()){
+            for (auto it = begin(unseen_expansions); it != end(unseen_expansions); ++it){
+                Actions()->UnitCommand(orbcom, ABILITY_ID::EFFECT_SCAN, *it);
+                unseen_expansions.erase(it);
+                return;
             }
         }
     }

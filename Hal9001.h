@@ -223,6 +223,7 @@ private:
 	//bool L3;
 
     std::vector<Point3D> expansions;	// vector of all expansions
+	std::vector<Point3D> unseen_expansions;	// vector of all unseen expansions (used for endgame sweeping)
     Point3D startLocation;	// location of main base
 	Point2D depotLocation;	// location where to build the first depot
 	Point2D enemyBase;		// location of enemy base
