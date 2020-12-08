@@ -560,6 +560,10 @@ void Hal9001::ShouldRetreat(const ObservationInterface* observation) {
 }
 
 void Hal9001::ManageArmyProduction(const ObservationInterface* observation){
+    if (observation->GetMinerals() < 300 || observation->GetFoodCap() <= observation->GetFoodUsed() + 2) {
+        return;
+    }
+
     Units barracks = GetUnitsOfType(UNIT_TYPEID::TERRAN_BARRACKS);
     Units factories = GetUnitsOfType(UNIT_TYPEID::TERRAN_FACTORY);
     Units starports = GetUnitsOfType(UNIT_TYPEID::TERRAN_STARPORT);
