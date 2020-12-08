@@ -1228,7 +1228,7 @@ void Hal9001::OnUnitIdle(const Unit *unit) {
 }
 
 void Hal9001::Expand(){
-    cout << "we are expanding" << endl;
+    // cout << "we are expanding" << endl;
     Point3D exp = FindNearestExpansion();
     // build command centre
     BuildStructure(ABILITY_ID::BUILD_COMMANDCENTER, exp.x, exp.y, mainSCV);
