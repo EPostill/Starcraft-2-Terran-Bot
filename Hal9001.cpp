@@ -316,7 +316,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         Units builders = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, fa->pos, 2);
         if (builders.size() == 2){
             // build barrack next to factory
-            int dist = 3;
+            int dist = (map_name == BELSHIR) ? 3 : 0;
             buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, BEHINDLEFT, dist, builders.front());
             // build another barrack next to starport
             buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, BEHINDLEFT, dist, builders.back());
