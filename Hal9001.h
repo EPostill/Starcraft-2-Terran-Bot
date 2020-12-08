@@ -128,23 +128,6 @@ public:
 	Corner cornerLoc(const Unit* unit);
 
 	/**
-	@desc This function will return random closest enemy unit
-	@param u - reference unit (return random closest enemy to this unit)
-	@param range - how far from u (prevent returning units that are too far)
-	@return void
-	*/
-	const Unit* random_closest_enemy(Unit &u, float range) const;
-
-	/**
-	@desc This function will populate a vector of enemies in range of a specific unit
-	@param unit - the unit to attack
-	@param targets - a vector to populate
-	@param range - how far from u (prevent returning units that are too far)
-	@return void
-	**/
-	void enemies_within_range(const Unit &u, Units &targets, float range) const;
-
-	/**
 	@desc This function will return true if expansion has a commcenter
 	@param exp - the Point3D expansion position  
 	@return bool
