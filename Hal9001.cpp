@@ -441,14 +441,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
             Point2D loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
             BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y, FindNearestSCV(loc));
         }
-        // can build near expansion
-        if (!orbcoms.empty() && !commcenters.empty()){
-            float rx = GetRandomScalar();
-            float ry = GetRandomScalar();
-            Point3D basePos = commcenters.front()->pos;
-            Point2D loc = Point2D(basePos.x + rx * 15, basePos.y + ry * 15);
-            BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, loc.x, loc.y, FindNearestSCV(loc));
-        }
     }
 
 }
