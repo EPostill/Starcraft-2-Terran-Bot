@@ -1699,45 +1699,6 @@ std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir
     return std::make_pair(0, 0);
 }
 
-
-/*
-@desc   This will return where another structure is relative to another structure anchor
-         Layman: "Is target on the left or right of anchor"
-
-@param  anchor - a unit, from this
-        target - a unit, to this
-
-@return LEFT or RIGHT (enum)
-*/
-RelDir Hal9001::getHandSide(const Unit* anchor, const Unit *target){
-    
-    // the displacements
-    int x_dis = abs( (anchor -> pos.x) - (target -> pos.y) );
-    int y_dis = abs( (anchor -> pos.y) - (target -> pos.y) );
-
-    // diff of x_dis - y_dis, if > 0 then x_dis is greater
-    int diff = x_dis - y_dis;
-
-
-    Corner loc = cornerLoc(anchor);
-    if(loc == SW || loc == NE){
-        if(diff > 0){
-            return RIGHT;
-        } else{
-            return LEFT;
-        }
-
-    } else if(loc == SE || loc == NW){
-        if(diff > 0){
-            return LEFT;
-        } else{
-            return RIGHT;
-        }
-    }
-    
-    return FRONT;
-}
-
 /*
 @desc This will return where a structure is in the map
 @param unit
@@ -1760,82 +1721,6 @@ Corner Hal9001::cornerLoc(const Unit* unit){
     return M;
 }
 
-/*
-@desc This will return true or false if a build ability is placeable in the given position
-@param unit
-@return bool
-*/
-bool Hal9001::isPlaceable(ABILITY_ID abilityId, Point2D points){
-    // placement query provision
-    vector<QueryInterface::PlacementQuery> queries;
-
-    // slate to query
-    queries.push_back(QueryInterface::PlacementQuery(abilityId, points));
-
-    // get query bool
-    vector<bool> placeble = Query()-> Placement(queries);
-
-    return placeble[0];
-}
-
-/*
-@desc This will return true or false if a order is already given to an scv and is in progress
-@param abilityid
-@return bool
-*/
-bool Hal9001::isOrdered(ABILITY_ID abilityId, UNIT_TYPEID unitTypeId){
-    Units units = GetUnitsOfType(unitTypeId);
-
-    for( const auto &u: units ){
-        if(u -> orders.size()){
-            
-            for( const auto &o: u -> orders){
-                if(o.ability_id == abilityId){
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
-/*
-@desc This will land a build structure in the vicinity
-@param unit for flying building, rel dir (try to land here first), ability id for landing the unit
-@return void
-*/
-void Hal9001::landFlyer(const Unit* flyer, RelDir relDir, ABILITY_ID aid_to_land){
-    // derived from mich's code
-
-    // config coordinates
-    float x = (flyer -> pos.x) + (flyer -> radius) * 2 + 2;
-    float y = (flyer -> pos.y) + (flyer -> radius) * 2 + 2;
-
-
-    vector<QueryInterface::PlacementQuery> queries;
-    // check placement in all 8 directions
-    for(int i = 0; i <= RelDir::BEHIND; ++i){
-        RelDir rd = static_cast<RelDir>(i);
-        std::pair<int, int> relCor = getRelativeDir(flyer, rd);
-        x *= relCor.first; y *= relCor.second;
-        queries.push_back(QueryInterface::PlacementQuery(aid_to_land, Point2D(x, y)));
-    }
-
-    vector<bool> landable = Query() -> Placement(queries);
-    // try to land in given dir first
-    if( landable[relDir]){
-        Actions() -> UnitCommand(flyer, aid_to_land, queries[relDir].target_pos);
-        return;
-    }
-
-    // or land in any possible placement
-    for (int i = 0; i < landable.size(); ++i){
-        if (landable[i]){
-            Actions() -> UnitCommand(flyer, aid_to_land, queries[i].target_pos);
-            break;
-        }
-    }
-}
 
 
 /**
