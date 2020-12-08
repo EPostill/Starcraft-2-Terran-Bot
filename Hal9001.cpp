@@ -1215,7 +1215,7 @@ const Point3D Hal9001::FindNearestExpansion(){
 void Hal9001::AttemptExpansion(const ObservationInterface* observation) {
     Units bases = observation->GetUnits(Unit::Alliance::Self, IsTownHall());
     for (const auto &base : bases) {
-        if (base->assigned_harvesters >= base->ideal_harvesters) {
+        if (base->assigned_harvesters <= base->ideal_harvesters) {
             return;
         }
     }
