@@ -360,7 +360,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         if (builders.size() == 2){
             // cout << "build 20" << endl;
             // build barrack next to factory
-            int dist = 3;
+            int dist = map_name == PROXIMA ? 0: 3;
             buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, BEHINDLEFT, dist, builders.front());
             // build another barrack next to starport
             buildNextTo(ABILITY_ID::BUILD_BARRACKS, sp, BEHINDLEFT, dist, builders.back());
