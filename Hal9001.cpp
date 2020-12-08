@@ -63,7 +63,6 @@ void Hal9001::OnGameStart() {
     // get raw map_name
     std::string map_name = observation -> GetGameInfo().map_name;
 
-    cout << map_name << endl;
 
     // config map_name to enum
     if(map_name == "Cactus Valley LE (Void)"){
@@ -87,8 +86,6 @@ void Hal9001::OnGameStart() {
 
     // set corner loc of base
     Corner corner_loc = cornerLoc(GetUnitsOfType(UNIT_TYPEID::TERRAN_COMMANDCENTER).front());
-
-    cout << "corner loc " << corner_loc << endl;
 }
 
 //This function contains the steps we take at the start to establish ourselves
@@ -132,7 +129,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Status: DONE
     =========================================================================================**/
     if (supplies >= 14 && minerals > 100 && depots.empty()) {
-        // cout << "build 2" << endl;
         // call BuildStructure
         BuildStructure(ABILITY_ID::BUILD_SUPPLYDEPOT, depotLocation.x, depotLocation.y, mainSCV);
     }
@@ -143,7 +139,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Status: DONE
     ========================================================================================= **/
     if (supplies >= 16 && minerals >= 150 && barracks.empty()) {
-        // cout << "build 3" << endl;
         const Unit *builder = FindNearestSCV(mainSCV->pos);
         if (!depots.empty()){
             const Unit *depot = depots.front();
@@ -157,33 +152,12 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     Status: DONE 
     =========================================================================================**/
     if (supplies >= 16 && minerals >= 75 && refineries.size() == 0) {
-        // cout << "build 4" << endl;
         // Call BuildRefinery with no builder aka random scv will be assigned
         // This will seek for nearest gas supply
         BuildRefinery(bases.front());
 
         // ManageRefineries() will take care of assigning scvs
     }
-
-    /**=========================================================================================
-    Build Order # 5: Send a SCV to scount enemy base and train a marine
-    Condition: supply >= 17 and Barracks == 1, Supply Depot == 1, Refinery == 1
-    Status: NOT DONE
-    =========================================================================================**/
-    // if (supplies >= 17 && refineries.size() == 1 && depots.size() == 1 && barracks.size() == 1){
-        
-    //     const Unit *barrack = barracks.front();
-    //     // train one marine
-    //     if (doneConstruction(barrack) && CountUnitType(UNIT_TYPEID::TERRAN_MARINE) == 0 && barrack->orders.empty()){
-    //         // cout << "build 5" << endl;
-    //         Actions()->UnitCommand(barrack, ABILITY_ID::TRAIN_MARINE);
-
-    //     }
-    //     //if (!builder) {
-    //     //    builder = units.back();
-    //     //}
-    //     // FOR MAX - send scv scout
-    // }
 
     /**=========================================================================================
      * Build Order # 6: Upgrade to orbital command center
@@ -194,7 +168,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         //upgrade command center to orbital command
         const Unit* commcenter = bases.front();
         if (commcenter->orders.empty()){
-            // cout << "build 6" << endl;
             Actions()->UnitCommand(commcenter, ABILITY_ID::MORPH_ORBITALCOMMAND, true);
         }
     }
@@ -205,21 +178,9 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
      *=========================================================================================*/
     if (supplies >= 20 && minerals >= 400 && CountUnitType(UNIT_TYPEID::TERRAN_COMMANDCENTER) == 0) {
-        // cout << "build 7" << endl;
         //build command center
         Expand();
     } 
-
-    // set rally point of new command center to minerals
-    // if (bases.size() == 1){
-    //     const Unit* commcenter = bases.front();
-    //     // only set it once
-    //     if (commcenter->build_progress == 0.5){
-    //         Actions()->UnitCommand(commcenter, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos), true);
-    //         // tell mainSCV to mine minerals too once its done building the command center
-    //         Actions()->UnitCommand(mainSCV, ABILITY_ID::SMART, FindNearestMineralPatch(commcenter->pos), true);
-    //     }
-    // }
 
     /***=========================================================================================
      * Build Order # 8: Build reactor on barracks, and build second depot
@@ -244,7 +205,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
      *=========================================================================================*/
     if (factories.empty() && supplies >= 22 && vespene > 100 && minerals > 150 && bases.size() == 1 && orbcoms.size() == 1) {
-        // cout << "build 9" << endl;
         // get 1st cc => orbital now
         const Unit* cc1 = orbcoms.front();
         if (map_name == MapName::PROXIMA){
@@ -292,7 +252,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
      *=========================================================================================*/
     if (supplies >= 26 && minerals >= 75 && refineries.size() == 1 && orbcoms.size() == 1) {
-        // cout << "build 12" << endl;
         // build second refinery next to first command center
         BuildRefinery(orbcoms.front());
     }
@@ -306,7 +265,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // get factory
         const Unit* factory = factories.front();
         if (doneConstruction(factory)){
-            // cout << "build 13" << endl;
             // build a star port next to the factory
             buildNextTo(ABILITY_ID::BUILD_STARPORT, factory, RIGHT, 1);
             // build tech lab on factory
@@ -341,7 +299,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // get depot thats close to 2nd commcenter
         const Unit *depot = FindNearestDepot(bases.front()->pos);
         if (mainSCV->orders.empty()){
-            // cout << "build 19" << endl;
             buildNextTo(ABILITY_ID::BUILD_SUPPLYDEPOT, depot, RIGHT, 0, mainSCV);
         }
     }
@@ -358,7 +315,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         // get two builders (so buildNextTo doesn't assign the same builder for both barracks)
         Units builders = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, fa->pos, 2);
         if (builders.size() == 2){
-            // cout << "build 20" << endl;
             // build barrack next to factory
             int dist = map_name == PROXIMA ? 0: 3;
             buildNextTo(ABILITY_ID::BUILD_BARRACKS, fa, BEHINDLEFT, dist, builders.front());
@@ -386,7 +342,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
      * Status: DONE
     *========================================================================================= */
     if (supplies >= 46 && minerals >= 300 && !starports.empty() && starport_reactors.size() < 2) {
-        // cout << "build 21" << endl;
         // build reactor on starport
         Actions()->UnitCommand(starports, ABILITY_ID::BUILD_REACTOR_STARPORT, true);
     }
@@ -400,7 +355,6 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         const Unit *cc = bases.front();
         Units builders = GetRandomUnits(UNIT_TYPEID::TERRAN_SCV, cc->pos, 2);
         if (builders.size() == 2){
-            // cout << "build 23" << endl;
             buildNextTo(ABILITY_ID::BUILD_ENGINEERINGBAY, cc, FRONT, 3, builders.front());
             BuildRefinery(cc, builders.back());
         }
@@ -414,10 +368,8 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
     if (refineries.size() == 3 && bases.size() == 1 && orbcoms.size() == 1){
         const Unit *cc = bases.front();
         if (cc->assigned_harvesters >= cc->ideal_harvesters){
-            // cout << "build 26" << endl;
             BuildRefinery(cc);
             buildOrderComplete = true;
-            cout << "Build order complete" << endl;
         }
     }   
 
@@ -466,7 +418,7 @@ void Hal9001::setCanRush(const ObservationInterface *observation){
     bool hasInfantry1 = false;
     Units marines = GetUnitsOfType(UNIT_TYPEID::TERRAN_MARINE);
 
-    // check marine hp == 55 for combat shielf
+    // check marine hp == 55 for combat shield
     if (marines.empty()){
         return;
     }
@@ -479,10 +431,8 @@ void Hal9001::setCanRush(const ObservationInterface *observation){
     auto upgrades = observation->GetUpgrades();
     for (const auto &upgrade : upgrades){
         if (upgrade == UPGRADE_ID::STIMPACK){
-            // cout << "has stimpack" << endl;
             hasStimpack = true;
         } else if (upgrade == UPGRADE_ID::TERRANINFANTRYWEAPONSLEVEL1){
-            // cout << "has infantry1" << endl;
             hasInfantry1 = true;
         }
     }
@@ -522,8 +472,6 @@ void Hal9001::ManageUpgrades(const ObservationInterface* observation){
     if (upgrades.size() >= 3){
         return;
     }
-    // TryBuildUnit(ABILITY_ID::RESEARCH_STIMPACK, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
-    // TryBuildUnit(ABILITY_ID::RESEARCH_COMBATSHIELD, UNIT_TYPEID::TERRAN_BARRACKSTECHLAB);
     TryBuildUnit(ABILITY_ID::RESEARCH_TERRANINFANTRYWEAPONS, UNIT_TYPEID::TERRAN_ENGINEERINGBAY);
 
     // combat shield
@@ -590,7 +538,6 @@ void Hal9001::ManageUpgrades(const ObservationInterface* observation){
 }
 
 void Hal9001::ShouldRetreat(const ObservationInterface* observation) {
-    //TODO determine retreat condition
     Units enemies = observation->GetUnits(Unit::Alliance::Enemy, IsArmy(observation));
     int enemyCount = enemies.size();
     int aliveCount = 0;
@@ -790,10 +737,6 @@ void Hal9001::ManageArmy() {
 
                 //if we can't rush chill in staging area
                 if (DistanceSquared2D(unit->pos, stagingArea) > 16) {
-                    // #ifdef DEBUG
-                    // cout << "Unit pos, Staging area pos" << endl;
-                    // cout << unit->pos.x << "," << unit->pos.y << " " << stagingArea.x << "," << stagingArea.y << endl;
-                    // #endif
                     Actions()->UnitCommand(unit, ABILITY_ID::ATTACK, stagingArea);
                 }
 
@@ -1156,17 +1099,15 @@ void Hal9001::ReconBase(const ObservationInterface* observation) {
         if (scouting == false) {
             moveUnit(scout, L1);
             scouting = true;
-            cout << "going to L1\n";
         }
         if (scouting == true) {
             if (observation->GetGameInfo().enemy_start_locations.size() == 3) {
                 if (scout->pos.x == L1.x && scout->pos.y == L1.y) {
                     scouting = true;
                     moveUnit(scout, L2);
-                    cout << "going to L2\n";
                 }
                 if (scout->pos.x == L2.x && scout->pos.y == L2.y) {
-                    cout << "setting base by process of elimination" << endl;
+
                     enemyBase = L3;
                     enemyBaseFound = true;
                     moveUnit(scout, mainSCV->pos);
@@ -1179,7 +1120,6 @@ void Hal9001::ReconBase(const ObservationInterface* observation) {
 
 void Hal9001::OnStep() { 
     ++steps;
-    // cout << Observation()->GetGameLoop() << endl;
     const ObservationInterface *observation = Observation();
 
     minerals = observation->GetMinerals();
@@ -1228,7 +1168,6 @@ void Hal9001::OnUnitIdle(const Unit *unit) {
 }
 
 void Hal9001::Expand(){
-    // cout << "we are expanding" << endl;
     Point3D exp = FindNearestExpansion();
     // build command centre
     BuildStructure(ABILITY_ID::BUILD_COMMANDCENTER, exp.x, exp.y, mainSCV);
@@ -1648,24 +1587,6 @@ float Hal9001::radiusOfToBeBuilt(ABILITY_ID abilityId){
     return abilities[index].footprint_radius;
 }
 
-
-/*
-@desc   This will return a Point towards the center from the building location
-@param  buildingloc - location of reference building
-        ratio - distance towards center eg. 2 is halfway to center
-*/
-Point2D Hal9001::PointTowardCenter(GameInfo game_info_, Point3D buildingloc, float ratio) {
-    Point2D mapcenter = Point2D(game_info_.playable_max.x / 2, game_info_.playable_max.y / 2);
-    float build_to_center_x = (buildingloc.x - mapcenter.x) / ratio;
-    float build_to_center_y = (buildingloc.y - mapcenter.y) / ratio;
-    #ifdef DEBUG
-        cout << "Map center is " << mapcenter.x << ", " << mapcenter.y << endl;
-        cout << "cc location is " << buildingloc.x << ", " << buildingloc.y << endl;
-        cout << "PointToCenter returns: " << buildingloc.x - build_to_center_x << ", " << buildingloc.y - build_to_center_y << endl;
-    #endif
-    return Point2D(buildingloc.x - build_to_center_x, buildingloc.y - build_to_center_y);
-}
-
 /*
 @desc   This will return a tuple (1,0), (1, -1), etc. 
 @param  anchor - a unit, will build relative to this
@@ -1778,45 +1699,6 @@ std::pair<int, int> Hal9001::getRelativeDir(const Unit *anchor, const RelDir dir
     return std::make_pair(0, 0);
 }
 
-
-/*
-@desc   This will return where another structure is relative to another structure anchor
-         Layman: "Is target on the left or right of anchor"
-
-@param  anchor - a unit, from this
-        target - a unit, to this
-
-@return LEFT or RIGHT (enum)
-*/
-RelDir Hal9001::getHandSide(const Unit* anchor, const Unit *target){
-    
-    // the displacements
-    int x_dis = abs( (anchor -> pos.x) - (target -> pos.y) );
-    int y_dis = abs( (anchor -> pos.y) - (target -> pos.y) );
-
-    // diff of x_dis - y_dis, if > 0 then x_dis is greater
-    int diff = x_dis - y_dis;
-
-
-    Corner loc = cornerLoc(anchor);
-    if(loc == SW || loc == NE){
-        if(diff > 0){
-            return RIGHT;
-        } else{
-            return LEFT;
-        }
-
-    } else if(loc == SE || loc == NW){
-        if(diff > 0){
-            return LEFT;
-        } else{
-            return RIGHT;
-        }
-    }
-    
-    return FRONT;
-}
-
 /*
 @desc This will return where a structure is in the map
 @param unit
@@ -1837,139 +1719,4 @@ Corner Hal9001::cornerLoc(const Unit* unit){
     }
     
     return M;
-}
-
-/*
-@desc This will return true or false if a build ability is placeable in the given position
-@param unit
-@return bool
-*/
-bool Hal9001::isPlaceable(ABILITY_ID abilityId, Point2D points){
-    // placement query provision
-    vector<QueryInterface::PlacementQuery> queries;
-
-    // slate to query
-    queries.push_back(QueryInterface::PlacementQuery(abilityId, points));
-
-    // get query bool
-    vector<bool> placeble = Query()-> Placement(queries);
-
-    return placeble[0];
-}
-
-/*
-@desc This will return true or false if a order is already given to an scv and is in progress
-@param abilityid
-@return bool
-*/
-bool Hal9001::isOrdered(ABILITY_ID abilityId, UNIT_TYPEID unitTypeId){
-    Units units = GetUnitsOfType(unitTypeId);
-
-    for( const auto &u: units ){
-        if(u -> orders.size()){
-            
-            for( const auto &o: u -> orders){
-                if(o.ability_id == abilityId){
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
-/*
-@desc This will land a build structure in the vicinity
-@param unit for flying building, rel dir (try to land here first), ability id for landing the unit
-@return void
-*/
-void Hal9001::landFlyer(const Unit* flyer, RelDir relDir, ABILITY_ID aid_to_land){
-    // derived from mich's code
-
-    // config coordinates
-    float x = (flyer -> pos.x) + (flyer -> radius) * 2 + 2;
-    float y = (flyer -> pos.y) + (flyer -> radius) * 2 + 2;
-
-    cout << flyer -> radius << endl;
-
-    vector<QueryInterface::PlacementQuery> queries;
-    // check placement in all 8 directions
-    for(int i = 0; i <= RelDir::BEHIND; ++i){
-        RelDir rd = static_cast<RelDir>(i);
-        std::pair<int, int> relCor = getRelativeDir(flyer, rd);
-        x *= relCor.first; y *= relCor.second;
-        queries.push_back(QueryInterface::PlacementQuery(aid_to_land, Point2D(x, y)));
-    }
-
-    vector<bool> landable = Query() -> Placement(queries);
-    // try to land in given dir first
-    if( landable[relDir]){
-        Actions() -> UnitCommand(flyer, aid_to_land, queries[relDir].target_pos);
-        return;
-    }
-
-    // or land in any possible placement
-    for (int i = 0; i < landable.size(); ++i){
-        if (landable[i]){
-            Actions() -> UnitCommand(flyer, aid_to_land, queries[i].target_pos);
-            break;
-        }
-    }
-}
-
-
-/**
-@desc This function will populate a vector of enemies in range of a specific unit
-@param unit - the unit to attack
-@param targets - a vector to populate
-@param range - how far from u (prevent returning units that are too far)
-@return void
-**/
-void Hal9001::enemies_within_range(const Unit &u, Units &targets, float range) const{
-    targets.clear();
-
-    // get all enemies from observation
-    const ObservationInterface *observation = Observation();
-    Units enemies = observation -> GetUnits(Unit::Alliance::Enemy, IsArmy(observation));
-
-    // for all enemies
-    for (const auto& enemy : enemies) {
-        float dist = DistanceSquared2D(enemy->pos, u.pos);
-        
-        // if distance between unit are within range then push to targets
-        if(dist <= range){
-            targets.push_back(enemy);
-        }
-    }
-}
-
-
-/**
-@desc This function will return random closest enemy unit
-@param u - reference unit (return random closest enemy to this unit)
-@param range - how far from u (prevent returning units that are too far)
-@return void
-*/
-const Unit* Hal9001::random_closest_enemy(Unit &u, float range) const{
-    // populate this vector 
-    Units targets;
-
-    // get enemies within range
-    enemies_within_range(u, targets, range);
-
-    // if no targets in range
-    if(!targets.size()) return 0;
-
-    // This will be the index of the closest enemy target
-    int minIndex = 0;
-
-    // loop through targets
-    for(int i = 0; i < targets.size(); ++i){
-        float minDist = DistanceSquared2D(targets[minIndex] -> pos, u.pos);
-        float currDist = DistanceSquared2D(targets[i] -> pos, u.pos);
-
-        if(currDist < minDist) minIndex = i;
-    }
-
-    return targets[minIndex];
 }

@@ -56,7 +56,6 @@ public:
 	void ManageUpgrades(const ObservationInterface* observation);
 	// build a refinery near the given command center
 	void BuildRefinery(const Unit *commcenter, const Unit *builder = nullptr);
-	void updateSupplies();
 	void ReconBase(const ObservationInterface* observation);
 	// checks if we can perform a rush
 	void setCanRush(const ObservationInterface *observation);
@@ -99,8 +98,6 @@ public:
 	@param	abilityId - BUILD_SUPPLYDEPOT, etc
 	*/
 	float radiusOfToBeBuilt(ABILITY_ID abilityId);
-	
-	Point2D PointTowardCenter(GameInfo game_info_, Point3D buildingloc, float ratio);
 
 	/*
 	@desc   This will return a tuple (1,0), (1, -1), etc. 
@@ -108,17 +105,6 @@ public:
 			dir    - RelDir enum
 	*/
 	std::pair<int, int> getRelativeDir(const Unit *anchor, const RelDir dir);
-
-	/*
-	@desc   This will return where another structure is relative to another structure anchor
-			Layman: "Is target on the left or right of anchor"
-
-	@param  anchor - a unit, from this
-			target - a unit, to this
-
-	@return LEFT or RIGHT (enum)
-	*/
-	RelDir getHandSide(const Unit* anchor, const Unit *target);
 
 	/*
 	@desc attempts to build a unit
@@ -140,44 +126,6 @@ public:
 	@return Corner enum
 	*/
 	Corner cornerLoc(const Unit* unit);
-
-	/*
-	@desc This will return true or false if a build ability is placeable in the given position
-	@param unit
-	@return bool
-	*/
-	bool isPlaceable(ABILITY_ID abilityId, Point2D points);
-
-	/*
-	@desc This will return true or false if a order is already given to an scv and is in progress
-	@param abilityid
-	@return bool
-	*/
-	bool isOrdered(ABILITY_ID abilityId, UNIT_TYPEID unitTypeId);
-
-	/*
-	@desc This will land a build structure in the vicinity
-	@param unit id for building, rel dir (try to land here first)
-	@return void
-	*/
-	void landFlyer(const Unit* flyer, RelDir relDir, ABILITY_ID aid_to_land);
-
-	/**
-	@desc This function will return random closest enemy unit
-	@param u - reference unit (return random closest enemy to this unit)
-	@param range - how far from u (prevent returning units that are too far)
-	@return void
-	*/
-	const Unit* random_closest_enemy(Unit &u, float range) const;
-
-	/**
-	@desc This function will populate a vector of enemies in range of a specific unit
-	@param unit - the unit to attack
-	@param targets - a vector to populate
-	@param range - how far from u (prevent returning units that are too far)
-	@return void
-	**/
-	void enemies_within_range(const Unit &u, Units &targets, float range) const;
 
 	/**
 	@desc This function will return true if expansion has a commcenter
