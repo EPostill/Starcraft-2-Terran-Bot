@@ -1230,7 +1230,7 @@ const Unit* Hal9001::FindNearestMineralPatch(const Point2D &start) {
     const Unit *target = nullptr;
     for (const auto &u : units) {
         // get closest mineral field
-        if (u->unit_type == UNIT_TYPEID::NEUTRAL_MINERALFIELD) {
+        if (u->unit_type == UNIT_TYPEID::NEUTRAL_MINERALFIELD || u->unit_type == UNIT_TYPEID::NEUTRAL_RICHMINERALFIELD) {
             float d = DistanceSquared2D(u->pos, start);
             if (d < distance) {
                 distance = d;
