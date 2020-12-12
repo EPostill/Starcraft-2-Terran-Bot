@@ -62,6 +62,8 @@ public:
 	//checks if we have a strong enough army to attack
 	void CanAttack(const ObservationInterface *observation);
 	void setStagingArea(const ObservationInterface *observation);
+	// fills expansions vector if its empty or incorrectly filled
+	void setExpansions(const ObservationInterface *observation);
 	
 	// policy for training scvs
 	void ManageSCVTraining();

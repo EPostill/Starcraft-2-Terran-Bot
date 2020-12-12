@@ -51,9 +51,8 @@ void Hal9001::OnGameStart() {
     game_stage = 0;
     steps = 0;
 
-    // store expansions and start location
-    expansions = search::CalculateExpansionLocations(observation, Query());
-    unseen_expansions = expansions;
+    // store start location
+
     startLocation = observation->GetStartLocation();
 
     // get map width and height
@@ -396,6 +395,14 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
         }
     }
 
+}
+
+void Hal9001::setExpansions(const ObservationInterface *observation){
+
+    if (expansions.empty() || expansions[0] == Point3D(0,0,0)){
+        expansions = search::CalculateExpansionLocations(observation, Query());
+        unseen_expansions = expansions;
+    }
 }
 
 void Hal9001::setStagingArea(const ObservationInterface *observation){
@@ -1125,6 +1132,7 @@ void Hal9001::OnStep() {
     minerals = observation->GetMinerals();
     supplies = observation->GetFoodUsed();
     vespene = observation->GetVespene();
+    setExpansions(observation);
     ManageSCVTraining();
     MineIdleWorkers();
     ManageRefineries();
