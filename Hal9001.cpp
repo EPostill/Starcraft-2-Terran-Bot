@@ -399,7 +399,7 @@ void Hal9001::BuildOrder(const ObservationInterface *observation) {
 
 void Hal9001::setExpansions(const ObservationInterface *observation){
 
-    if (expansions.empty() || expansions[0] == Point3D(0,0,0)){
+    if (expansions.empty() || (expansions[0].x == 0 && expansions[0].y == 0)){
         expansions = search::CalculateExpansionLocations(observation, Query());
         unseen_expansions = expansions;
     }
